@@ -1,4 +1,4 @@
-// ----------------------------------------------------------------------------------
+﻿// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,18 @@
 
 using AutoMapper;
 using Microsoft.Azure.Commands.Network.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.ResourceManager.Common.Tags;
 using Microsoft.Azure.Management.Network;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Management.Automation;
 using MNM = Microsoft.Azure.Management.Network.Models;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.New, "AzureRmLocalNetworkGateway", SupportsShouldProcess = true),
-        OutputType(typeof(PSLocalNetworkGateway))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "LocalNetworkGateway", SupportsShouldProcess = true),OutputType(typeof(PSLocalNetworkGateway))]
     public class NewAzureLocalNetworkGatewayCommand : LocalNetworkGatewayBaseCmdlet
     {
         [Alias("ResourceName")]
@@ -39,6 +40,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public virtual string ResourceGroupName { get; set; }
 
@@ -46,6 +48,7 @@ namespace Microsoft.Azure.Commands.Network
          Mandatory = true,
          ValueFromPipelineByPropertyName = true,
          HelpMessage = "location.")]
+        [LocationCompleter("Microsoft.Network/localNetworkGateways")]
         [ValidateNotNullOrEmpty]
         public virtual string Location { get; set; }
 
@@ -60,7 +63,7 @@ namespace Microsoft.Azure.Commands.Network
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The address prefixes of the virtual network")]
         [ValidateNotNullOrEmpty]
-        public List<string> AddressPrefix { get; set; }
+        public string[] AddressPrefix { get; set; }
 
         [Parameter(
             Mandatory = false,
@@ -91,10 +94,12 @@ namespace Microsoft.Azure.Commands.Network
             HelpMessage = "Do not ask for confirmation if you want to overrite a resource")]
         public SwitchParameter Force { get; set; }
 
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
+
         public override void Execute()
         {
             base.Execute();
-            WriteWarning("The output object type of this cmdlet will be modified in a future release.");
             var present = this.IsLocalNetworkGatewayPresent(this.ResourceGroupName, this.Name);
             ConfirmAction(
                 Force.IsPresent,
@@ -116,7 +121,7 @@ namespace Microsoft.Azure.Commands.Network
             localnetGateway.ResourceGroupName = this.ResourceGroupName;
             localnetGateway.Location = this.Location;
             localnetGateway.LocalNetworkAddressSpace = new PSAddressSpace();
-            localnetGateway.LocalNetworkAddressSpace.AddressPrefixes = this.AddressPrefix;
+            localnetGateway.LocalNetworkAddressSpace.AddressPrefixes = this.AddressPrefix?.ToList();
             localnetGateway.GatewayIpAddress = this.GatewayIpAddress;
 
             if (this.PeerWeight < 0)
@@ -140,7 +145,7 @@ namespace Microsoft.Azure.Commands.Network
             }
 
             // Map to the sdk object
-            var localnetGatewayModel = Mapper.Map<MNM.LocalNetworkGateway>(localnetGateway);
+            var localnetGatewayModel = NetworkResourceManagerProfile.Mapper.Map<MNM.LocalNetworkGateway>(localnetGateway);
             localnetGatewayModel.Tags = TagsConversionHelper.CreateTagDictionary(this.Tag, validate: true);
 
             // Execute the Create Local Network Gateway call

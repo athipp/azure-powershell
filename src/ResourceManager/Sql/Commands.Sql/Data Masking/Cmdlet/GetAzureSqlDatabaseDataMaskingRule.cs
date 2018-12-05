@@ -23,7 +23,7 @@ namespace Microsoft.Azure.Commands.Sql.DataMasking.Cmdlet
     /// <summary>
     /// Returns a data masking rule or all the rules for a given database
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmSqlDatabaseDataMaskingRule", SupportsShouldProcess = true), OutputType(typeof(IEnumerable<DatabaseDataMaskingRuleModel>))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlDatabaseDataMaskingRule", SupportsShouldProcess = true), OutputType(typeof(DatabaseDataMaskingRuleModel))]
     public class GetAzureSqlDatabaseDataMaskingRule : SqlDatabaseDataMaskingRuleCmdletBase
     {
         /// <summary>

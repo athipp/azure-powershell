@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Microsoft.WindowsAzure.Commands.Common;
 
 namespace Microsoft.WindowsAzure.Commands.ScenarioTest
 {
@@ -47,6 +48,8 @@ namespace Microsoft.WindowsAzure.Commands.ScenarioTest
 
         protected void RunPowerShellTest(params string[] scripts)
         {
+            AzureSessionInitializer.InitializeAzureSession();
+            ServiceManagementProfileProvider.InitializeServiceManagementProfile();
             using (UndoContext context = UndoContext.Current)
             {
                 context.Start(TestUtilities.GetCallingClass(1), TestUtilities.GetCurrentMethodName(2));
@@ -54,9 +57,8 @@ namespace Microsoft.WindowsAzure.Commands.ScenarioTest
                 SetupManagementClients();
 
                 List<string> modules = new List<string>();
-                
+
                 modules.Add(Path.Combine(EnvironmentSetupHelper.PackageDirectory,@"ServiceManagement\Azure\Compute\AzurePreview.psd1"));
-                modules.Add(Path.Combine(EnvironmentSetupHelper.PackageDirectory,@"ServiceManagement\Azure\Compute\PIR.psd1"));
                 modules.AddRange(Directory.GetFiles(@"Resources\ServiceManagement".AsAbsoluteLocation(), "*.ps1").ToList());
 
                 helper.SetupEnvironment(AzureModule.AzureServiceManagement);

@@ -16,9 +16,12 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using Microsoft.WindowsAzure.Commands.Utilities.Common;
+// TODO: Remove IfDef code
+#if !NETSTANDARD
 using Security.Cryptography;
 using Security.Cryptography.X509Certificates;
-
+#endif
 namespace Microsoft.Azure.Commands.RecoveryServices
 {
     /// <summary>
@@ -72,6 +75,8 @@ namespace Microsoft.Azure.Commands.RecoveryServices
             string issuer = DefaultIssuer,
             string password = DefaultPassword)
         {
+// TODO: Remove IfDef code
+#if !NETSTANDARD
             string friendlyName = GenerateCertFriendlyName(subscriptionId, certificateNamePrefix);
             DateTime startTime = DateTime.UtcNow.AddMinutes(-10);
             DateTime endTime = DateTime.UtcNow.AddHours(validForHours);
@@ -107,6 +112,9 @@ namespace Microsoft.Azure.Commands.RecoveryServices
 
             // PfxValidation is not done here because these are newly created certs and assumed valid.
             return NewX509Certificate2(bytes, password, X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable, shouldValidatePfx: false);
+#else
+            return null;
+#endif
         }
 
         /// <summary>
@@ -119,11 +127,11 @@ namespace Microsoft.Azure.Commands.RecoveryServices
         /// <returns>An instance of the X509Certificate</returns>
         public static X509Certificate2 NewX509Certificate2(byte[] rawData, string password, X509KeyStorageFlags keyStorageFlags, bool shouldValidatePfx)
         {
-            string temporaryFileName = Path.GetTempFileName();
+            var temporaryFileName = Path.GetTempFileName();
 
             try
             {
-                X509ContentType contentType = X509Certificate2.GetCertContentType(rawData);
+                var contentType = X509Certificate2.GetCertContentType(rawData);
                 File.WriteAllBytes(temporaryFileName, rawData);
                 return new X509Certificate2(temporaryFileName, password, keyStorageFlags);
             }
@@ -148,8 +156,7 @@ namespace Microsoft.Azure.Commands.RecoveryServices
         public static string GetCertInBase64EncodedForm(string certFileName)
         {
             FileStream fileStream = null;
-            byte[] data = null;
-            string certInBase64EncodedForm = null;
+            string certInBase64EncodedForm;
 
             try
             {
@@ -161,12 +168,12 @@ namespace Microsoft.Azure.Commands.RecoveryServices
                     throw new Exception("The Certficate size exceeds 1MB. Please provide a file whose size is utmost 1 MB");
                 }
 
-                int size = (int)fileStream.Length;
-                data = new byte[size];
+                var size = (int)fileStream.Length;
+                var data = new byte[size];
                 size = fileStream.Read(data, 0, size);
 
                 // Check if the file is a valid certificate before sending it to service
-                X509Certificate2 x509 = new X509Certificate2();
+                var x509 = new X509Certificate2();
                 x509.Import(data);
                 if (string.IsNullOrEmpty(x509.Thumbprint))
                 {
@@ -182,10 +189,7 @@ namespace Microsoft.Azure.Commands.RecoveryServices
             }
             finally
             {
-                if (null != fileStream)
-                {
-                    fileStream.Close();
-                }
+                fileStream?.Close();
             }
 
             return certInBase64EncodedForm;
@@ -199,7 +203,12 @@ namespace Microsoft.Azure.Commands.RecoveryServices
         /// <returns>friendly name</returns>
         private static string GenerateCertFriendlyName(string subscriptionId, string prefix = "")
         {
-            return string.Format("{0}{1}-{2}-vaultcredentials", prefix, subscriptionId, DateTime.Now.ToString("M-d-yyyy"));
+            var dateString = DateTime.Now.ToString("M-d-yyyy");
+            if (TestMockSupport.RunningMocked)
+            {
+                dateString = string.Empty;
+            }
+            return string.Format("{0}{1}-{2}-vaultcredentials", prefix, subscriptionId, dateString);
         }
 
         /// <summary>
@@ -209,6 +218,8 @@ namespace Microsoft.Azure.Commands.RecoveryServices
         /// <returns>A 2048 bit RSA key</returns>
         private static CngKey Create2048RsaKey()
         {
+// TODO: Remove IfDef code
+#if !NETSTANDARD
             var keyCreationParameters = new CngKeyCreationParameters
             {
                 ExportPolicy = CngExportPolicies.AllowExport,
@@ -220,6 +231,9 @@ namespace Microsoft.Azure.Commands.RecoveryServices
             keyCreationParameters.Parameters.Add(new CngProperty("Length", BitConverter.GetBytes(KeySize2048), CngPropertyOptions.None));
 
             return CngKey.Create(CngAlgorithm2.Rsa, null, keyCreationParameters);
+#else
+            return null;
+#endif
         }
 
         /// <summary>

@@ -19,7 +19,7 @@ namespace Microsoft.Azure.Commands.Resources.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -79,20 +79,29 @@ namespace Microsoft.Azure.Commands.Resources.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Application with display name &apos;{0}&apos; does not exist..
+        /// </summary>
+        internal static string ApplicationWithDisplayNameDoesntExist {
+            get {
+                return ResourceManager.GetString("ApplicationWithDisplayNameDoesntExist", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cancelling active deployment ....
+        /// </summary>
+        internal static string CancelDeploymentMessage {
+            get {
+                return ResourceManager.GetString("CancelDeploymentMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Are you sure you want to cancel the active deployment of resource group &apos;{0}&apos;?.
         /// </summary>
         internal static string CancelResourceGroupDeployment {
             get {
                 return ResourceManager.GetString("CancelResourceGroupDeployment", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cancelling active resource group deployment ....
-        /// </summary>
-        internal static string CancelResourceGroupDeploymentMessage {
-            get {
-                return ResourceManager.GetString("CancelResourceGroupDeploymentMessage", resourceCulture);
             }
         }
         
@@ -115,20 +124,29 @@ namespace Microsoft.Azure.Commands.Resources.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Are you sure you want to delete the deployment &apos;{0}&apos;?.
+        ///   Looks up a localized string similar to No value specified for -EndDate parameter; setting the value to one year after start date..
         /// </summary>
-        internal static string DeleteResourceGroupDeployment {
+        internal static string DefaultEndDateUsed {
             get {
-                return ResourceManager.GetString("DeleteResourceGroupDeployment", resourceCulture);
+                return ResourceManager.GetString("DefaultEndDateUsed", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Deleting the deployment ....
         /// </summary>
-        internal static string DeleteResourceGroupDeploymentMessage {
+        internal static string DeleteDeploymentMessage {
             get {
-                return ResourceManager.GetString("DeleteResourceGroupDeploymentMessage", resourceCulture);
+                return ResourceManager.GetString("DeleteDeploymentMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to delete the deployment &apos;{0}&apos;?.
+        /// </summary>
+        internal static string DeleteResourceGroupDeployment {
+            get {
+                return ResourceManager.GetString("DeleteResourceGroupDeployment", resourceCulture);
             }
         }
         
@@ -237,6 +255,15 @@ namespace Microsoft.Azure.Commands.Resources.Properties {
         internal static string IncludeClassicAdminsNotSupported {
             get {
                 return ResourceManager.GetString("IncludeClassicAdminsNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The User/Application doesn&apos;t have sufficient AAD graph permissions to perform the operation..
+        /// </summary>
+        internal static string InSufficientGraphPermission {
+            get {
+                return ResourceManager.GetString("InSufficientGraphPermission", resourceCulture);
             }
         }
         
@@ -538,6 +565,15 @@ namespace Microsoft.Azure.Commands.Resources.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to remove group with object id &apos;{0}&apos;?.
+        /// </summary>
+        internal static string RemoveGroupConfirmation {
+            get {
+                return ResourceManager.GetString("RemoveGroupConfirmation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Removing resource group ....
         /// </summary>
         internal static string RemoveResourceGroupMessage {
@@ -624,6 +660,15 @@ namespace Microsoft.Azure.Commands.Resources.Properties {
         internal static string RemovingApplication {
             get {
                 return ResourceManager.GetString("RemovingApplication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Removing group ....
+        /// </summary>
+        internal static string RemovingGroup {
+            get {
+                return ResourceManager.GetString("RemovingGroup", resourceCulture);
             }
         }
         
@@ -786,6 +831,60 @@ namespace Microsoft.Azure.Commands.Resources.Properties {
         internal static string RoleDefinitionWithIdNotFound {
             get {
                 return ResourceManager.GetString("RoleDefinitionWithIdNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Scope &apos;{0}&apos; should begin with &apos;/subscriptions/&lt;subid&gt;/resourceGroups&apos;..
+        /// </summary>
+        internal static string ScopeShouldBeginWithSubscriptionsAndResourceGroups {
+            get {
+                return ResourceManager.GetString("ScopeShouldBeginWithSubscriptionsAndResourceGroups", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Scope &apos;{0}&apos; should begin with &apos;/subscriptions/&lt;subid&gt;/resourceGroups/&lt;groupname&gt;/providers&apos;..
+        /// </summary>
+        internal static string ScopeShouldBeginWithSubscriptionsAndResourceGroupsAndProviders {
+            get {
+                return ResourceManager.GetString("ScopeShouldBeginWithSubscriptionsAndResourceGroupsAndProviders", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Scope &apos;{0}&apos; should begin with &apos;/subscriptions&apos; or &apos;/providers&apos;..
+        /// </summary>
+        internal static string ScopeShouldBeginWithSubscriptionsOrProviders {
+            get {
+                return ResourceManager.GetString("ScopeShouldBeginWithSubscriptionsOrProviders", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Scope &apos;{0}&apos; should have at least one pair of resource type and resource name. e.g. &apos;/subscriptions/&lt;subid&gt;/resourceGroups/&lt;groupname&gt;/providers/&lt;providername&gt;/&lt;resourcetype&gt;/&lt;resourcename&gt;&apos;..
+        /// </summary>
+        internal static string ScopeShouldHaveAtLeastOnePairOfResourceTypeAndName {
+            get {
+                return ResourceManager.GetString("ScopeShouldHaveAtLeastOnePairOfResourceTypeAndName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Scope &apos;{0}&apos; should have even number of parts..
+        /// </summary>
+        internal static string ScopeShouldHaveEvenNumberOfParts {
+            get {
+                return ResourceManager.GetString("ScopeShouldHaveEvenNumberOfParts", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Scope &apos;{0}&apos; should not have any empty part..
+        /// </summary>
+        internal static string ScopeShouldHaveNoEmptyPart {
+            get {
+                return ResourceManager.GetString("ScopeShouldHaveNoEmptyPart", resourceCulture);
             }
         }
         

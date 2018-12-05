@@ -13,7 +13,7 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Insights.Autoscale;
-using Microsoft.Azure.Management.Insights.Models;
+using Microsoft.Azure.Management.Monitor.Models;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Moq;
 using System;
@@ -45,15 +45,14 @@ namespace Microsoft.Azure.Commands.Insights.Test.Autoscale
             // New-AutoscaleRule -MetricName <String> -MetricResourceUri <String> -Operator <{Equals | NotEquals | GreaterThan | GreaterThanOrEqual | LessThan | LessThanOrEqual}> 
             //                   -MetricStatistic <{Average | Min | Max | Sum}> -Threshold <Double> [-TimeAggregationOperator <{Average | Minimum | Maximum | Last | Total | Count}>] 
             //                   -TimeGrain <TimeSpan> [-TimeWindow <TimeSpan>] -ScaleActionCooldown <TimeSpan> -ScaleActionDirection <{None | Increase | Decrease}> 
-            //                   -ScaleActionScaleType <{ChangeSize | ChangeCount | PercentChangeCount | ExactCount}> -ScaleActionValue <String>
+            //                   -ScaleActionScaleType <{ChangeSize | ChangeCount | PercentChangeCount}> -ScaleActionValue <String>
             Cmdlet.MetricName = "Requests";
             Cmdlet.MetricResourceId = "/subscriptions/a93fb07c-6c93-40be-bf3b-4f0deba10f4b/resourceGroups/Default-Web-EastUS/providers/microsoft.web/sites/misitiooeltuyo";
-            Cmdlet.Operator = ComparisonOperationType.GreaterThan;
-            Cmdlet.MetricStatistic = MetricStatisticType.Average;
+            Cmdlet.Operator = Management.Monitor.Management.Models.ComparisonOperationType.GreaterThan;
+            Cmdlet.MetricStatistic = Management.Monitor.Management.Models.MetricStatisticType.Average;
             Cmdlet.Threshold = 10;
             Cmdlet.ScaleActionCooldown = TimeSpan.FromMinutes(5);
-            Cmdlet.ScaleActionDirection = ScaleDirection.Increase;
-            Cmdlet.ScaleActionScaleType = ScaleType.ChangeCount;
+            Cmdlet.ScaleActionDirection = Management.Monitor.Management.Models.ScaleDirection.Increase;
             Cmdlet.ScaleActionValue = "1";
             Assert.Throws<ArgumentOutOfRangeException>(() => Cmdlet.ExecuteCmdlet());
 

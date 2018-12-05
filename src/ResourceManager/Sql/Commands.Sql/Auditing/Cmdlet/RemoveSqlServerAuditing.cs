@@ -13,6 +13,7 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Sql.Auditing.Model;
+using System;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Sql.Auditing.Cmdlet
@@ -20,8 +21,9 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Cmdlet
     /// <summary>
     /// Disables auditing on a specific database server.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "AzureRmSqlServerAuditing", SupportsShouldProcess = true), OutputType(typeof(AuditingPolicyModel))]
-    [Alias("Remove-AzureRmSqlDatabaseServerAuditing")]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlServerAuditing", SupportsShouldProcess = true), OutputType(typeof(AuditingPolicyModel))]
+    [Alias("Remove-" + ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlDatabaseServerAuditing")]
+    [Obsolete("Note that Table auditing is deprecated and this command will be removed in a future release. Please use the 'Set-AzSqlServerAuditing' command to configure Blob auditing.", false)]
     public class RemoveSqlServerAuditing : SqlDatabaseServerAuditingCmdletBase
     {
         /// <summary>
@@ -56,10 +58,21 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Cmdlet
         {
             ModelAdapter.IgnoreStorage = true;
             base.PersistChanges(model);
-            AuditType = AuditType.Blob;
-            var blobModel = GetEntity();
-            blobModel.AuditState = AuditStateType.Disabled;
-            base.PersistChanges(blobModel);
+            //if another server auditing policy exists, remove it
+            if (AuditType == AuditType.Blob)
+            {
+                AuditType = AuditType.Table;
+            }
+            else
+            {
+                AuditType = AuditType.Blob;
+            }
+            var otherAuditingTypePolicyModel = GetEntity();
+            if (otherAuditingTypePolicyModel != null)
+            {
+                otherAuditingTypePolicyModel.AuditState = AuditStateType.Disabled;
+                base.PersistChanges(otherAuditingTypePolicyModel);
+            }
             return null;
         }
     }

@@ -17,12 +17,13 @@ using Microsoft.Azure.Management.Logic.Models;
 namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 {
     using Microsoft.Azure.Commands.LogicApp.Utilities;
+    using ResourceManager.Common.ArgumentCompleters;
     using System.Management.Automation;
 
     /// <summary>
     /// Gets the callback URL for a trigger in a workflow
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmLogicAppTriggerCallbackUrl"), OutputType(typeof(object))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "LogicAppTriggerCallbackUrl"), OutputType(typeof(WorkflowTriggerCallbackUrl))]
     public class GetAzureLogicAppTriggerCallbackUrlCommand : LogicAppBaseCmdlet
     {
 
@@ -30,6 +31,7 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 
         [Parameter(Mandatory = true, HelpMessage = "The targeted resource group for the workflow.",
             ValueFromPipelineByPropertyName = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

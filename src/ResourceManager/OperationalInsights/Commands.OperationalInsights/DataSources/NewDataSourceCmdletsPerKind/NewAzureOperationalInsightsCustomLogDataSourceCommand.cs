@@ -14,6 +14,7 @@
 
 using Microsoft.Azure.Commands.OperationalInsights.Models;
 using Microsoft.Azure.Commands.OperationalInsights.Properties;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -22,14 +23,37 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.OperationalInsights
 {
-    [Cmdlet(VerbsCommon.New, "AzureRmOperationalInsightsCustomLogDataSource", SupportsShouldProcess = true, 
-        DefaultParameterSetName = ByWorkspaceName), OutputType(typeof(PSDataSource))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "OperationalInsightsCustomLogDataSource", SupportsShouldProcess = true, DefaultParameterSetName = ByWorkspaceName), OutputType(typeof(PSDataSource))]
     public class NewAzureOperationalInsightsCustomLogDataSourceCommand : NewAzureOperationalInsightsDataSourceBaseCmdlet
     {
+        [Parameter(Position = 0, ParameterSetName = ByWorkspaceObject, Mandatory = true, ValueFromPipeline = true,
+            HelpMessage = "The workspace that will contain the data source.")]
+        [ValidateNotNull]
+        public override PSWorkspace Workspace { get; set; }
+
+        [Parameter(Position = 1, ParameterSetName = ByWorkspaceName, Mandatory = true, ValueFromPipelineByPropertyName = true,
+            HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
+        [ValidateNotNullOrEmpty]
+        public override string ResourceGroupName { get; set; }
+
+        [Parameter(Position = 2, ParameterSetName = ByWorkspaceName, Mandatory = true, ValueFromPipelineByPropertyName = true,
+            HelpMessage = "The name of the workspace that will contain the data source.")]
+        [ValidateNotNullOrEmpty]
+        public override string WorkspaceName { get; set; }
+
+        [Parameter(Position = 3, Mandatory = true, ValueFromPipelineByPropertyName = true,
+            HelpMessage = "The data source name.")]
+        [ValidateNotNullOrEmpty]
+        public override string Name { get; set; }
+
         [Parameter(Position = 4, Mandatory = true, ValueFromPipelineByPropertyName = true,
         HelpMessage = "The azure subscription Id.")]
         [ValidateNotNullOrEmpty]
         public string CustomLogRawJson { get; set; }
+
+        [Parameter(Mandatory = false, HelpMessage = "Don't ask for confirmation.")]
+        public override SwitchParameter Force { get; set; }
 
         public override void ExecuteCmdlet()
         {

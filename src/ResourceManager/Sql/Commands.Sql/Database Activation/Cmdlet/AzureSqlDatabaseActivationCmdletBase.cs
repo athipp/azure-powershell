@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,9 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.Common;
 using Microsoft.Azure.Commands.Sql.Database.Model;
 using Microsoft.Azure.Commands.Sql.DatabaseActivation.Services;
@@ -31,6 +33,7 @@ namespace Microsoft.Azure.Commands.Sql.DatabaseActivation.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 1,
             HelpMessage = "The name of the Azure SQL Server the data warehouse database is in.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string ServerName { get; set; }
 
@@ -40,17 +43,24 @@ namespace Microsoft.Azure.Commands.Sql.DatabaseActivation.Cmdlet
         [Parameter(Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The name of the Azure SQL Data Warehouse database.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers/databases", "ResourceGroupName", "ServerName")]
         [ValidateNotNullOrEmpty]
         public string DatabaseName { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether or not to run this cmdlet in the background as a job
+        /// </summary>
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         /// <summary>
         /// Initializes the adapter
         /// </summary>
         /// <param name="subscription"></param>
         /// <returns></returns>
-        protected override AzureSqlDatabaseActivationAdapter InitModelAdapter(AzureSubscription subscription)
+        protected override AzureSqlDatabaseActivationAdapter InitModelAdapter(IAzureSubscription subscription)
         {
-            return new AzureSqlDatabaseActivationAdapter(DefaultProfile.Context);
+            return new AzureSqlDatabaseActivationAdapter(DefaultProfile.DefaultContext);
         }
     }
 }

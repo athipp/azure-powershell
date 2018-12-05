@@ -17,12 +17,13 @@ using Microsoft.Azure.Management.Logic.Models;
 namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 {
     using Microsoft.Azure.Commands.LogicApp.Utilities;
+    using ResourceManager.Common.ArgumentCompleters;
     using System.Management.Automation;
 
     /// <summary>
     /// Creates a new LogicApp workflow 
     /// </summary>
-    [Cmdlet(VerbsLifecycle.Start, "AzureRmLogicApp", SupportsShouldProcess = true), OutputType(typeof(object))]
+    [Cmdlet("Start", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "LogicApp", SupportsShouldProcess = true), OutputType(typeof(void))]
     public class RunAzureLogicAppCommand : LogicAppBaseCmdlet
     {
 
@@ -30,6 +31,7 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 
         [Parameter(Mandatory = true, HelpMessage = "The targeted resource group for the workflow.",
             ValueFromPipelineByPropertyName = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

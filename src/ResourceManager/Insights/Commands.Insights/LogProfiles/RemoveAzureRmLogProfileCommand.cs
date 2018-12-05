@@ -13,6 +13,7 @@
 // ----------------------------------------------------------------------------------
 
 using System.Management.Automation;
+using System.Net;
 using System.Threading;
 
 namespace Microsoft.Azure.Commands.Insights.LogProfiles
@@ -20,10 +21,9 @@ namespace Microsoft.Azure.Commands.Insights.LogProfiles
     /// <summary>
     /// Removes the log profile.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "AzureRmLogProfile"), OutputType(typeof(bool))]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "LogProfile", SupportsShouldProcess = true), OutputType(typeof(AzureOperationResponse))]
     public class RemoveAzureRmLogProfileCommand : ManagementCmdletBase
     {
-
         #region Parameters declarations
 
         /// <summary>
@@ -33,12 +33,30 @@ namespace Microsoft.Azure.Commands.Insights.LogProfiles
         [ValidateNotNullOrEmpty]
         public string Name { get; set; }
 
+        [Parameter(Mandatory = false)]
+        public SwitchParameter PassThru { get; set; }
+
         #endregion
 
         protected override void ProcessRecordInternal()
         {
-            this.InsightsManagementClient.LogProfilesOperations.DeleteAsync(this.Name, CancellationToken.None).Wait();
-            WriteObject(true);
+            if (ShouldProcess(
+                target: string.Format("Remove a log profile: {0}", this.Name),
+                action: "Remove a log profile"))
+            {
+                Rest.Azure.AzureOperationResponse result = this.MonitorManagementClient.LogProfiles.DeleteWithHttpMessagesAsync(logProfileName: this.Name, cancellationToken: CancellationToken.None).Result;
+
+                var response = new AzureOperationResponse
+                {
+                    RequestId = result.RequestId,
+                    StatusCode = result.Response != null ? result.Response.StatusCode : HttpStatusCode.OK
+                };
+
+                if (this.PassThru)
+                {
+                    WriteObject(response);
+                }
+            }
         }
     }
 }

@@ -14,29 +14,32 @@
 
 using System;
 using System.Management.Automation;
+using Microsoft.Azure.Commands.RecoveryServices.Properties;
 using Microsoft.Azure.Management.RecoveryServices.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.RecoveryServices
 {
     /// <summary>
     /// Used to initiate a vault create operation.
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmRecoveryServicesVault")]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "RecoveryServicesVault", SupportsShouldProcess = true),OutputType(typeof(ARSVault))]
     public class NewAzureRmRecoveryServicesVault : RecoveryServicesCmdletBase
     {
         #region Parameters
 
         /// <summary>
-        /// Gets or sets the vault name
+        /// Gets or sets the vault name.
         /// </summary>
         [Parameter(Mandatory = true)]
         [ValidateNotNullOrEmpty]
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets or sets the resource group name
+        /// Gets or sets the resource group name.
         /// </summary>
         [Parameter(Mandatory = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -44,6 +47,7 @@ namespace Microsoft.Azure.Commands.RecoveryServices
         /// Gets or sets the location of the vault
         /// </summary>
         [Parameter(Mandatory = true)]
+        [LocationCompleter("Microsoft.RecoveryServices/vaults")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
@@ -54,21 +58,24 @@ namespace Microsoft.Azure.Commands.RecoveryServices
         /// </summary>
         public override void ExecuteCmdlet()
         {
-            try
+            if (ShouldProcess(Resources.VaultTarget, "new"))
             {
-                VaultCreateArgs vaultCreateArgs = new VaultCreateArgs();
-                vaultCreateArgs.Location = this.Location;
-                vaultCreateArgs.Properties = new VaultProperties();
-                vaultCreateArgs.Sku = new VaultSku();
-                vaultCreateArgs.Sku.Name = "standard";
+                try
+                {
+                    Vault vaultCreateArgs = new Vault();
+                    vaultCreateArgs.Location = this.Location;
+                    vaultCreateArgs.Properties = new VaultProperties();
+                    vaultCreateArgs.Sku = new Sku();
+                    vaultCreateArgs.Sku.Name = SkuName.Standard;
 
-                VaultCreateResponse response = RecoveryServicesClient.CreateVault(this.ResourceGroupName, this.Name, vaultCreateArgs);
+                    Vault response = RecoveryServicesClient.CreateVault(this.ResourceGroupName, this.Name, vaultCreateArgs);
 
-                this.WriteObject(new ARSVault(response));
-            }
-            catch (Exception exception)
-            {
-                this.HandleException(exception);
+                    this.WriteObject(new ARSVault(response));
+                }
+                catch (Exception exception)
+                {
+                    this.HandleException(exception);
+                }
             }
         }
     }

@@ -16,10 +16,11 @@ using System.Collections.Generic;
 using System.Management.Automation;
 using Microsoft.Azure.Commands.Management.PowerBIEmbedded.Models;
 using Microsoft.Azure.Management.PowerBIEmbedded;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Management.PowerBIEmbedded.WorkspaceCollection
 {
-    [Cmdlet(VerbsCommon.Get, Nouns.WorkspaceCollection), OutputType(typeof(PSWorkspaceCollection))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "PowerBIWorkspaceCollection"), OutputType(typeof(PSWorkspaceCollection))]
     public class GetWorkspaceCollection : WorkspaceCollectionBaseCmdlet
     {
         [Parameter(
@@ -34,6 +35,7 @@ namespace Microsoft.Azure.Commands.Management.PowerBIEmbedded.WorkspaceCollectio
             ParameterSetName = WorkspaceCollectionNameParameterSet,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Resource Group Name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

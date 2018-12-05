@@ -12,26 +12,31 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Hyak.Common;
+// TODO: Remove IfDef
+#if NETSTANDARD
+using Microsoft.Azure.Graph.RBAC.Version1_6.ActiveDirectory;
+#else
 using Microsoft.Azure.ActiveDirectory.GraphClient;
-using Microsoft.Azure.Commands.Common.Authentication;
-using Microsoft.Azure.Commands.Common.Authentication.Models;
-using Microsoft.Azure.Commands.ResourceManager.Common.Tags;
-using Microsoft.Azure.Management.KeyVault;
+#endif
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.ResourceManager.Common.Tags;
+using Microsoft.Azure.Management.KeyVault;
 using PSKeyVaultProperties = Microsoft.Azure.Commands.KeyVault.Properties;
 using Microsoft.Azure.Management.KeyVault.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
+using Microsoft.Rest.Azure;
 
 namespace Microsoft.Azure.Commands.KeyVault.Models
 {
     public class VaultManagementClient
     {
-        public VaultManagementClient(AzureContext context)
+        public VaultManagementClient(IAzureContext context)
         {
-            KeyVaultManagementClient = AzureSession.ClientFactory.CreateArmClient<KeyVaultManagementClient>(context, AzureEnvironment.Endpoint.ResourceManager);
+            KeyVaultManagementClient = AzureSession.Instance.ClientFactory.CreateArmClient<KeyVaultManagementClient>(context, AzureEnvironment.Endpoint.ResourceManager);
         }
 
         /// <summary>
@@ -52,7 +57,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Models
         /// <param name="parameters">vault creation parameters</param>
         /// <param name="adClient">the active directory client</param>
         /// <returns></returns>
-        public PSVault CreateNewVault(VaultCreationParameters parameters, ActiveDirectoryClient adClient = null)
+        public PSKeyVault CreateNewVault(VaultCreationParameters parameters, ActiveDirectoryClient adClient = null)
         {
             if (parameters == null)
                 throw new ArgumentNullException("parameters");
@@ -62,35 +67,46 @@ namespace Microsoft.Azure.Commands.KeyVault.Models
                 throw new ArgumentNullException("parameters.ResourceGroupName");
             if (string.IsNullOrWhiteSpace(parameters.Location))
                 throw new ArgumentNullException("parameters.Location");
-            if (string.IsNullOrWhiteSpace(parameters.SkuFamilyName))
-                throw new ArgumentNullException("parameters.SkuFamilyName");
-            if (parameters.TenantId == null || parameters.TenantId == Guid.Empty)
-                throw new ArgumentException("parameters.TenantId");
 
-            var response = this.KeyVaultManagementClient.Vaults.CreateOrUpdate(
+            var properties = new VaultProperties();
+
+            if (parameters.CreateMode != CreateMode.Recover)
+            {
+                if (string.IsNullOrWhiteSpace(parameters.SkuFamilyName))
+                    throw new ArgumentNullException("parameters.SkuFamilyName");
+                if (parameters.TenantId == Guid.Empty)
+                    throw new ArgumentException("parameters.TenantId");
+
+                properties.Sku = new Sku
+                {
+                    Name = parameters.SkuName,
+                };
+                properties.EnabledForDeployment = parameters.EnabledForDeployment;
+                properties.EnabledForTemplateDeployment = parameters.EnabledForTemplateDeployment;
+                properties.EnabledForDiskEncryption = parameters.EnabledForDiskEncryption;
+                properties.EnableSoftDelete = parameters.EnableSoftDelete.HasValue && parameters.EnableSoftDelete.Value ? true : (bool?) null;
+                properties.EnablePurgeProtection = parameters.EnablePurgeProtection.HasValue && parameters.EnablePurgeProtection.Value ? true : (bool?)null;
+                properties.TenantId = parameters.TenantId;
+                properties.VaultUri = "";
+                properties.AccessPolicies = (parameters.AccessPolicy != null) ? new[] { parameters.AccessPolicy } : new AccessPolicyEntry[] { };
+                properties.NetworkAcls = parameters.NetworkAcls;
+            }
+            else
+            {
+                properties.CreateMode = CreateMode.Recover;
+            }
+            var response = KeyVaultManagementClient.Vaults.CreateOrUpdate(
                 resourceGroupName: parameters.ResourceGroupName,
                 vaultName: parameters.VaultName,
 
-                parameters: new VaultCreateOrUpdateParameters()
+                parameters: new VaultCreateOrUpdateParameters
                 {
                     Location = parameters.Location,
                     Tags = TagsConversionHelper.CreateTagDictionary(parameters.Tags, validate: true),
-                    Properties = new VaultProperties
-                    {
-                        Sku = new Sku
-                        {                            
-                            Name = parameters.SkuName,
-                        },
-                        EnabledForDeployment = parameters.EnabledForDeployment,
-                        EnabledForTemplateDeployment = parameters.EnabledForTemplateDeployment,
-                        EnabledForDiskEncryption = parameters.EnabledForDiskEncryption,
-                        TenantId = parameters.TenantId,
-                        VaultUri = "",
-                        AccessPolicies = (parameters.AccessPolicy != null) ? new[] { parameters.AccessPolicy } : new AccessPolicyEntry[] { }
-                    }
+                    Properties = properties
                 });
 
-            return new PSVault(response, adClient);
+            return new PSKeyVault(response, adClient);
         }
 
         /// <summary>
@@ -100,7 +116,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Models
         /// <param name="resourceGroupName">resource group name</param>
         /// <param name="adClient">the active directory client</param>
         /// <returns>the retrieved vault</returns>
-        public PSVault GetVault(string vaultName, string resourceGroupName, ActiveDirectoryClient adClient = null)
+        public PSKeyVault GetVault(string vaultName, string resourceGroupName, ActiveDirectoryClient adClient = null)
         {
             if (string.IsNullOrWhiteSpace(vaultName))
                 throw new ArgumentNullException("vaultName");
@@ -109,16 +125,17 @@ namespace Microsoft.Azure.Commands.KeyVault.Models
 
             try
             {
-                var response = this.KeyVaultManagementClient.Vaults.Get(resourceGroupName, vaultName);
+                var response = KeyVaultManagementClient.Vaults.Get(resourceGroupName, vaultName);
 
-                return new PSVault(response, adClient);
+                return new PSKeyVault(response, adClient);
             }
             catch (CloudException ce)
             {
                 if (ce.Response.StatusCode == HttpStatusCode.NotFound)
+                {
                     return null;
-                else
-                    throw;
+                }
+                throw;
             }
         }
 
@@ -130,10 +147,19 @@ namespace Microsoft.Azure.Commands.KeyVault.Models
         /// <param name="updatedEnabledForDeployment">enabled for deployment</param>
         /// <param name="updatedEnabledForTemplateDeployment">enabled for template deployment</param>
         /// <param name="updatedEnabledForDiskEncryption">enabled for disk encryption</param>
+        /// <param name="updatedNetworkAcls">updated network rule set</param>
         /// <param name="adClient">the active directory client</param>
         /// <returns>the updated vault</returns>
-        public PSVault UpdateVault(PSVault existingVault, PSVaultAccessPolicy[] updatedPolicies, bool? updatedEnabledForDeployment,
-            bool? updatedEnabledForTemplateDeployment, bool? updatedEnabledForDiskEncryption, ActiveDirectoryClient adClient = null)
+        public PSKeyVault UpdateVault(
+            PSKeyVault existingVault, 
+            PSKeyVaultAccessPolicy[] updatedPolicies, 
+            bool? updatedEnabledForDeployment,
+            bool? updatedEnabledForTemplateDeployment, 
+            bool? updatedEnabledForDiskEncryption, 
+            bool? updatedSoftDeleteSwitch,
+            bool? updatedPurgeProtectionSwitch,
+            PSKeyVaultNetworkRuleSet updatedNetworkAcls,
+            ActiveDirectoryClient adClient = null)
         {
             if (existingVault == null)
                 throw new ArgumentNullException("existingVault");
@@ -142,14 +168,27 @@ namespace Microsoft.Azure.Commands.KeyVault.Models
 
             //Update the vault properties in the object received from server
             //Only access policies and EnabledForDeployment can be changed
-            VaultProperties properties = existingVault.OriginalVault.Properties;
+            var properties = existingVault.OriginalVault.Properties;
             properties.EnabledForDeployment = updatedEnabledForDeployment;
             properties.EnabledForTemplateDeployment = updatedEnabledForTemplateDeployment;
             properties.EnabledForDiskEncryption = updatedEnabledForDiskEncryption;
+
+            // soft delete flags can only be applied if they enable their respective behaviors
+            // and if different from the current corresponding properties on the vault.
+            if (!(properties.EnableSoftDelete.HasValue && properties.EnableSoftDelete.Value)
+                && updatedSoftDeleteSwitch.HasValue 
+                && updatedSoftDeleteSwitch.Value)
+                properties.EnableSoftDelete = updatedSoftDeleteSwitch;
+
+            if (!(properties.EnablePurgeProtection.HasValue && properties.EnableSoftDelete.Value)
+                && updatedPurgeProtectionSwitch.HasValue 
+                && updatedPurgeProtectionSwitch.Value)
+                properties.EnablePurgeProtection = updatedPurgeProtectionSwitch;
+
             properties.AccessPolicies = (updatedPolicies == null) ?
                 new List<AccessPolicyEntry>() :
-                updatedPolicies.Select(a => new AccessPolicyEntry()
-                        {
+                updatedPolicies.Select(a => new AccessPolicyEntry
+                {
                             TenantId = a.TenantId,
                             ObjectId = a.ObjectId,
                             ApplicationId = a.ApplicationId,
@@ -157,20 +196,24 @@ namespace Microsoft.Azure.Commands.KeyVault.Models
                             {
                                 Keys = a.PermissionsToKeys.ToArray(),
                                 Secrets = a.PermissionsToSecrets.ToArray(),
-                                Certificates = a.PermissionsToCertificates.ToArray()
+                                Certificates = a.PermissionsToCertificates.ToArray(),
+                                Storage = a.PermissionsToStorage.ToArray(),
                             }
                         }).ToList();
 
-            var response = this.KeyVaultManagementClient.Vaults.CreateOrUpdate(
+            UpdateVaultNetworkRuleSetProperties(properties, updatedNetworkAcls);
+
+            var response = KeyVaultManagementClient.Vaults.CreateOrUpdate(
                 resourceGroupName: existingVault.ResourceGroupName,
                 vaultName: existingVault.VaultName,
-                parameters: new VaultCreateOrUpdateParameters()
+                parameters: new VaultCreateOrUpdateParameters
                 {
                     Location = existingVault.Location,
-                    Properties = properties
+                    Properties = properties,
+                    Tags = TagsConversionHelper.CreateTagDictionary(existingVault.Tags, validate: true)
                 }
                 );
-            return new PSVault(response, adClient);
+            return new PSKeyVault(response, adClient);
         }
 
         /// <summary>
@@ -178,7 +221,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Models
         /// </summary>
         /// <param name="vaultName"></param>
         /// <param name="resourceGroupName"></param>
-        public void DeletVault(string vaultName, string resourceGroupName)
+        public void DeleteVault(string vaultName, string resourceGroupName)
         {
             if (string.IsNullOrWhiteSpace(vaultName))
                 throw new ArgumentNullException("vaultName");
@@ -187,16 +230,138 @@ namespace Microsoft.Azure.Commands.KeyVault.Models
 
             try
             {
-                this.KeyVaultManagementClient.Vaults.Delete(resourceGroupName, vaultName);
+                KeyVaultManagementClient.Vaults.Delete(resourceGroupName, vaultName);
             }
             catch (CloudException ce)
             {
-                if (ce.Response.StatusCode == HttpStatusCode.NoContent)
+                if (ce.Response.StatusCode == HttpStatusCode.NoContent || ce.Response.StatusCode == HttpStatusCode.NotFound)
                     throw new ArgumentException(string.Format(PSKeyVaultProperties.Resources.VaultNotFound, vaultName, resourceGroupName));
                 throw;
             }
         }
 
+        /// <summary>
+        /// Purge a deleted vault. Throws if vault is not found.
+        /// </summary>
+        /// <param name="vaultName"></param>
+        /// <param name="resourceGroupName"></param>
+        public void PurgeVault(string vaultName, string location)
+        {
+            if (string.IsNullOrWhiteSpace(vaultName))
+                throw new ArgumentNullException(nameof(vaultName));
+            if (string.IsNullOrWhiteSpace(location))
+                throw new ArgumentNullException(nameof(location));
+
+            try
+            {
+                KeyVaultManagementClient.Vaults.PurgeDeleted(vaultName, location);
+            }
+            catch (CloudException ce)
+            {
+                if (ce.Response.StatusCode == HttpStatusCode.NoContent || ce.Response.StatusCode == HttpStatusCode.NotFound)
+                    throw new ArgumentException(string.Format(PSKeyVaultProperties.Resources.DeletedVaultNotFound, vaultName, location));
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets a deleted vault.
+        /// </summary>
+        /// <param name="vaultName">vault name</param>
+        /// <param name="location">resource group name</param>
+        /// <returns>the retrieved deleted vault. Null if vault is not found.</returns>
+        public PSDeletedKeyVault GetDeletedVault(string vaultName, string location)
+        {
+            if (string.IsNullOrWhiteSpace(vaultName))
+                throw new ArgumentNullException(nameof(vaultName));
+            if (string.IsNullOrWhiteSpace(location))
+                throw new ArgumentNullException(nameof(location));
+
+            try
+            {
+                var response = KeyVaultManagementClient.Vaults.GetDeleted(vaultName, location);
+
+                return new PSDeletedKeyVault(response);
+            }
+            catch (CloudException ce)
+            {
+                if (ce.Response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return null;
+                }
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Lists deleted vault in a subscription.
+        /// </summary>
+        /// <returns>the retrieved deleted vault</returns>
+        public List<PSDeletedKeyVault> ListDeletedVaults()
+        {
+            var deletedVaults = new List<PSDeletedKeyVault>();
+
+            var response = KeyVaultManagementClient.Vaults.ListDeleted();
+
+            foreach (var deletedVault in response)
+            {
+                deletedVaults.Add(new PSDeletedKeyVault(deletedVault));
+            }
+
+            while (response?.NextPageLink != null)
+            {
+                response = KeyVaultManagementClient.Vaults.ListDeletedNext(response.NextPageLink);
+
+                foreach (var deletedVault in response)
+                {
+                    deletedVaults.Add(new PSDeletedKeyVault(deletedVault));
+                }
+            }
+
+            return deletedVaults;
+        }
+
         public readonly string VaultsResourceType = "Microsoft.KeyVault/vaults";
+
+
+        #region HELP_METHODS
+        /// <summary>
+        /// Update vault network rule set
+        /// </summary>
+        /// <param name="vaultProperties">Vault property</param>
+        /// <param name="psRuleSet">Network rule set input</param>
+        private static void UpdateVaultNetworkRuleSetProperties(VaultProperties vaultProperties, PSKeyVaultNetworkRuleSet psRuleSet)
+        {
+            if (vaultProperties == null)
+                return;
+
+            var updatedRuleSet = new NetworkRuleSet();       // It contains default settings
+            if (psRuleSet != null)
+            {
+                updatedRuleSet.DefaultAction = psRuleSet.DefaultAction.ToString();
+                updatedRuleSet.Bypass = psRuleSet.Bypass.ToString();
+
+                if (psRuleSet.IpAddressRanges != null && psRuleSet.IpAddressRanges.Count > 0)
+                {
+                    updatedRuleSet.IpRules = psRuleSet.IpAddressRanges.Select(ipAddress => new IPRule { Value = ipAddress }).ToList();
+                }
+                else
+                {   // Send empty array [] to server to override default
+                    updatedRuleSet.IpRules = new List<IPRule>();
+                }
+
+                if (psRuleSet.VirtualNetworkResourceIds != null && psRuleSet.VirtualNetworkResourceIds.Count > 0)
+                {
+                    updatedRuleSet.VirtualNetworkRules = psRuleSet.VirtualNetworkResourceIds.Select(resourceId => new VirtualNetworkRule { Id = resourceId }).ToList();
+                }
+                else
+                {   // Send empty array [] to server to override default
+                    updatedRuleSet.VirtualNetworkRules = new List<VirtualNetworkRule>();
+                }
+            }
+
+            vaultProperties.NetworkAcls = updatedRuleSet;
+        }
+        #endregion
     }
 }

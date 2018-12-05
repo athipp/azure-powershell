@@ -59,19 +59,33 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Model.Contract
             }
         }
 
-        public CloudFileShare GetShareReference(string shareName)
+        public CloudFileShare GetShareReference(string shareName, DateTimeOffset? snapshotTime = null)
         {
-            return this.Client.GetShareReference(shareName);
+            return this.Client.GetShareReference(shareName, snapshotTime);
         }
 
         public void FetchShareAttributes(CloudFileShare share, AccessCondition accessCondition, FileRequestOptions options, OperationContext operationContext)
         {
-            share.FetchAttributes(accessCondition, options, operationContext);
+            try
+            {
+                Task.Run(() => share.FetchAttributesAsync(accessCondition, options, operationContext)).Wait();
+            }
+            catch (AggregateException e) when (e.InnerException is StorageException)
+            {
+                throw e.InnerException;
+            }
         }
 
         public void SetShareProperties(CloudFileShare share, AccessCondition accessCondition, FileRequestOptions options, OperationContext operationContext)
         {
-            share.SetProperties(accessCondition, options, operationContext);
+            try
+            {
+                Task.Run(() => share.SetPropertiesAsync(accessCondition, options, operationContext)).Wait();
+            }
+            catch (AggregateException e) when (e.InnerException is StorageException)
+            {
+                throw e.InnerException;
+            }
         }
 
         public async Task EnumerateFilesAndDirectoriesAsync(CloudFileDirectory directory, Action<IListFileItem> enumerationAction, FileRequestOptions options, OperationContext operationContext, CancellationToken token)
@@ -79,7 +93,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Model.Contract
             FileContinuationToken continuationToken = null;
             do
             {
-                var segment = await directory.ListFilesAndDirectoriesSegmentedAsync(null, continuationToken, options, operationContext, token);
+                var segment = await directory.ListFilesAndDirectoriesSegmentedAsync(null, continuationToken, options, operationContext, token).ConfigureAwait(false);
                 foreach (var item in segment.Results)
                 {
                     enumerationAction(item);
@@ -100,7 +114,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Model.Contract
             FileContinuationToken continuationToken = null;
             do
             {
-                var segment = await this.Client.ListSharesSegmentedAsync(prefix, detailsIncluded, null, continuationToken, options, operationContext, token);
+                var segment = await this.Client.ListSharesSegmentedAsync(prefix, detailsIncluded, null, continuationToken, options, operationContext, token).ConfigureAwait(false);
                 foreach (var item in segment.Results)
                 {
                     enumerationAction(item);
@@ -136,9 +150,9 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Model.Contract
             return directory.DeleteAsync(accessCondition, options, operationContext, cancellationToken);
         }
 
-        public Task DeleteShareAsync(CloudFileShare share, AccessCondition accessCondition, FileRequestOptions options, OperationContext operationContext, CancellationToken cancellationToken)
+        public Task DeleteShareAsync(CloudFileShare share, DeleteShareSnapshotsOption deleteShareSnapshotsOption, AccessCondition accessCondition, FileRequestOptions options, OperationContext operationContext, CancellationToken cancellationToken)
         {
-            return share.DeleteAsync(accessCondition, options, operationContext, cancellationToken);
+            return share.DeleteAsync(deleteShareSnapshotsOption, accessCondition, options, operationContext, cancellationToken);
         }
 
         public Task DeleteFileAsync(CloudFile file, AccessCondition accessCondition, FileRequestOptions options, OperationContext operationContext, CancellationToken cancellationToken)
@@ -155,14 +169,28 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Model.Contract
         public FileSharePermissions GetSharePermissions(CloudFileShare share, AccessCondition accessCondition = null,
             FileRequestOptions options = null, OperationContext operationContext = null)
         {
-            return share.GetPermissions(accessCondition, options, operationContext);
+            try
+            {
+                return share.GetPermissionsAsync(accessCondition, options, operationContext).Result;
+            }
+            catch (AggregateException e) when (e.InnerException is StorageException)
+            {
+                throw e.InnerException;
+            }
         }
 
         public void SetSharePermissions(CloudFileShare share, FileSharePermissions permissions,
             AccessCondition accessCondition = null,
             FileRequestOptions options = null, OperationContext operationContext = null)
         {
-            share.SetPermissions(permissions, accessCondition, options, operationContext);
+            try
+            {
+                Task.Run(() => share.SetPermissionsAsync(permissions, accessCondition, options, operationContext)).Wait();
+            }
+            catch (AggregateException e) when (e.InnerException is StorageException)
+            {
+                throw e.InnerException;
+            }
         }
 
         public Task FetchFileAttributesAsync(CloudFile file, AccessCondition accessCondition, FileRequestOptions options, OperationContext operationContext, CancellationToken token)
@@ -177,6 +205,8 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Model.Contract
 
         public Task AbortCopyAsync(CloudFile file, string copyId, AccessCondition accessCondition, FileRequestOptions requestOptions, OperationContext operationContext, CancellationToken cancellationToken)
         {
+            // Workaround for XSCL 8.4.0 issue: File abort copy fail with null reference. Will remove the line with the issue fixed.
+            CloudFileShare share = file.Share;
             return file.AbortCopyAsync(copyId, accessCondition, requestOptions, operationContext, cancellationToken);
         }
     }

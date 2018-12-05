@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
+using System.Linq;
+using Tools.Common.Loggers;
 
 namespace StaticAnalysis
 {
@@ -23,66 +26,169 @@ namespace StaticAnalysis
     /// </summary>
     public class Program
     {
-        static readonly IList<IStaticAnalyzer> Analyzers = new List<IStaticAnalyzer>()
+        static IList<IStaticAnalyzer> Analyzers = new List<IStaticAnalyzer>()
         {
-            new HelpAnalyzer.HelpAnalyzer(),
-            new DependencyAnalyzer.DependencyAnalyzer(),
-            new SignatureVerifier.SignatureVerifier()
+            new DependencyAnalyzer.DependencyAnalyzer()
         };
+
+        static IList<string> ExceptionFileNames = new List<string>()
+        {
+            "AssemblyVersionConflict.csv",
+            "BreakingChangeIssues.csv",
+            "ExtraAssemblies.csv",
+            "HelpIssues.csv",
+            "MissingAssemblies.csv",
+            "SignatureIssues.csv"
+        };
+
+        private static string ExceptionsDirectory { get; set; }
+
         public static void Main(string[] args)
         {
-            if (args == null || args.Length < 1)
+            AnalysisLogger analysisLogger = null;
+            try
             {
-                throw new InvalidOperationException("Please pass a valid directory name as the first parameter");
+                string installDir = null;
+                if (args.Any(a => a == "--package-directory" || a == "-p"))
+                {
+                    int idx = Array.FindIndex(args, a => a == "--package-directory" || a == "-p");
+                    if (idx + 1 == args.Length)
+                    {
+                        throw new ArgumentException("No value provided for the --package-directory parameter.");
+                    }
+
+                    installDir = args[idx + 1];
+                }
+
+                if (args == null)
+                {
+                    throw new InvalidOperationException("No installation directory was provided; please use the --package-directory parameter to provide the value.");
+                }
+                else if (!Directory.Exists(installDir))
+                {
+                    throw new InvalidOperationException(string.Format("Please provide a valid installation directory; the provided directory '{0}' could not be found.", installDir));
+                }
+
+                var directories = new List<string>
+                {
+                    Path.Combine(installDir, @"ResourceManager\AzureResourceManager\"),
+                    Path.Combine(installDir, @"ServiceManagement\Azure\"),
+                    Path.Combine(installDir, @"Storage\")
+                }.Where((d) => Directory.Exists(d)).ToList<string>();
+
+                var reportsDirectory = Directory.GetCurrentDirectory();
+                bool logReportsDirectoryWarning = true;
+                if (args.Any(a => a == "--reports-directory" || a == "-r"))
+                {
+                    int idx = Array.FindIndex(args, a => a == "--reports-directory" || a == "-r");
+                    if (idx + 1 == args.Length)
+                    {
+                        throw new ArgumentException("No value provided for the --reports-directory parameter.");
+                    }
+
+                    reportsDirectory = args[idx + 1];
+                    logReportsDirectoryWarning = false;
+                }
+
+                ExceptionsDirectory = Path.Combine(reportsDirectory, "Exceptions");
+                bool useExceptions = !args.Any(a => a == "--dont-use-exceptions" || a == "-d");
+                bool skipHelp = args.Any(a => a == "--skip-help" || a == "-s");
+
+                var modulesToAnalyze = new List<string>();
+                if (args.Any(a => a == "--modules-to-analyze" || a == "-m"))
+                {
+                    int idx = Array.FindIndex(args, a => a == "--modules-to-analyze" || a == "-m");
+                    if (idx + 1 == args.Length)
+                    {
+                        Console.WriteLine("No value provided for the --modules-to-analyze parameter. Filtering over all built modules.");
+                    }
+                    else
+                    {
+                        modulesToAnalyze = args[idx + 1].Split(';').ToList();
+                    }
+                }
+
+                bool useNetcore = args.Any(a => a == "--use-netcore" || a == "-u");
+                Analyzers.Add(new SignatureVerifier.SignatureVerifier());
+                Analyzers.Add(new BreakingChangeAnalyzer.BreakingChangeAnalyzer());
+
+                if (!skipHelp)
+                {
+                    Analyzers.Add(new HelpAnalyzer.HelpAnalyzer());
+                }
+
+                ConsolidateExceptionFiles(ExceptionsDirectory, useNetcore);
+                analysisLogger = useExceptions ? new AnalysisLogger(reportsDirectory, ExceptionsDirectory) :
+                    new AnalysisLogger(reportsDirectory);
+
+                if (logReportsDirectoryWarning)
+                {
+                    analysisLogger.WriteWarning("No logger specified in the second parameter, writing reports to {0}",
+                        reportsDirectory);
+                }
+
+                foreach (var analyzer in Analyzers)
+                {
+                    analyzer.Logger = analysisLogger;
+                    analysisLogger.WriteMessage("Executing analyzer: {0}", analyzer.Name);
+                    analyzer.Analyze(directories, modulesToAnalyze);
+                    analysisLogger.WriteMessage("Processing complete for analyzer: {0}", analyzer.Name);
+                }
+
+                analysisLogger.WriteReports();
+                analysisLogger.CheckForIssues(2);
             }
-
-            var installDir = args[0];
-            if (!Directory.Exists(installDir))
+            catch(Exception ex)
             {
-                throw new InvalidOperationException("You must pass a valid directory as the first parameter");
+                analysisLogger?.WriteError(ex.ToString());
+                throw ex;
             }
-
-            var directories = new List<string>
+            finally
             {
-                Path.Combine(installDir, @"ResourceManager\AzureResourceManager\"),
-                Path.Combine(installDir, @"ServiceManagement\Azure\"),
-                Path.Combine(installDir, @"Storage\")
-           };
-
-            var reportsDirectory = Directory.GetCurrentDirectory();
-            bool logReportsDirectoryWarning = true;
-            if (args.Length > 1 && Directory.Exists(args[1]))
-            {
-                reportsDirectory = args[1];
-                logReportsDirectoryWarning = false;
+                foreach (var exceptionFileName in ExceptionFileNames)
+                {
+                    var exceptionFilePath = Path.Combine(ExceptionsDirectory, exceptionFileName);
+                    if (File.Exists(exceptionFilePath))
+                    {
+                        File.Delete(exceptionFilePath);
+                    }
+                }
             }
+        }
 
-           var exceptionsDirectory = Path.Combine(reportsDirectory, "Exceptions");
-           bool useExceptions = true;
-            if (args.Length > 2)
+        private static void ConsolidateExceptionFiles(string exceptionsDirectory, bool useNetcore)
+        {
+            foreach (var exceptionFileName in ExceptionFileNames)
             {
-                bool.TryParse(args[2], out useExceptions);
+                var moduleExceptionFilePaths = Directory.EnumerateFiles(exceptionsDirectory, exceptionFileName, SearchOption.AllDirectories)
+                                                        .Where(f => useNetcore ? Directory.GetParent(f).Name.StartsWith("Az.") : Directory.GetParent(f).Name.StartsWith("Azure"))
+                                                        .ToList();
+                var exceptionFilePath = Path.Combine(exceptionsDirectory, exceptionFileName);
+                if (File.Exists(exceptionFilePath))
+                {
+                    File.Delete(exceptionFilePath);
+                }
+
+                File.Create(exceptionFilePath).Close();
+                var fileEmpty = true;
+                foreach (var moduleExceptionFilePath in moduleExceptionFilePaths)
+                {
+                    var content = File.ReadAllLines(moduleExceptionFilePath);
+                    if (content.Length > 1)
+                    {
+                        if (fileEmpty)
+                        {
+                            // Write the header
+                            File.WriteAllLines(exceptionFilePath, new string[] { content.FirstOrDefault() });
+                            fileEmpty = false;
+                        }
+
+                        // Write everything but the header
+                        content = content.Skip(1).ToArray();
+                        File.AppendAllLines(exceptionFilePath, content);
+                    }
+                }
             }
-
-            var logger = useExceptions? new ConsoleLogger(reportsDirectory, exceptionsDirectory) :
-                new ConsoleLogger(reportsDirectory);
-
-            if (logReportsDirectoryWarning)
-            {
-                logger.WriteWarning("No logger specified in the second parameter, writing reports to {0}",
-                    reportsDirectory);
-            }
-
-            foreach (var analyzer in Analyzers)
-            {
-                analyzer.Logger = logger;
-                logger.WriteMessage("Executing analyzer: {0}", analyzer.Name);
-                analyzer.Analyze(directories);
-                logger.WriteMessage("Processing complete for analyzer: {0}", analyzer.Name);
-            }
-
-            logger.WriteReports();
-            logger.CheckForIssues(2);
         }
     }
 }

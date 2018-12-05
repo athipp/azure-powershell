@@ -19,7 +19,8 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Sql.Backup.Cmdlet
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmSqlDeletedDatabaseBackup", SupportsShouldProcess = true)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlDeletedDatabaseBackup", SupportsShouldProcess = true)]
+    [OutputType(typeof(AzureSqlDeletedDatabaseBackupModel))]
     public class GetAzureRMSqlDeletedDatabaseBackup : AzureSqlDeletedDatabaseBackupCmdletBase
     {
         /// <summary>

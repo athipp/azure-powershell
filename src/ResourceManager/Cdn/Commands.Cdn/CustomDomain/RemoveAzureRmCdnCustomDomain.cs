@@ -21,14 +21,11 @@ using Microsoft.Azure.Commands.Cdn.Properties;
 using Microsoft.Azure.Management.Cdn;
 using Microsoft.Azure.Management.Cdn.Models;
 using System.Linq;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Cdn.CustomDomain
 {
-    [Cmdlet(VerbsCommon.Remove, 
-        "AzureRmCdnCustomDomain", 
-        DefaultParameterSetName = FieldsParameterSet, 
-        SupportsShouldProcess = true), 
-        OutputType(typeof(bool))]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CdnCustomDomain",DefaultParameterSetName = FieldsParameterSet,SupportsShouldProcess = true),OutputType(typeof(bool))]
     public class RemoveAzureRmCdnCustomDomain : AzureCdnCmdletBase
     {
         [Parameter(Mandatory = true, ParameterSetName = FieldsParameterSet, HelpMessage = "Azure CDN custom domain display name.")]
@@ -44,6 +41,7 @@ namespace Microsoft.Azure.Commands.Cdn.CustomDomain
         public string ProfileName { get; set; }
 
         [Parameter(Mandatory = true, ParameterSetName = FieldsParameterSet, HelpMessage = "The resource group of the Azure CDN profile")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -65,9 +63,9 @@ namespace Microsoft.Azure.Commands.Cdn.CustomDomain
             }
 
 
-            var existingCustomDomain = CdnManagementClient.CustomDomains.ListByEndpoint(EndpointName, ProfileName, ResourceGroupName)
-                .Where(cd => cd.Name.ToLower() == CustomDomainName.ToLower())
-                .FirstOrDefault();
+            var existingCustomDomain = CdnManagementClient.CustomDomains
+                .ListByEndpoint(ResourceGroupName, ProfileName, EndpointName)
+                .FirstOrDefault(cd => cd.Name.ToLower() == CustomDomainName.ToLower());
 
             if (existingCustomDomain == null)
             {
@@ -80,10 +78,11 @@ namespace Microsoft.Azure.Commands.Cdn.CustomDomain
 
             ConfirmAction(MyInvocation.InvocationName,
                 String.Format("{0} ({1})", existingCustomDomain.Name, existingCustomDomain.HostName),
-                () => CdnManagementClient.CustomDomains.DeleteIfExists(CustomDomainName,
-                    EndpointName,
+                () => CdnManagementClient.CustomDomains.Delete(
+                    ResourceGroupName,
                     ProfileName,
-                    ResourceGroupName));
+                    EndpointName,
+                    CustomDomainName));
 
             if (PassThru)
             {

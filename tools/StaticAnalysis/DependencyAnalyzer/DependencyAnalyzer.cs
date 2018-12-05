@@ -13,12 +13,16 @@
 // ----------------------------------------------------------------------------------
 
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Tools.Common.Helpers;
+using Tools.Common.Issues;
+using Tools.Common.Loaders;
+using Tools.Common.Loggers;
+using Tools.Common.Models;
 
 namespace StaticAnalysis.DependencyAnalyzer
 {
@@ -27,34 +31,42 @@ namespace StaticAnalysis.DependencyAnalyzer
     /// </summary>
     public class DependencyAnalyzer : IStaticAnalyzer
     {
-        const int NoAssemblyVersionEvidence = 1000;
-        const int ReferenceDoesNotMatchAssemblyVersion = 1010;
-        const int ExtraAssemblyRecord = 2000;
-        const int MissingAssemblyRecord = 3000;
-        const int AssemblyVersionFileVersionMismatch = 7000;
-        const int CommonAuthenticationMismatch = 7010;
+        private const int NoAssemblyVersionEvidence = 1000;
+        private const int ReferenceDoesNotMatchAssemblyVersion = 1010;
+        private const int ExtraAssemblyRecord = 2000;
+        private const int MissingAssemblyRecord = 3000;
+        private const int AssemblyVersionFileVersionMismatch = 7000;
+        private const int CommonAuthenticationMismatch = 7010;
 
-        static List<string> FrameworkAssemblies = new List<string>
+        private static readonly List<string> FrameworkAssemblies = new List<string>
         {
             "Microsoft.CSharp",
             "Microsoft.Management.Infrastructure",
             "Microsoft.Build",
-            "Microsoft.Build.Framework"
+            "Microsoft.Build.Framework",
+            "Microsoft.Win32.Primitives",
+            "WindowsBase"
         };
 
-        private Dictionary<string, AssemblyRecord> _assemblies =
+        private readonly Dictionary<string, AssemblyRecord> _assemblies =
             new Dictionary<string, AssemblyRecord>(StringComparer.OrdinalIgnoreCase);
-        private Dictionary<AssemblyName, AssemblyRecord> _sharedAssemblyReferences =
+        private readonly Dictionary<AssemblyName, AssemblyRecord> _sharedAssemblyReferences =
             new Dictionary<AssemblyName, AssemblyRecord>(new AssemblyNameComparer());
-        private Dictionary<string, AssemblyRecord> _identicalSharedAssemblies =
+        private readonly Dictionary<string, AssemblyRecord> _identicalSharedAssemblies =
             new Dictionary<string, AssemblyRecord>(StringComparer.OrdinalIgnoreCase);
 
+// TODO: Remove IfDef code
+#if !NETSTANDARD
         private AppDomain _testDomain;
+#endif
         private AssemblyLoader _loader;
         private ReportLogger<AssemblyVersionConflict> _versionConflictLogger;
         private ReportLogger<SharedAssemblyConflict> _sharedConflictLogger;
         private ReportLogger<MissingAssembly> _missingAssemblyLogger;
         private ReportLogger<ExtraAssembly> _extraAssemblyLogger;
+        private ReportLogger<DependencyMap> _dependencyMapLogger;
+
+        private bool _isNetcore;
 
         public DependencyAnalyzer()
         {
@@ -64,7 +76,12 @@ namespace StaticAnalysis.DependencyAnalyzer
         public AnalysisLogger Logger { get; set; }
         public string Name { get; private set; }
 
-        public void Analyze(IEnumerable<string> directories)
+        public void Analyze(IEnumerable<string> scopes)
+        {
+            Analyze(scopes, null);
+        }
+
+        public void Analyze(IEnumerable<string> directories, IEnumerable<String> modulesToAnalyze)
         {
             if (directories == null)
             {
@@ -75,10 +92,18 @@ namespace StaticAnalysis.DependencyAnalyzer
             _sharedConflictLogger = Logger.CreateLogger<SharedAssemblyConflict>("SharedAssemblyConflict.csv");
             _missingAssemblyLogger = Logger.CreateLogger<MissingAssembly>("MissingAssemblies.csv");
             _extraAssemblyLogger = Logger.CreateLogger<ExtraAssembly>("ExtraAssemblies.csv");
+            _dependencyMapLogger = Logger.CreateLogger<DependencyMap>("DependencyMap.csv");
             foreach (var baseDirectory in directories)
             {
                 foreach (var directoryPath in Directory.EnumerateDirectories(baseDirectory))
                 {
+                    if (modulesToAnalyze != null &&
+                        modulesToAnalyze.Any() &&
+                        !modulesToAnalyze.Any(m => directoryPath.EndsWith(m)))
+                    {
+                        continue;
+                    }
+
                     if (!Directory.Exists(directoryPath))
                     {
                         throw new InvalidOperationException("Please pass a valid directory name as the first parameter");
@@ -89,10 +114,13 @@ namespace StaticAnalysis.DependencyAnalyzer
                     _versionConflictLogger.Decorator.AddDecorator(r => { r.Directory = directoryPath; }, "Directory");
                     _missingAssemblyLogger.Decorator.AddDecorator(r => { r.Directory = directoryPath; }, "Directory");
                     _extraAssemblyLogger.Decorator.AddDecorator(r => { r.Directory = directoryPath; }, "Directory");
+                    _dependencyMapLogger.Decorator.AddDecorator(r => { r.Directory = directoryPath; }, "Directory");
+                    _isNetcore = directoryPath.Contains("Az.");
                     ProcessDirectory(directoryPath);
                     _versionConflictLogger.Decorator.Remove("Directory");
                     _missingAssemblyLogger.Decorator.Remove("Directory");
                     _extraAssemblyLogger.Decorator.Remove("Directory");
+                    _dependencyMapLogger.Decorator.Remove("Directory");
                 }
             }
         }
@@ -105,7 +133,7 @@ namespace StaticAnalysis.DependencyAnalyzer
             {
                 var assembly = LoadByReflectionFromFile(fullPath);
                 var versionInfo = FileVersionInfo.GetVersionInfo(fullPath);
-                result = new AssemblyRecord()
+                result = new AssemblyRecord
                 {
                     AssemblyName = assembly.GetName(),
                     AssemblyFileMajorVersion = versionInfo.FileMajorPart,
@@ -131,35 +159,32 @@ namespace StaticAnalysis.DependencyAnalyzer
             if (_sharedAssemblyReferences.ContainsKey(assembly.AssemblyName))
             {
                 var stored = _sharedAssemblyReferences[assembly.AssemblyName];
-                if (!assembly.Equals(stored) && !(IsFrameworkAssembly(assembly.AssemblyName) && assembly.Version.Major <= 4))
+                if (assembly.Equals(stored) || IsFrameworkAssembly(assembly.AssemblyName) && assembly.Version.Major <= 4) return true;
+
+                _sharedConflictLogger.LogRecord(new SharedAssemblyConflict
                 {
-                    _sharedConflictLogger.LogRecord(new SharedAssemblyConflict
+                    AssemblyName = assembly.Name,
+                    AssemblyPathsAndFileVersions = new List<Tuple<string, Version>>
                     {
-                        AssemblyName = assembly.Name,
-                        AssemblyPathsAndFileVersions = new List<Tuple<string, Version>>()
-                        {
-                            new Tuple<string, Version>(assembly.Location, new Version(assembly.AssemblyFileMajorVersion, 
-                                assembly.AssemblyFileMinorVersion)),
-                            new Tuple<string, Version>(stored.Location, new Version(stored.AssemblyFileMajorVersion, 
-                                stored.AssemblyFileMinorVersion))
+                        new Tuple<string, Version>(assembly.Location, new Version(assembly.AssemblyFileMajorVersion,
+                            assembly.AssemblyFileMinorVersion)),
+                        new Tuple<string, Version>(stored.Location, new Version(stored.AssemblyFileMajorVersion,
+                            stored.AssemblyFileMinorVersion))
 
-                        },
-                        AssemblyVersion = assembly.Version,
-                        Severity = 0,
-                        ProblemId = AssemblyVersionFileVersionMismatch,
-                        Description = "Shared assembly conflict, shared assemblies with the same assembly " +
-                                      "version have differing file versions",
-                        Remediation = string.Format("Update the assembly reference for {0} in one of the " +
-                                                    "referring assemblies", assembly.Name)
-                    });
+                    },
+                    AssemblyVersion = assembly.Version,
+                    Severity = 0,
+                    ProblemId = AssemblyVersionFileVersionMismatch,
+                    Description = "Shared assembly conflict, shared assemblies with the same assembly " +
+                                  "version have differing file versions",
+                    Remediation = string.Format("Update the assembly reference for {0} in one of the " +
+                                                "referring assemblies", assembly.Name)
+                });
 
-                    return false;
-                }
+                return false;
             }
-            else
-            {
-                _sharedAssemblyReferences[assembly.AssemblyName] = assembly;
-            }
+
+            _sharedAssemblyReferences[assembly.AssemblyName] = assembly;
 
             return true;
         }
@@ -180,35 +205,32 @@ namespace StaticAnalysis.DependencyAnalyzer
             if (_identicalSharedAssemblies.ContainsKey(record.Name))
             {
                 var stored = _identicalSharedAssemblies[record.Name];
-                if (!record.Equals(stored) && !(IsFrameworkAssembly(record.AssemblyName)))
+                if (record.Equals(stored) || IsFrameworkAssembly(record.AssemblyName)) return true;
+
+                _sharedConflictLogger.LogRecord(new SharedAssemblyConflict
                 {
-                    _sharedConflictLogger.LogRecord(new SharedAssemblyConflict
+                    AssemblyName = record.Name,
+                    AssemblyVersion = record.Version,
+                    Severity = 0,
+                    ProblemId = CommonAuthenticationMismatch,
+                    AssemblyPathsAndFileVersions = new List<Tuple<string, Version>>
                     {
-                        AssemblyName = record.Name,
-                        AssemblyVersion = record.Version,
-                        Severity = 0,
-                        ProblemId = CommonAuthenticationMismatch,
-                        AssemblyPathsAndFileVersions = new List<Tuple<string, Version>>()
-                        {
-                            new Tuple<string, Version>(record.Location, new Version(record.AssemblyFileMajorVersion, 
-                                record.AssemblyFileMinorVersion)),
-                            new Tuple<string, Version>(stored.Location, new Version(stored.AssemblyFileMajorVersion, 
-                                stored.AssemblyFileMinorVersion)),
-                        },
-                        Description = string.Format("Assembly {0} has multiple versions as specified in 'Target'",
+                        new Tuple<string, Version>(record.Location, new Version(record.AssemblyFileMajorVersion,
+                            record.AssemblyFileMinorVersion)),
+                        new Tuple<string, Version>(stored.Location, new Version(stored.AssemblyFileMajorVersion,
+                            stored.AssemblyFileMinorVersion)),
+                    },
+                    Description = string.Format("Assembly {0} has multiple versions as specified in 'Target'",
                         record.Name),
-                        Remediation = string.Format("Ensure that all packages reference exactly the same package " +
-                                                    "version of {0}", record.Name)
+                    Remediation = string.Format("Ensure that all packages reference exactly the same package " +
+                                                "version of {0}", record.Name)
 
-                    });
+                });
 
-                    return false;
-                }
+                return false;
             }
-            else
-            {
-                _identicalSharedAssemblies[record.Name] = record;
-            }
+
+            _identicalSharedAssemblies[record.Name] = record;
 
             return true;
         }
@@ -220,7 +242,7 @@ namespace StaticAnalysis.DependencyAnalyzer
 
         private static bool IsFrameworkAssembly(AssemblyName name)
         {
-            return name.Name.StartsWith("System") || name.Name.Equals("mscorlib") 
+            return name.Name.StartsWith("System") || name.Name.Equals("mscorlib") || name.Name.Equals("netstandard")
                 || FrameworkAssemblies.Contains(name.Name);
         }
 
@@ -228,10 +250,16 @@ namespace StaticAnalysis.DependencyAnalyzer
         {
             var savedDirectory = Directory.GetCurrentDirectory();
             Directory.SetCurrentDirectory(directoryPath);
+
+// TODO: Remove IfDef
+#if NETSTANDARD
+            _loader = new AssemblyLoader();
+#else
             _loader = EnvironmentHelpers.CreateProxy<AssemblyLoader>(directoryPath, out _testDomain);
+#endif
             foreach (var file in Directory.GetFiles(directoryPath).Where(file => file.EndsWith(".dll")))
             {
-                AssemblyRecord assembly = CreateAssemblyRecord(file);
+                var assembly = CreateAssemblyRecord(file);
                 _assemblies[assembly.Name] = assembly;
                 if (RequiresExactVersionMatch(assembly))
                 {
@@ -241,20 +269,46 @@ namespace StaticAnalysis.DependencyAnalyzer
                 {
                     AddSharedAssembly(assembly);
                 }
+
             }
 
             // Now check for assembly mismatches
             foreach (var assembly in _assemblies.Values)
             {
+
                 foreach (var reference in assembly.Children)
                 {
                     CheckAssemblyReference(reference, assembly);
                 }
             }
 
+            foreach (var assembly in _assemblies.Values)
+            {
+                if (!assembly.Name.Contains("System") && !assembly.Name.Contains("Microsoft.IdentityModel") 
+                    && !assembly.Name.Equals("Newtonsoft.Json") && !assembly.Name.Equals("Microsoft.AspNetCore.WebUtilities"))
+                {
+                    foreach (var parent in assembly.ReferencingAssembly)
+                    {
+                        _dependencyMapLogger.LogRecord(
+                            new DependencyMap
+                            {
+                                AssemblyName = assembly.Name,
+                                AssemblyVersion = assembly.Version.ToString(),
+                                ReferencingAssembly = parent.Name,
+                                ReferencingAssemblyVersion = parent.Version.ToString(),
+                                Severity = 3
+                            });
+                    }
+                }
+
+            }
+
             FindExtraAssemblies();
 
+// TODO: Remove IfDef code
+#if !NETSTANDARD
             AppDomain.Unload(_testDomain);
+#endif
             Directory.SetCurrentDirectory(savedDirectory);
         }
 
@@ -265,25 +319,31 @@ namespace StaticAnalysis.DependencyAnalyzer
 
         private void FindExtraAssemblies()
         {
-            if (_assemblies.Values.Any(a => !IsCommandAssembly(a) && (a.ReferencingAssembly == null 
-                || a.ReferencingAssembly.Count == 0 || !a.GetAncestors().Any(IsCommandAssembly))))
+            if (!_assemblies.Values.Any(a =>
+                !IsCommandAssembly(a)
+                && (a.ReferencingAssembly == null
+                || a.ReferencingAssembly.Count == 0
+                || !a.GetAncestors().Any(IsCommandAssembly))))
             {
-                foreach (
-                    var assembly in
-                        _assemblies.Values.Where(a => !IsCommandAssembly(a) && (a.ReferencingAssembly == null ||
-                            a.ReferencingAssembly.Count == 0 || !a.GetAncestors().Any(IsCommandAssembly))))
+                return;
+            }
+ 
+            foreach (var assembly in _assemblies.Values.Where(a => 
+                !IsCommandAssembly(a)
+                && (a.ReferencingAssembly == null
+                || a.ReferencingAssembly.Count == 0
+                || !a.GetAncestors().Any(IsCommandAssembly))))
+            {
+                _extraAssemblyLogger.LogRecord(new ExtraAssembly
                 {
-                    _extraAssemblyLogger.LogRecord(new ExtraAssembly
-                    {
-                        AssemblyName = assembly.Name,
-                        Severity = 2,
-                        ProblemId = ExtraAssemblyRecord,
-                        Description = string.Format("Assembly {0} is not referenced from any cmdlets assembly", 
+                    AssemblyName = assembly.Name,
+                    Severity = 2,
+                    ProblemId = ExtraAssemblyRecord,
+                    Description = string.Format("Assembly {0} is not referenced from any cmdlets assembly",
                         assembly.Name),
-                        Remediation = string.Format("Remove assembly {0} from the project and regenerate the Wix " +
-                                                    "file", assembly.Name)
-                    });
-                }
+                    Remediation = string.Format("Remove assembly {0} from the project and regenerate the Wix " +
+                                                "file", assembly.Name)
+                });
             }
         }
 
@@ -298,28 +358,28 @@ namespace StaticAnalysis.DependencyAnalyzer
                 }
                 else if (reference.Version.Major == 0 && reference.Version.Minor == 0)
                 {
-                    Logger.WriteWarning("{0}.dll has reference to assembly {1} without any version specification.", 
+                    Logger.WriteWarning("{0}.dll has reference to assembly {1} without any version specification.",
                         parent.Name, reference.Name);
-                    _versionConflictLogger.LogRecord(new AssemblyVersionConflict()
-                   {
-                       AssemblyName = reference.Name,
-                       ActualVersion = stored.Version,
-                       ExpectedVersion = reference.Version,
-                       ParentAssembly = parent.Name,
-                       ProblemId = NoAssemblyVersionEvidence,
-                       Severity = 2,
-                       Description = string.Format("Assembly {0} referenced from {1}.dll does not specify any " +
+                    _versionConflictLogger.LogRecord(new AssemblyVersionConflict
+                    {
+                        AssemblyName = reference.Name,
+                        ActualVersion = stored.Version,
+                        ExpectedVersion = reference.Version,
+                        ParentAssembly = parent.Name,
+                        ProblemId = NoAssemblyVersionEvidence,
+                        Severity = 2,
+                        Description = string.Format("Assembly {0} referenced from {1}.dll does not specify any " +
                                                    "assembly version evidence.  The assembly will use version " +
                                                    "{2} from disk.", reference.Name, parent.Name, stored.Version),
-                       Remediation = string.Format("Update the reference to assembly {0} from {1} so that " +
-                                                   "assembly version evidence is supplied", reference.Name, 
+                        Remediation = string.Format("Update the reference to assembly {0} from {1} so that " +
+                                                   "assembly version evidence is supplied", reference.Name,
                                                    parent.Name)
-                   });
+                    });
                 }
-                else
+                else if (_isNetcore && stored.Version < reference.Version)
                 {
                     var minVersion = (stored.Version < reference.Version) ? stored.Version : reference.Version;
-                    _versionConflictLogger.LogRecord(new AssemblyVersionConflict()
+                    _versionConflictLogger.LogRecord(new AssemblyVersionConflict
                     {
                         AssemblyName = reference.Name,
                         ActualVersion = stored.Version,
@@ -328,9 +388,9 @@ namespace StaticAnalysis.DependencyAnalyzer
                         ProblemId = ReferenceDoesNotMatchAssemblyVersion,
                         Severity = 1,
                         Description = string.Format("Assembly {0} version {1} referenced from {2}.dll does " +
-                                                    "not match assembly version on disk: {3}", 
+                                                    "not match assembly version on disk: {3}",
                                                     reference.Name, reference.Version, parent.Name, stored.Version),
-                        Remediation = string.Format("Update any references to version {0} of assembly {1}", 
+                        Remediation = string.Format("Update any references to version {0} of assembly {1}",
                         minVersion, reference.Name)
                     });
                 }
@@ -344,11 +404,36 @@ namespace StaticAnalysis.DependencyAnalyzer
                     ReferencingAssembly = parent.Name,
                     Severity = 0,
                     ProblemId = MissingAssemblyRecord,
-                    Description = string.Format("Missing assembly {0} referenced from {1}", reference.Name, 
+                    Description = string.Format("Missing assembly {0} referenced from {1}", reference.Name,
                     parent.Name),
                     Remediation = "Ensure that the assembly is included in the Wix file or directory"
                 });
             }
+        }
+
+        /// <summary>
+        /// These methods will be added in a new work item that has enhancements for Static Analysis tool
+        /// </summary>
+        /// <param name="cmdletProbingDirs"></param>
+        /// <param name="directoryFilter"></param>
+        /// <param name="cmdletFilter"></param>
+        void IStaticAnalyzer.Analyze(IEnumerable<string> cmdletProbingDirs, Func<IEnumerable<string>, IEnumerable<string>> directoryFilter, Func<string, bool> cmdletFilter)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// These methods will be added in a new work item that has enhancements for Static Analysis tool
+        /// </summary>
+        /// <returns></returns>
+        public AnalysisReport GetAnalysisReport()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Analyze(IEnumerable<string> cmdletProbingDirs, Func<IEnumerable<string>, IEnumerable<string>> directoryFilter, Func<string, bool> cmdletFilter, IEnumerable<string> modulesToAnalyze)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -17,12 +17,13 @@ using Microsoft.Azure.Management.Logic.Models;
 namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 {
     using Microsoft.Azure.Commands.LogicApp.Utilities;
+    using ResourceManager.Common.ArgumentCompleters;
     using System.Management.Automation;
 
     /// <summary>
     /// Gets the trigger history of the workflow
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmLogicAppTriggerHistory"), OutputType(typeof(object))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "LogicAppTriggerHistory"), OutputType(typeof(WorkflowTriggerHistory))]
     public class GetAzureLogicAppTriggerHistoryCommand : LogicAppBaseCmdlet
     {
 
@@ -30,6 +31,7 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 
         [Parameter(Mandatory = true, HelpMessage = "The targeted resource group for the workflow.",
             ValueFromPipelineByPropertyName = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

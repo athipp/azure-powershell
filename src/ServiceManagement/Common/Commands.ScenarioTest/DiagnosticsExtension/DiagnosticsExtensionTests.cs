@@ -22,6 +22,7 @@ using Microsoft.WindowsAzure.Management.Storage;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using System.Collections.Generic;
 using Xunit;
+using Microsoft.WindowsAzure.Commands.Common;
 
 namespace Microsoft.WindowsAzure.Commands.ScenarioTest
 {
@@ -47,6 +48,8 @@ namespace Microsoft.WindowsAzure.Commands.ScenarioTest
 
         protected void RunPowerShellTest(params string[] scripts)
         {
+            AzureSessionInitializer.InitializeAzureSession();
+            ServiceManagementProfileProvider.InitializeServiceManagementProfile();
             using (UndoContext context = UndoContext.Current)
             {
                 context.Start(TestUtilities.GetCallingClass(1), TestUtilities.GetCurrentMethodName(2));
@@ -56,7 +59,6 @@ namespace Microsoft.WindowsAzure.Commands.ScenarioTest
                 var modules = new List<string>
                 {
                     @"..\..\..\..\..\Package\Debug\ServiceManagement\Azure\Compute\AzurePreview.psd1",
-                    @"..\..\..\..\..\Package\Debug\ServiceManagement\Azure\Compute\PIR.psd1",
                     "Resources\\ServiceManagement\\Common.ps1",
                     "Resources\\DiagnosticsExtension\\DiagnosticsExtensionTests.ps1"
                 };
@@ -99,6 +101,15 @@ namespace Microsoft.WindowsAzure.Commands.ScenarioTest
         public void TestAzureServiceDiagnosticsExtensionWrongServiceName()
         {
             this.RunPowerShellTest("Test-AzureServiceDiagnosticsExtensionWrongServiceName");
+        }
+
+        [Fact]
+        [Trait(Category.Service, Category.DiagnosticsExtension)]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.AcceptanceType, Category.BVT)]
+        public void TestAzureServiceDiagnosticsExtensionStorageContext()
+        {
+            this.RunPowerShellTest("Test-AzureServiceDiagnosticsExtensionStorageContext");
         }
     }
 }

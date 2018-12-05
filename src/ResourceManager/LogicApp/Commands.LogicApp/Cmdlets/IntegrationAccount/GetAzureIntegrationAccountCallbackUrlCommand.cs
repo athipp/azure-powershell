@@ -12,18 +12,19 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System;
-using Microsoft.Azure.Management.Logic.Models;
-
 namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 {
+    using System;
     using System.Management.Automation;
     using Microsoft.Azure.Commands.LogicApp.Utilities;
+    using Microsoft.Azure.Management.Logic.Models;
+    using ResourceManager.Common.ArgumentCompleters;
 
     /// <summary>
     /// Gets the integration account callback URL. 
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmIntegrationAccountCallbackUrl"), OutputType(typeof (object))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "IntegrationAccountCallbackUrl")]
+    [OutputType(typeof(CallbackUrl))]
     public class GetAzureIntegrationAccountCallbackUrlCommand : LogicAppBaseCmdlet
     {
 
@@ -31,13 +32,14 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 
         [Parameter(Mandatory = true, HelpMessage = "The integration account resource group name.",
             ValueFromPipelineByPropertyName = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The integration account name.",
             ValueFromPipelineByPropertyName = true)]
-        [Alias("ResourceName")]
         [ValidateNotNullOrEmpty]
+        [Alias("IntegrationAccountName", "ResourceName")]
         public string Name { get; set; }
 
         [Parameter(Mandatory = false, HelpMessage = "The integration account callback URL expiry time.")]
@@ -54,13 +56,16 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
             base.ExecuteCmdlet();
 
             this.WriteObject(
-                IntegrationAccountClient.GetIntegrationAccountCallbackUrl(this.ResourceGroupName, this.Name,
-                    (NotAfter != null)
-                        ? new ListCallbackUrlParameters
+                sendToPipeline: IntegrationAccountClient.GetIntegrationAccountCallbackUrl(
+                    resourceGroupName: this.ResourceGroupName,
+                    integrationAccountName: this.Name,
+                    callbackUrl: (NotAfter != null)
+                        ? new GetCallbackUrlParameters
                         {
                             NotAfter = NotAfter
                         }
-                        : new ListCallbackUrlParameters()), true);
+                        : new GetCallbackUrlParameters()),
+                enumerateCollection: true);
         }
     }
 }

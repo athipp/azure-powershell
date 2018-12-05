@@ -15,33 +15,39 @@
 
 using Microsoft.Azure.Commands.WebApps.Models;
 using Microsoft.Azure.Management.WebSites.Models;
+using Microsoft.Azure.Management.Internal.Resources.Utilities;
+using Microsoft.Azure.Management.Internal.Resources.Utilities.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
-using PSResourceManagerModels = Microsoft.Azure.Commands.Resources.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
+using Microsoft.Azure.Commands.WebApps.Models.WebApp;
 
 namespace Microsoft.Azure.Commands.WebApps.Cmdlets.AppServicePlans
 {
     /// <summary>
     /// this commandlet will let you Get an Azure App Service Plan using ARM APIs
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmAppServicePlan"), OutputType(typeof(ServerFarmWithRichSku), typeof(ServerFarmCollection))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "AppServicePlan"), OutputType(typeof(PSAppServicePlan))]
     public class GetAppServicePlanCmdlet : WebAppBaseClientCmdLet
     {
         private const string ParameterSet1 = "S1";
         private const string ParameterSet2 = "S2";
 
         [Parameter(ParameterSetName = ParameterSet1, Position = 0, Mandatory = false, HelpMessage = "The name of the resource group.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
         [Parameter(ParameterSetName = ParameterSet1, Position = 1, Mandatory = false, HelpMessage = "The name of the app service plan.")]
+        [ResourceNameCompleter("Microsoft.Web/serverfarms", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string Name { get; set; }
 
 
         [Parameter(ParameterSetName = ParameterSet2, Position = 0, Mandatory = true, HelpMessage = "The location of the app service plan.")]
+        [LocationCompleter("Microsoft.Web/serverfarms")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
@@ -85,12 +91,12 @@ namespace Microsoft.Azure.Commands.WebApps.Cmdlets.AppServicePlans
 
             WriteProgress(progressRecord);
 
-            var serverFarmResources = this.ResourcesClient.FilterPSResources(new PSResourceManagerModels.BasePSResourceParameters()
+            var serverFarmResources = ResourcesClient.ResourceManagementClient.FilterResources(new FilterResourcesOptions
             {
                 ResourceType = "Microsoft.Web/ServerFarms"
             }).Where(sf => string.Equals(sf.Name, Name, StringComparison.OrdinalIgnoreCase)).ToArray();
 
-            var list = new List<ServerFarmWithRichSku>();
+            var list = new List<PSAppServicePlan>();
             for (var i = 0; i < serverFarmResources.Length; i++)
             {
                 var sf = serverFarmResources[i];
@@ -99,7 +105,7 @@ namespace Microsoft.Azure.Commands.WebApps.Cmdlets.AppServicePlans
                     var result = WebsitesClient.GetAppServicePlan(sf.ResourceGroupName, sf.Name);
                     if (result != null)
                     {
-                        list.Add(result);
+                        list.Add(new PSAppServicePlan(result));
                     }
                 }
                 catch (Exception e)
@@ -117,7 +123,7 @@ namespace Microsoft.Azure.Commands.WebApps.Cmdlets.AppServicePlans
 
         private void GetByResourceGroup()
         {
-            WriteObject(WebsitesClient.ListAppServicePlans(ResourceGroupName).Value, true);
+            WriteObject(WebsitesClient.ListAppServicePlans(ResourceGroupName), true);
         }
 
         private void GetBySubscription()
@@ -131,13 +137,12 @@ namespace Microsoft.Azure.Commands.WebApps.Cmdlets.AppServicePlans
 
             WriteProgress(progressRecord);
 
-            var resourceGroups = this.ResourcesClient.FilterPSResources(new PSResourceManagerModels.BasePSResourceParameters()
+            var resourceGroups = ResourcesClient.ResourceManagementClient.FilterResources(new FilterResourcesOptions
             {
                 ResourceType = "Microsoft.Web/ServerFarms"
             }).Select(sf => sf.ResourceGroupName).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
 
-            var list = new List<ServerFarmWithRichSku>();
-
+            var list = new List<PSAppServicePlan>();
 
             for (var i = 0; i < resourceGroups.Length; i++)
             {
@@ -145,9 +150,12 @@ namespace Microsoft.Azure.Commands.WebApps.Cmdlets.AppServicePlans
                 try
                 {
                     var result = WebsitesClient.ListAppServicePlans(rg);
-                    if (result != null && result.Value != null)
+                    if (result != null)
                     {
-                        list.AddRange(result.Value);
+                        foreach(var item in result)
+                        {
+                            list.Add(new PSAppServicePlan(item));
+                        }
                     }
                 }
                 catch (Exception e)
@@ -171,12 +179,12 @@ namespace Microsoft.Azure.Commands.WebApps.Cmdlets.AppServicePlans
 
             WriteProgress(progressRecord);
 
-            var serverFarmResources = this.ResourcesClient.FilterPSResources(new PSResourceManagerModels.BasePSResourceParameters()
+            var serverFarmResources = ResourcesClient.ResourceManagementClient.FilterResources(new FilterResourcesOptions
             {
                 ResourceType = "Microsoft.Web/ServerFarms"
             }).Where(sf => string.Equals(sf.Location, Location.Replace(" ", string.Empty), StringComparison.OrdinalIgnoreCase)).ToArray();
 
-            var list = new List<ServerFarmWithRichSku>();
+            var list = new List<AppServicePlan>();
             for (var i = 0; i < serverFarmResources.Length; i++)
             {
                 var sf = serverFarmResources[i];
@@ -202,4 +210,3 @@ namespace Microsoft.Azure.Commands.WebApps.Cmdlets.AppServicePlans
         }
     }
 }
-

@@ -21,11 +21,14 @@ namespace Microsoft.Azure.Commands.RedisCache
     using System.Collections.Generic;
     using System.Management.Automation;
     using DayOfWeekEnum = System.DayOfWeek;
+    using Rest.Azure;
+    using ResourceManager.Common.ArgumentCompleters;
 
-    [Cmdlet(VerbsCommon.Get, "AzureRmRedisCachePatchSchedule"), OutputType(typeof(List<PSScheduleEntry>))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "RedisCachePatchSchedule"), OutputType(typeof(PSScheduleEntry))]
     public class GetAzureRedisCachePatchSchedule : RedisCacheCmdletBase
     {
-        [Parameter(ValueFromPipelineByPropertyName = true, Mandatory = true, HelpMessage = "Name of resource group in which cache exists.")]
+        [Parameter(ValueFromPipelineByPropertyName = true, Mandatory = false, HelpMessage = "Name of resource group in which cache exists.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -36,13 +39,20 @@ namespace Microsoft.Azure.Commands.RedisCache
         public override void ExecuteCmdlet()
         {
             Utility.ValidateResourceGroupAndResourceName(ResourceGroupName, Name);
+            ResourceGroupName = CacheClient.GetResourceGroupNameIfNotProvided(ResourceGroupName, Name);
+
             IList<ScheduleEntry> response = CacheClient.GetPatchSchedules(ResourceGroupName, Name);
+            if (response == null)
+            {
+                throw new CloudException(string.Format(Resources.PatchScheduleNotFound, Name));
+            }
+
             List<PSScheduleEntry> returnValue = new List<PSScheduleEntry>();
             foreach (var schedule in response)
             {
                 returnValue.Add(new PSScheduleEntry
                 {
-                    DayOfWeek = schedule.DayOfWeek,
+                    DayOfWeek = schedule.DayOfWeek.ToString(),
                     StartHourUtc = schedule.StartHourUtc,
                     MaintenanceWindow = schedule.MaintenanceWindow
                 });

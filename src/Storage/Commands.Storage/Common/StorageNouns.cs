@@ -80,6 +80,11 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         public const string CopyBlob = "AzureStorageBlobCopy";
 
         /// <summary>
+        /// IncrementalCopy azure storage blob
+        /// </summary>
+        public const string IncrementalCopyBlob = "AzureStorageBlobIncrementalCopy";        
+
+        /// <summary>
         /// Copy azure storage blob deprecated name
         /// </summary>
         public const string CopyBlobDeprecatedName = "CopyAzureStorageBlob";
@@ -98,6 +103,16 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         /// Azure storage service logging
         /// </summary>
         public const string StorageServiceLogging = "AzureStorageServiceLoggingProperty";
+
+        /// <summary>
+        /// Azure storage service Property
+        /// </summary>
+        public const string StorageServiceProperty = "AzureStorageServiceProperty";
+
+        /// <summary>
+        /// Azure storage Service Delete Retention Policy
+        /// </summary>
+        public const string ServiceDeleteRetentionPolicy = "AzureStorageDeleteRetentionPolicy";
 
         /// <summary>
         /// Azure storage CORS rule
@@ -154,7 +169,6 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         /// </summary>
         public const string ContainerStoredAccessPolicy = "AzureStorageContainerStoredAccessPolicy";
 
-
         /// <summary>
         /// Azure storage container stored access policy
         /// </summary>
@@ -176,7 +190,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         public const string DefaultLoggingVersion = "1.0";
 
         /// <summary>
-        /// Permission const for New-AzureStorage(Blob/Container/Table/Queue)SasToken
+        /// Permission const for New-AzStorage(Blob/Container/Table/Queue)SasToken
         /// </summary>
         public static class Permission
         {

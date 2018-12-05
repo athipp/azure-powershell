@@ -18,11 +18,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
     using System.Globalization;
     using System.Management.Automation;
 
-    [Cmdlet(
-        VerbsCommon.Remove,
-        Constants.FileCmdletName,
-        SupportsShouldProcess = true,
-        DefaultParameterSetName = Constants.ShareNameParameterSetName)]
+    [Cmdlet("Remove", Azure.Commands.ResourceManager.Common.AzureRMConstants.AzurePrefix + "StorageFile",SupportsShouldProcess = true,DefaultParameterSetName = Constants.ShareNameParameterSetName), OutputType(typeof(CloudFile))]
     public class RemoveAzureStorageFile : AzureStorageFileCmdletBase
     {
         [Parameter(
@@ -112,7 +108,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
             {
                 if (this.ShouldProcess(fileToBeRemoved.GetFullPath(), "Remove file"))
                 {
-                    await this.Channel.DeleteFileAsync(fileToBeRemoved, null, this.RequestOptions, this.OperationContext, this.CmdletCancellationToken);
+                    await this.Channel.DeleteFileAsync(fileToBeRemoved, null, this.RequestOptions, this.OperationContext, this.CmdletCancellationToken).ConfigureAwait(false);
                 }
 
                 if (this.PassThru)

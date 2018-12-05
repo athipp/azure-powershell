@@ -12,8 +12,9 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+#if !NETSTANDARD
 using Microsoft.Azure.Commands.Resources.Models;
-using Microsoft.Azure.Gallery;
+using Microsoft.Azure.Commands.Resources.Models.Gallery;
 using Microsoft.Azure.ServiceManagemenet.Common.Models;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using System.Collections.Generic;
@@ -74,3 +75,4 @@ namespace Microsoft.Azure.Commands.Resources.Test.Models
         }
     }
 }
+#endif

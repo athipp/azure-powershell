@@ -17,10 +17,11 @@ using Microsoft.Azure.Commands.Management.PowerBIEmbedded.Models;
 using Microsoft.Azure.Commands.Management.PowerBIEmbedded.Properties;
 using Microsoft.Azure.Management.PowerBIEmbedded;
 using Microsoft.Azure.Management.PowerBIEmbedded.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Management.PowerBIEmbedded.WorkspaceCollection
 {
-    [Cmdlet(VerbsCommon.New, Nouns.WorkspaceCollection, SupportsShouldProcess = true), OutputType(typeof(PSWorkspaceCollection))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "PowerBIWorkspaceCollection", SupportsShouldProcess = true), OutputType(typeof(PSWorkspaceCollection))]
     public class NewWorkspaceCollection : WorkspaceCollectionBaseCmdlet
     {
         [Parameter(
@@ -28,6 +29,7 @@ namespace Microsoft.Azure.Commands.Management.PowerBIEmbedded.WorkspaceCollectio
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Resource Group Name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -45,6 +47,7 @@ namespace Microsoft.Azure.Commands.Management.PowerBIEmbedded.WorkspaceCollectio
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Location.")]
+        [LocationCompleter("Microsoft.PowerBI/workspaceCollections")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 

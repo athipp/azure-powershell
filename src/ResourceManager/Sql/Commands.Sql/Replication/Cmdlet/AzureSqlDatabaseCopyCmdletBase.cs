@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,9 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.Common;
 using Microsoft.Azure.Commands.Sql.Replication.Model;
 using Microsoft.Azure.Commands.Sql.ReplicationLink.Services;
@@ -30,6 +32,7 @@ namespace Microsoft.Azure.Commands.Sql.Replication.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 1,
             HelpMessage = "The name of the Azure SQL Server the database to be copied is in.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string ServerName { get; set; }
 
@@ -38,9 +41,9 @@ namespace Microsoft.Azure.Commands.Sql.Replication.Cmdlet
         /// </summary>
         /// <param name="subscription">The Azure Subscription</param>
         /// <returns>A replication Adapter object</returns>
-        protected override AzureSqlDatabaseReplicationAdapter InitModelAdapter(AzureSubscription subscription)
+        protected override AzureSqlDatabaseReplicationAdapter InitModelAdapter(IAzureSubscription subscription)
         {
-            return new AzureSqlDatabaseReplicationAdapter(DefaultProfile.Context);
+            return new AzureSqlDatabaseReplicationAdapter(DefaultProfile.DefaultContext);
         }
     }
 }

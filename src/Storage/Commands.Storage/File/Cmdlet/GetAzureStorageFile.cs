@@ -20,7 +20,8 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
     using System.Management.Automation;
     using System.Net;
 
-    [Cmdlet(VerbsCommon.Get, Constants.FileCmdletName, DefaultParameterSetName = Constants.ShareNameParameterSetName)]
+    [Cmdlet("Get", Azure.Commands.ResourceManager.Common.AzureRMConstants.AzurePrefix + "StorageFile", DefaultParameterSetName = Constants.ShareNameParameterSetName)]
+    [OutputType(typeof(CloudFile))]
     public class GetAzureStorageFile : AzureStorageFileCmdletBase
     {
         [Parameter(
@@ -84,7 +85,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
                         item => this.OutputStream.WriteObject(taskId, item),
                         this.RequestOptions,
                         this.OperationContext,
-                        this.CmdletCancellationToken);
+                        this.CmdletCancellationToken).ConfigureAwait(false);
                 });
             }
             else
@@ -102,7 +103,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
                             null,
                             this.RequestOptions,
                             this.OperationContext,
-                            this.CmdletCancellationToken);
+                            this.CmdletCancellationToken).ConfigureAwait(false);
                     }
                     catch (StorageException se)
                     {
@@ -129,7 +130,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
                         null,
                         this.RequestOptions,
                         this.OperationContext,
-                        this.CmdletCancellationToken);
+                        this.CmdletCancellationToken).ConfigureAwait(false);
 
                     this.OutputStream.WriteObject(taskId, targetFile);
                 });

@@ -1,7 +1,9 @@
-using AutoMapper;
+﻿using AutoMapper;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.Azure.Commands.Compute.Common;
 using Microsoft.Azure.Commands.Compute.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.Compute.Models;
 using Microsoft.WindowsAzure.Commands.Common.Extensions.DSC;
 using Microsoft.WindowsAzure.Storage;
@@ -17,11 +19,7 @@ using System.Text.RegularExpressions;
 
 namespace Microsoft.Azure.Commands.Compute.Extension.DSC
 {
-    [Cmdlet(
-        VerbsCommon.Set,
-        ProfileNouns.VirtualMachineDscExtension,
-        SupportsShouldProcess = true,
-        DefaultParameterSetName = AzureBlobDscExtensionParamSet)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VMDscExtension",SupportsShouldProcess = true,DefaultParameterSetName = AzureBlobDscExtensionParamSet)]
     [OutputType(typeof(PSAzureOperationResponse))]
     public class SetAzureVMDscExtensionCommand : VirtualMachineExtensionBaseCmdlet
     {
@@ -32,6 +30,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
            Position = 2,
            ValueFromPipelineByPropertyName = true,
            HelpMessage = "The name of the resource group that contains the virtual machine.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -40,6 +39,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
             Position = 3,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Name of the virtual machine where dsc extension handler would be installed.")]
+        [ResourceNameCompleter("Microsoft.Compute/virtualMachines", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string VMName { get; set; }
 
@@ -51,7 +51,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
 
         /// <summary>
         /// The name of the configuration archive that was previously uploaded by 
-        /// Publish-AzureRmVMDSCConfiguration. This parameter must specify only the name 
+        /// Publish-AzVMDSCConfiguration. This parameter must specify only the name 
         /// of the file, without any path.
         /// A null value or empty string indicate that the VM extension should install DSC,
         /// but not start any configuration
@@ -62,7 +62,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
             Position = 5,
             ValueFromPipelineByPropertyName = true,
             ParameterSetName = AzureBlobDscExtensionParamSet,
-            HelpMessage = "The name of the configuration file that was previously uploaded by Publish-AzureRmVMDSCConfiguration")]
+            HelpMessage = "The name of the configuration file that was previously uploaded by Publish-AzVMDSCConfiguration")]
         [AllowEmptyString]
         [AllowNull]
         public string ArchiveBlobName { get; set; }
@@ -146,7 +146,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
         public string ConfigurationData { get; set; }
 
         /// <summary>
-        /// The specific version of the DSC extension that Set-AzureRmVMDSCExtension will 
+        /// The specific version of the DSC extension that Set-AzVMDSCExtension will 
         /// apply the settings to. 
         /// </summary>
         [Alias("HandlerVersion")]
@@ -154,13 +154,13 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
             Mandatory = true,
             Position = 1,
             ValueFromPipelineByPropertyName = true,
-            HelpMessage = "The version of the DSC extension that Set-AzureRmVMDSCExtension will apply the settings to. " +
+            HelpMessage = "The version of the DSC extension that Set-AzVMDSCExtension will apply the settings to. " +
                           "Allowed format N.N")]
         [ValidateNotNullOrEmpty]
         public string Version { get; set; }
 
         /// <summary>
-        /// By default Set-AzureRmVMDscExtension will not overwrite any existing blobs. Use -Force to overwrite them.
+        /// By default Set-AzVMDscExtension will not overwrite any existing blobs. Use -Force to overwrite them.
         /// </summary>
         [Parameter(
             HelpMessage = "Use this parameter to overwrite any existing blobs")]
@@ -170,6 +170,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
             Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Location of the resource.")]
+        [LocationCompleter("Microsoft.Storage/storageAccounts")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
@@ -187,7 +188,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
         ///
         /// The DSC Azure Extension depends on DSC features that are only available in 
         /// the WMF updates. This parameter specifies which version of the update to 
-        /// install on the VM. The possible values are "4.0","5.0" ,"5.1PP" and "latest".  
+        /// install on the VM. The possible values are "4.0","5.0" ,"5.1" and "latest".  
         /// 
         /// A value of "4.0" will install WMF 4.0 Update packages 
         /// (https://support.microsoft.com/en-us/kb/3119938) on Windows 8.1 or Windows Server 
@@ -198,15 +199,15 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
         /// A value of "5.0" will install the latest release of WMF 5.0 
         /// (https://www.microsoft.com/en-us/download/details.aspx?id=50395).
         /// 
-        /// A value of "5.1PP" will install the WMF 5.1 preview
-        /// (https://www.microsoft.com/en-us/download/details.aspx?id=53347).
+        /// A value of "5.1" will install the WMF 5.1
+        /// (https://www.microsoft.com/en-us/download/details.aspx?id=54616).
         /// 
-        /// A value of "latest" will install the latest WMF, currently WMF 5.0
+        /// A value of "latest" will install the latest WMF, currently WMF 5.1
         /// 
         /// The default value is "latest"
         /// </summary>
         [Parameter(ValueFromPipelineByPropertyName = true)]
-        [ValidateSetAttribute(new[] { "4.0", "5.0", "5.1PP", "latest" })]
+        [ValidateSetAttribute(new[] {"4.0", "5.0", "5.1", "latest"})]
         public string WmfVersion { get; set; }
 
         /// <summary>
@@ -301,7 +302,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
                 if (ArchiveStorageEndpointSuffix == null)
                 {
                     ArchiveStorageEndpointSuffix =
-                        DefaultProfile.Context.Environment.GetEndpoint(AzureEnvironment.Endpoint.StorageEndpointSuffix);
+                        DefaultProfile.DefaultContext.Environment.GetEndpoint(AzureEnvironment.Endpoint.StorageEndpointSuffix);
                 }
 
                 if (!(Regex.Match(Version, VersionRegexExpr).Success))
@@ -398,7 +399,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
                 }
             }
 
-            var result = Mapper.Map<PSAzureOperationResponse>(op);
+            var result = ComputeAutoMapperProfile.Mapper.Map<PSAzureOperationResponse>(op);
             WriteObject(result);
         }
 
@@ -460,7 +461,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
                     configurationDataBlobReference.Uri.AbsoluteUri,
                     () =>
                     {
-                        if (!Force && configurationDataBlobReference.Exists())
+                        if (!Force && configurationDataBlobReference.ExistsAsync().ConfigureAwait(false).GetAwaiter().GetResult())
                         {
                             ThrowTerminatingError(
                                 new ErrorRecord(
@@ -474,7 +475,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
                                     null));
                         }
 
-                        configurationDataBlobReference.UploadFromFile(ConfigurationData, FileMode.Open);
+                        configurationDataBlobReference.UploadFromFileAsync(ConfigurationData).ConfigureAwait(false).GetAwaiter().GetResult();
 
                         var configurationDataBlobSasToken =
                             configurationDataBlobReference.GetSharedAccessSignature(blobAccessPolicy);
@@ -503,4 +504,3 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
         }
     }
 }
-

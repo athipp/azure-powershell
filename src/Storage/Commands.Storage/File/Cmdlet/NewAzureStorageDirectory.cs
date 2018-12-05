@@ -18,7 +18,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
     using System.Globalization;
     using System.Management.Automation;
 
-    [Cmdlet(VerbsCommon.New, Constants.FileDirectoryCmdletName, DefaultParameterSetName = Constants.ShareNameParameterSetName)]
+    [Cmdlet("New", Azure.Commands.ResourceManager.Common.AzureRMConstants.AzurePrefix + "StorageDirectory", DefaultParameterSetName = Constants.ShareNameParameterSetName), OutputType(typeof(CloudFileDirectory))]
     public class NewAzureStorageDirectory : AzureStorageFileCmdletBase
     {
         [Parameter(
@@ -83,7 +83,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
             var directoryToBeCreated = baseDirectory.GetDirectoryReferenceByPath(path);
             this.RunTask(async taskId =>
             {
-                await this.Channel.CreateDirectoryAsync(directoryToBeCreated, this.RequestOptions, this.OperationContext, this.CmdletCancellationToken);
+                await this.Channel.CreateDirectoryAsync(directoryToBeCreated, this.RequestOptions, this.OperationContext, this.CmdletCancellationToken).ConfigureAwait(false);
                 this.OutputStream.WriteObject(taskId, directoryToBeCreated);
             });
         }

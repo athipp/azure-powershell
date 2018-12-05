@@ -13,19 +13,24 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.KeyVault.Models;
+using Microsoft.Azure.Commands.KeyVault.Properties;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System.Globalization;
 using System.Management.Automation;
-using KeyVaultProperties = Microsoft.Azure.Commands.KeyVault.Properties;
 
 namespace Microsoft.Azure.Commands.KeyVault
 {
-    [Cmdlet(VerbsCommon.Remove, "AzureKeyVaultSecret",
-        SupportsShouldProcess = true,
-         ConfirmImpact = ConfirmImpact.High,
-        HelpUri = Constants.KeyVaultHelpUri)]
-    [OutputType(typeof(Secret))]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzurePrefix + "KeyVaultSecret",SupportsShouldProcess = true,DefaultParameterSetName = ByVaultNameParameterSet)]
+    [OutputType(typeof(PSDeletedKeyVaultSecret))]
     public class RemoveAzureKeyVaultSecret : KeyVaultCmdletBase
     {
+        #region Parameter Set Names
+
+        private const string ByVaultNameParameterSet = "ByVaultName";
+        private const string ByInputObjectParameterSet = "ByInputObject";
+
+        #endregion
+
         #region Input Parameter Definitions
 
         /// <summary>
@@ -33,8 +38,9 @@ namespace Microsoft.Azure.Commands.KeyVault
         /// </summary>
         [Parameter(Mandatory = true,
             Position = 0,
-            ValueFromPipelineByPropertyName = true,
+            ParameterSetName = ByVaultNameParameterSet,
             HelpMessage = "Vault name. Cmdlet constructs the FQDN of a vault based on the name and currently selected environment.")]
+        [ResourceNameCompleter("Microsoft.KeyVault/vaults", "FakeResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string VaultName { get; set; }
 
@@ -43,11 +49,22 @@ namespace Microsoft.Azure.Commands.KeyVault
         /// </summary>
         [Parameter(Mandatory = true,
             Position = 1,
-            ValueFromPipelineByPropertyName = true,
+            ParameterSetName = ByVaultNameParameterSet,
             HelpMessage = "Secret name. Cmdlet constructs the FQDN of a secret from vault name, currently selected environment and secret name.")]
         [ValidateNotNullOrEmpty]
         [Alias(Constants.SecretName)]
         public string Name { get; set; }
+
+        /// <summary>
+        /// Secret Object
+        /// </summary>
+        [Parameter(Mandatory = true,
+            Position = 0,
+            ParameterSetName = ByInputObjectParameterSet,
+            ValueFromPipeline = true,
+            HelpMessage = "Key Vault Secret Object")]
+        [ValidateNotNullOrEmpty]
+        public PSKeyVaultSecretIdentityItem InputObject { get; set; }
 
         /// <summary>
         /// If present, do not ask for confirmation
@@ -60,27 +77,57 @@ namespace Microsoft.Azure.Commands.KeyVault
             HelpMessage = "Cmdlet does not return an object by default. If this switch is specified, cmdlet returns the secret that was deleted.")]
         public SwitchParameter PassThru { get; set; }
 
+        /// <summary>
+        /// If present, operate on the deleted secret entity.
+        /// </summary>
+        [Parameter(Mandatory = false,
+           HelpMessage = "If present, removes the previously deleted secret permanently.")]
+        public SwitchParameter InRemovedState { get; set; }
+
         #endregion
 
         public override void ExecuteCmdlet()
         {
-            Secret secret = null;
+            if (InputObject != null)
+            {
+                VaultName = InputObject.VaultName;
+                Name = InputObject.Name;
+            }
+
+            if(InRemovedState.IsPresent)
+            {
+                ConfirmAction(
+                    Force.IsPresent,
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        Resources.RemoveDeletedSecretWarning,
+                        Name),
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        Resources.RemoveDeletedSecretWhatIfMessage,
+                        Name),
+                    Name,
+                   () => { DataServiceClient.PurgeSecret(VaultName, Name); });
+                return;
+            }
+
+            PSDeletedKeyVaultSecret deletedSecret = null;
             ConfirmAction(
                 Force.IsPresent,
                 string.Format(
                     CultureInfo.InvariantCulture,
-                    KeyVaultProperties.Resources.RemoveSecretWarning,
+                    Resources.RemoveSecretWarning,
                     Name),
                 string.Format(
                     CultureInfo.InvariantCulture,
-                    KeyVaultProperties.Resources.RemoveSecretWhatIfMessage,
+                    Resources.RemoveSecretWhatIfMessage,
                     Name),
                 Name,
-               () => { secret = DataServiceClient.DeleteSecret(VaultName, Name); });
+               () => { deletedSecret = DataServiceClient.DeleteSecret(VaultName, Name); });
 
             if (PassThru)
             {
-                WriteObject(secret);
+                WriteObject(deletedSecret);
             }
         }
     }

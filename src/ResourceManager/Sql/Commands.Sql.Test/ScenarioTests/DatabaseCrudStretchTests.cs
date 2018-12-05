@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,7 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Commands.ScenarioTest.Mocks;
 using Microsoft.Azure.Commands.ScenarioTest.SqlTests;
-using Microsoft.Azure.ServiceManagemenet.Common.Models;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Xunit.Abstractions;
@@ -24,27 +22,8 @@ namespace Microsoft.Azure.Commands.Sql.Test.ScenarioTests
 {
     public class DatabaseCrudStretchTests : SqlTestsBase
     {
-        /// <summary>
-        /// Follow the way how AuditingTests setup their manangement clients
-        /// Only overide SetupManagementClients() here because stretch database 
-        /// tests in this test suite now use V2 version of storage client
-        /// </summary>
-        protected override void SetupManagementClients(RestTestFramework.MockContext context)
+        public DatabaseCrudStretchTests(ITestOutputHelper output) : base(output)
         {
-            var sqlCSMClient = GetSqlClient();
-            var storageClient = GetStorageV2Client();
-
-            // TODO, Remove the MockDeploymentFactory call when the test is re-recorded
-            //
-            var resourcesClient = MockDeploymentClientFactory.GetResourceClient(GetResourcesClient());
-            var authorizationClient = GetAuthorizationManagementClient();
-            helper.SetupSomeOfManagementClients(sqlCSMClient, storageClient, resourcesClient,
-                authorizationClient);
-        }
-
-        public DatabaseCrudStretchTests(ITestOutputHelper output)
-        {
-            XunitTracingInterceptor.AddToContext(new XunitTracingInterceptor(output));
         }
 
         [Fact]

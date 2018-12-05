@@ -13,12 +13,13 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.OperationalInsights.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System.Collections.Generic;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.OperationalInsights
 {
-    [Cmdlet(VerbsCommon.Get, Constants.StorageInsight, DefaultParameterSetName = ByWorkspaceName), OutputType(typeof(List<PSStorageInsight>), typeof(PSStorageInsight))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "OperationalInsightsStorageInsight", DefaultParameterSetName = ByWorkspaceName), OutputType(typeof(PSStorageInsight))]
     public class GetAzureOperationalInsightsStorageInsightCommand : OperationalInsightsBaseCmdlet
     {
         [Parameter(Position = 0, ParameterSetName = ByWorkspaceObject, Mandatory = true, ValueFromPipeline = true,
@@ -28,6 +29,7 @@ namespace Microsoft.Azure.Commands.OperationalInsights
 
         [Parameter(Position = 1, ParameterSetName = ByWorkspaceName, Mandatory = true, ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

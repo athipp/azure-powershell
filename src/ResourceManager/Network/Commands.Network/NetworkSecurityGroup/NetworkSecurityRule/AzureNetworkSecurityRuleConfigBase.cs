@@ -12,7 +12,9 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using System.Collections.Generic;
 using System.Management.Automation;
+using Microsoft.Azure.Commands.Network.Models;
 using MNM = Microsoft.Azure.Management.Network.Models;
 
 namespace Microsoft.Azure.Commands.Network
@@ -46,25 +48,49 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = false,
             HelpMessage = "Source Port Range rule")]
         [ValidateNotNullOrEmpty]
-        public string SourcePortRange { get; set; }
+        public string[] SourcePortRange { get; set; }
 
         [Parameter(
             Mandatory = false,
             HelpMessage = "Destination Port Range rule")]
         [ValidateNotNullOrEmpty]
-        public string DestinationPortRange { get; set; }
+        public string[] DestinationPortRange { get; set; }
 
         [Parameter(
             Mandatory = false,
             HelpMessage = "Source Address Prefix  rule")]
         [ValidateNotNullOrEmpty]
-        public string SourceAddressPrefix { get; set; }
+        public string[] SourceAddressPrefix { get; set; }
 
         [Parameter(
             Mandatory = false,
             HelpMessage = "Destination Address Prefix rule")]
         [ValidateNotNullOrEmpty]
-        public string DestinationAddressPrefix { get; set; }
+        public string[] DestinationAddressPrefix { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            ParameterSetName = "SetByResource",
+            HelpMessage = "The application security group set as source for the rule. It cannot be used with 'SourceAddressPrefix' parameter.")]
+        public PSApplicationSecurityGroup[] SourceApplicationSecurityGroup { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            ParameterSetName = "SetByResource",
+            HelpMessage = "The application security group set as destination for the rule. It cannot be used with 'DestinationAddressPrefix' parameter.")]
+        public PSApplicationSecurityGroup[] DestinationApplicationSecurityGroup { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            ParameterSetName = "SetByResourceId",
+            HelpMessage = "The application security group set as source for the rule. It cannot be used with 'SourceAddressPrefix' parameter.")]
+        public string[] SourceApplicationSecurityGroupId { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            ParameterSetName = "SetByResourceId",
+            HelpMessage = "The application security group set as destination for the rule. It cannot be used with 'DestinationAddressPrefix' parameter.")]
+        public string[] DestinationApplicationSecurityGroupId { get; set; }
 
         [Parameter(
             Mandatory = false,
@@ -78,7 +104,7 @@ namespace Microsoft.Azure.Commands.Network
 
         [Parameter(
             Mandatory = false,
-            HelpMessage = "The prioroty of the rule")]
+            HelpMessage = "The priority of the rule")]
         [ValidateNotNullOrEmpty]
         public int Priority { get; set; }
 
@@ -91,5 +117,53 @@ namespace Microsoft.Azure.Commands.Network
             MNM.SecurityRuleDirection.Outbound,
             IgnoreCase = true)]
         public string Direction { get; set; }
+
+        protected void SetDestinationApplicationSecurityGroupInRule(PSSecurityRule rule)
+        {
+            if ((this.DestinationApplicationSecurityGroup != null) || (this.DestinationApplicationSecurityGroupId != null))
+            {
+                rule.DestinationApplicationSecurityGroups = new List<PSApplicationSecurityGroup>();
+            }
+
+            if (this.DestinationApplicationSecurityGroup != null)
+            {
+                foreach (var psApplicationSecurityGroup in this.DestinationApplicationSecurityGroup)
+                {
+                    rule.DestinationApplicationSecurityGroups.Add(psApplicationSecurityGroup);
+                }
+            }
+
+            if (this.DestinationApplicationSecurityGroupId != null)
+            {
+                foreach (var psApplicationSecurityGroupId in this.DestinationApplicationSecurityGroupId)
+                {
+                    rule.DestinationApplicationSecurityGroups.Add(new PSApplicationSecurityGroup { Id = psApplicationSecurityGroupId });
+                }
+            }
+        }
+
+        protected void SetSourceApplicationSecurityGroupInRule(PSSecurityRule rule)
+        {
+            if ((this.SourceApplicationSecurityGroup != null) || (this.SourceApplicationSecurityGroupId != null))
+            {
+                rule.SourceApplicationSecurityGroups = new List<PSApplicationSecurityGroup>();
+            }
+
+            if (this.SourceApplicationSecurityGroup != null)
+            {
+                foreach (var psApplicationSecurityGroup in this.SourceApplicationSecurityGroup)
+                {
+                    rule.SourceApplicationSecurityGroups.Add(psApplicationSecurityGroup);
+                }
+            }
+
+            if (this.SourceApplicationSecurityGroupId != null)
+            {
+                foreach (var psApplicationSecurityGroupId in this.SourceApplicationSecurityGroupId)
+                {
+                    rule.SourceApplicationSecurityGroups.Add(new PSApplicationSecurityGroup { Id = psApplicationSecurityGroupId });
+                }
+            }
+        }
     }
 }

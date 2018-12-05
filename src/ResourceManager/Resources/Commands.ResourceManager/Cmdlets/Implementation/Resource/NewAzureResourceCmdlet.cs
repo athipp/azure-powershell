@@ -1,4 +1,4 @@
-// ----------------------------------------------------------------------------------
+﻿// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,6 +14,7 @@
 
 namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
 {
+    using Common.ArgumentCompleters;
     using Common.Tags;
     using Microsoft.Azure.Commands.ResourceManager.Cmdlets.Components;
     using Microsoft.Azure.Commands.ResourceManager.Cmdlets.Entities.Resources;
@@ -27,13 +28,14 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
     /// <summary>
     /// A cmdlet that creates a new azure resource.
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmResource", SupportsShouldProcess = true, DefaultParameterSetName = ResourceManipulationCmdletBase.ResourceIdParameterSet), OutputType(typeof(PSObject))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "Resource", SupportsShouldProcess = true, DefaultParameterSetName = ResourceManipulationCmdletBase.ResourceIdParameterSet), OutputType(typeof(PSObject))]
     public sealed class NewAzureResourceCmdlet : ResourceManipulationCmdletBase
     {
         /// <summary>
         /// Gets or sets the location.
         /// </summary>
         [Parameter(Mandatory = false, HelpMessage = "The resource location.")]
+        [LocationCompleter("Microsoft.Resources/resourceGroups")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
@@ -76,16 +78,13 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
         public Hashtable Tag { get; set; }
 
         /// <summary>
-        /// Gets or sets the zones.
-        /// </summary>
-        [Parameter(Mandatory = false, HelpMessage = "The zones.")]
-        public string[] Zones { get; set; }
-
-        /// <summary>
         /// Gets or sets a value that indicates if the full object was passed it.
         /// </summary>
         [Parameter(Mandatory = false, HelpMessage = "When set indicates that the full object is passed in to the -PropertyObject parameter.")]
         public SwitchParameter IsFullObject { get; set; }
+
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         /// <summary>
         /// Executes the cmdlet.
@@ -150,8 +149,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
                 Plan = this.Plan.ToDictionary(addValueLayer: false).ToJson().FromJson<ResourcePlan>(),
                 Sku = this.Sku.ToDictionary(addValueLayer: false).ToJson().FromJson<ResourceSku>(),
                 Tags = TagsHelper.GetTagsDictionary(this.Tag),
-                Properties = this.Properties.ToResourcePropertiesBody(),
-                Zones = this.Zones
+                Properties = this.Properties.ToResourcePropertiesBody()
             };
         }
 

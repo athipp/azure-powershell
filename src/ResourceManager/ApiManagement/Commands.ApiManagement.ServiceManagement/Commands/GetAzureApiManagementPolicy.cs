@@ -14,24 +14,24 @@
 
 namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
 {
-    using Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models;
-    using Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Properties;
     using System;
     using System.Globalization;
     using System.IO;
     using System.Management.Automation;
     using System.Text;
+    using Management.ApiManagement.Models;
+    using Models;
+    using Properties;
 
-    [Cmdlet(VerbsCommon.Get, Constants.ApiManagementPolicy, DefaultParameterSetName = TenantLevel, 
-        SupportsShouldProcess = true)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApiManagementPolicy",SupportsShouldProcess = true,DefaultParameterSetName = TenantLevel)]
     [OutputType(typeof(string))]
     public class GetAzureApiManagementPolicy : AzureApiManagementCmdletBase
     {
         private const string DefaultFormat = "application/vnd.ms-azure-apim.policy+xml";
-        private const string TenantLevel = "Tenant level";
-        private const string ProductLevel = "Product level";
-        private const string ApiLevel = "API level";
-        private const string OperationLevel = "Operation level";
+        private const string TenantLevel = "GetTenantLevel";
+        private const string ProductLevel = "GetProductLevel";
+        private const string ApiLevel = "GetApiLevel";
+        private const string OperationLevel = "GetOperationLevel";
 
         [Parameter(
             ValueFromPipelineByPropertyName = true,
@@ -75,6 +75,20 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
         public String ApiId { get; set; }
 
         [Parameter(
+            ParameterSetName = ApiLevel,
+            ValueFromPipelineByPropertyName = true,
+            Mandatory = false,
+            HelpMessage = "Identifier of API Revision. This parameter is optional. If not specified, the policy will be " +
+            "retrieved from the currently active api revision.")]
+        [Parameter(
+            ParameterSetName = OperationLevel,
+            ValueFromPipelineByPropertyName = true,
+            Mandatory = false,
+            HelpMessage = "Identifier of API Revision. This parameter is optional. If not specified, the policy will be " +
+            "retrieved from the currently active api revision.")]
+        public String ApiRevision { get; set; }
+
+        [Parameter(
             ParameterSetName = OperationLevel,
             ValueFromPipelineByPropertyName = true,
             Mandatory = true,
@@ -91,31 +105,41 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
 
         public override void ExecuteApiManagementCmdlet()
         {
-            string format = Format ?? DefaultFormat;
-            byte[] content;
+            string policyContent;
+            string apiId;
             switch (ParameterSetName)
             {
                 case TenantLevel:
-                    content = Client.PolicyGetTenantLevel(Context, format);
+                    policyContent = Client.PolicyGetTenantLevel(Context);
                     break;
                 case ProductLevel:
-                    content = Client.PolicyGetProductLevel(Context, format, ProductId);
+                    policyContent = Client.PolicyGetProductLevel(Context, ProductId);
                     break;
                 case ApiLevel:
-                    content = Client.PolicyGetApiLevel(Context, format, ApiId);
+                    apiId = ApiId;
+                    if (!string.IsNullOrEmpty(ApiRevision))
+                    {
+                        apiId = ApiId.ApiRevisionIdentifier(ApiRevision);
+                    }
+                    policyContent = Client.PolicyGetApiLevel(Context, apiId);
                     break;
                 case OperationLevel:
                     if (string.IsNullOrWhiteSpace(ApiId))
                     {
                         throw new PSArgumentNullException("ApiId");
                     }
-                    content = Client.PolicyGetOperationLevel(Context, format, ApiId, OperationId);
+                    apiId = ApiId;
+                    if (!string.IsNullOrEmpty(ApiRevision))
+                    {
+                        apiId = ApiId.ApiRevisionIdentifier(ApiRevision);
+                    }
+                    policyContent = Client.PolicyGetOperationLevel(Context, apiId, OperationId);
                     break;
                 default:
                     throw new InvalidOperationException(string.Format("Parameter set name '{0}' is not supported.", ParameterSetName));
             }
 
-            if (content == null)
+            if (policyContent == null)
             {
                 return;
             }
@@ -135,22 +159,11 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
                     return;
                 }
 
-                using (var file = File.OpenWrite(SaveAs))
-                {
-                    file.Write(content, 0, content.Length);
-                    file.Flush();
-                }
+                File.WriteAllText(SaveAs, policyContent);
             }
             else
             {
-                string resultStr;
-                using (var memoryStream = new MemoryStream(content))
-                using (var streamReader = new StreamReader(memoryStream, Encoding.UTF8))
-                {
-                    resultStr = streamReader.ReadToEnd();
-                }
-
-                WriteObject(resultStr);
+                WriteObject(policyContent);
             }
         }
     }

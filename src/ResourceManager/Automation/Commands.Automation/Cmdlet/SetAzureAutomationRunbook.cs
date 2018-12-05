@@ -14,6 +14,7 @@
 
 using Microsoft.Azure.Commands.Automation.Common;
 using Microsoft.Azure.Commands.Automation.Model;
+using System;
 using System.Collections;
 using System.Management.Automation;
 using System.Security.Permissions;
@@ -23,7 +24,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
     /// <summary>
     /// Sets an azure automation runbook's configuration values.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "AzureRmAutomationRunbook", DefaultParameterSetName = AutomationCmdletParameterSets.ByRunbookName)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "AutomationRunbook", DefaultParameterSetName = AutomationCmdletParameterSets.ByRunbookName)]
     [OutputType(typeof(Runbook))]
     public class SetAzureAutomationRunbook : AzureAutomationBaseCmdlet
     {
@@ -45,7 +46,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
         /// Gets or sets the runbook tags.
         /// </summary>
         [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The runbook tags.")]
-        public IDictionary Tags { get; set; }
+        public IDictionary Tag { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether progress logging should be turned on or off.
@@ -71,7 +72,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
                   this.AutomationAccountName,
                   this.Name,
                   this.Description,
-                  this.Tags,
+                  this.Tag,
                   this.LogProgress,
                   this.LogVerbose);
 

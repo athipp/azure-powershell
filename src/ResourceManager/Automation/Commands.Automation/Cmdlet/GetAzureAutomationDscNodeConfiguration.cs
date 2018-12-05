@@ -23,7 +23,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
     /// <summary>
     /// Gets Azure automation node configurations
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmAutomationDscNodeConfiguration", DefaultParameterSetName = AutomationCmdletParameterSets.ByAll)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "AutomationDscNodeConfiguration", DefaultParameterSetName = AutomationCmdletParameterSets.ByAll)]
     [OutputType(typeof(CompilationJob))]
     public class GetAzureAutomationDscNodeConfiguration : AzureAutomationBaseCmdlet
     {
@@ -59,19 +59,39 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
             if (this.Name != null)
             {
                 nodeConfigurations = new List<NodeConfiguration> { this.AutomationClient.GetNodeConfiguration(this.ResourceGroupName, this.AutomationAccountName, this.Name, this.RollupStatus) };
+                this.GenerateCmdletOutput(nodeConfigurations);
             }
             else if (this.ConfigurationName != null)
             {
-                // ByConfiguration 
-                nodeConfigurations = this.AutomationClient.ListNodeConfigurationsByConfigurationName(this.ResourceGroupName, this.AutomationAccountName, this.ConfigurationName, this.RollupStatus);
+                var nextLink = string.Empty;
+
+                do
+                {
+                    // ByConfiguration 
+                    nodeConfigurations = this.AutomationClient.ListNodeConfigurationsByConfigurationName(this.ResourceGroupName, this.AutomationAccountName, this.ConfigurationName, this.RollupStatus, ref nextLink);
+                    if (nodeConfigurations != null)
+                    {
+                        this.GenerateCmdletOutput(nodeConfigurations);
+                    }
+
+                } while (!string.IsNullOrEmpty(nextLink));
+                
             }
             else
             {
-                // ByAll 
-                nodeConfigurations = this.AutomationClient.ListNodeConfigurations(this.ResourceGroupName, this.AutomationAccountName, this.RollupStatus);
-            }
+                var nextLink = string.Empty;
 
-            this.WriteObject(nodeConfigurations, true);
+                do
+                {
+                    // ByAll
+                    nodeConfigurations = this.AutomationClient.ListNodeConfigurations(this.ResourceGroupName, this.AutomationAccountName, this.RollupStatus, ref nextLink);
+                    if (nodeConfigurations != null)
+                    {
+                        this.GenerateCmdletOutput(nodeConfigurations);
+                    }
+
+                } while (!string.IsNullOrEmpty(nextLink));
+            }
         }
     }
 }

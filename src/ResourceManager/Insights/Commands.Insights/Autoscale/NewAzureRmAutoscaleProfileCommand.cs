@@ -12,10 +12,10 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Commands.ResourceManager.Common;
-using Microsoft.Azure.Management.Insights.Models;
+using Microsoft.Azure.Management.Monitor.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Insights.Autoscale
@@ -23,12 +23,12 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
     /// <summary>
     /// Create an autoscale profile
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmAutoscaleProfile"), OutputType(typeof(AutoscaleProfile))]
-    public class NewAzureRmAutoscaleProfileCommand : AzureRMCmdlet
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "AutoscaleProfile"), OutputType(typeof(Management.Monitor.Management.Models.AutoscaleProfile))]
+    public class NewAzureRmAutoscaleProfileCommand : MonitorCmdletBase
     {
-        private const string AddAutoscaleProfileNoScheduleParamGroup = "Parameters for New-AzureRmAutoscaleProfile cmdlet without scheduled times";
-        private const string AddAutoscaleProfileFixDateParamGroup = "Parameters for New-AzureRmAutoscaleProfile cmdlet using fix date scheduling";
-        private const string AddAutoscaleProfileRecurrenceParamGroup = "Parameters for New-AzureRmAutoscaleProfile cmdlet using recurrent scheduling";
+        private const string AddAutoscaleProfileNoScheduleParamGroup = "CreateWithoutScheduledTimes";
+        private const string AddAutoscaleProfileFixDateParamGroup = "CreateWithFixedDateScheduling";
+        private const string AddAutoscaleProfileRecurrenceParamGroup = "CreateUsingRecurrentScheduling";
 
         #region Cmdlet parameters
 
@@ -91,28 +91,28 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
         /// Gets or sets the recurrence frequency
         /// </summary>
         [Parameter(ParameterSetName = AddAutoscaleProfileRecurrenceParamGroup, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The recurrence frequency for the setting")]
-        public RecurrenceFrequency RecurrenceFrequency { get; set; }
+        public Management.Monitor.Management.Models.RecurrenceFrequency RecurrenceFrequency { get; set; }
 
         /// <summary>
         /// Gets or sets the ScheduleDays
         /// </summary>
         [Parameter(ParameterSetName = AddAutoscaleProfileRecurrenceParamGroup, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The schedule days for the recurrence")]
         [ValidateNotNull]
-        public List<string> ScheduleDays { get; set; }
+        public List<string> ScheduleDay { get; set; }
 
         /// <summary>
         /// Gets or sets the ScheduleHours
         /// </summary>
         [Parameter(ParameterSetName = AddAutoscaleProfileRecurrenceParamGroup, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The schedule hours for the recurrence")]
         [ValidateNotNull]
-        public List<int> ScheduleHours { get; set; }
+        public List<int?> ScheduleHour { get; set; }
 
         /// <summary>
         /// Gets or sets the ScheduleMinutes
         /// </summary>
         [Parameter(ParameterSetName = AddAutoscaleProfileRecurrenceParamGroup, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The schedule minutes for the recurrence")]
         [ValidateNotNull]
-        public List<int> ScheduleMinutes { get; set; }
+        public List<int?> ScheduleMinute { get; set; }
 
         /// <summary>
         /// Gets or sets the ScheduleTimeZone
@@ -127,9 +127,15 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
         [Parameter(ParameterSetName = AddAutoscaleProfileFixDateParamGroup, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The rules for the setting")]
         [Parameter(ParameterSetName = AddAutoscaleProfileRecurrenceParamGroup, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The rules for the setting")]
         [ValidateNotNullOrEmpty]
-        public List<ScaleRule> Rules { get; set; }
+        public List<Management.Monitor.Management.Models.ScaleRule> Rule { get; set; }
 
         #endregion
+
+        /// <summary>
+        /// Executes the Cmdlet. This is a callback function to simplify the exception handling
+        /// </summary>
+        protected override void ProcessRecordInternal()
+        { }
 
         /// <summary>
         /// Execute the cmdlet
@@ -144,14 +150,14 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
         /// Create an autoscale profile based on the properties of the object
         /// </summary>
         /// <returns>An autoscale profile based on the properties of the object</returns>
-        public AutoscaleProfile CreateSettingProfile()
+        public Management.Monitor.Management.Models.AutoscaleProfile CreateSettingProfile()
         {
-            return new AutoscaleProfile
+            return new Management.Monitor.Management.Models.AutoscaleProfile
             {
                 Name = this.Name ?? string.Empty,
-                Capacity = new ScaleCapacity()
+                Capacity = new Management.Monitor.Management.Models.ScaleCapacity()
                 {
-                    Default = this.DefaultCapacity,
+                    DefaultProperty = this.DefaultCapacity,
                     Minimum = this.MinimumCapacity,
                     Maximum = this.MaximumCapacity,
                 },
@@ -159,16 +165,16 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
                 // NOTE: "always" is specify by a null value in the FixedDate value with null ScheduledDays(Minutes, Seconds)
                 // Premise: Fixed date schedule and recurrence are mutually exclusive, but they can both be missing so that the rule is always enabled.
                 // Assuming dates are validated by the server
-                FixedDate = this.ScheduleDays == null && (this.StartTimeWindow != default(DateTime) || this.EndTimeWindow != default(DateTime))
-                        ? new TimeWindow()
+                FixedDate = this.ScheduleDay == null && (this.StartTimeWindow != default(DateTime) || this.EndTimeWindow != default(DateTime))
+                        ? new Management.Monitor.Management.Models.TimeWindow()
                         {
                             Start = this.StartTimeWindow,
                             End = this.EndTimeWindow,
                             TimeZone = this.TimeWindowTimeZone,
                         }
                         : null,
-                Recurrence = this.ScheduleDays != null ? this.CreateAutoscaleRecurrence() : null,
-                Rules = this.Rules,
+                Recurrence = this.ScheduleDay != null ? this.CreateAutoscaleRecurrence() : null,
+                Rules = this.Rule.Select(e => new Management.Monitor.Management.Models.ScaleRule(e)).ToList()
             };
         }
 
@@ -176,24 +182,24 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
         /// Create a Recurrence based on the properties of this object
         /// </summary>
         /// <returns>A Recurrence created based on the properties of this object</returns>
-        public Recurrence CreateAutoscaleRecurrence()
+        public Management.Monitor.Management.Models.Recurrence CreateAutoscaleRecurrence()
         {
-            return new Recurrence()
+            return new Management.Monitor.Management.Models.Recurrence
             {
                 Frequency = this.RecurrenceFrequency,
                 Schedule = this.CreateRecurrentSchedule()
             };
         }
 
-        private RecurrentSchedule CreateRecurrentSchedule()
+        private Management.Monitor.Management.Models.RecurrentSchedule CreateRecurrentSchedule()
         {
             // Assuming validation is done by the server
-            return new RecurrentSchedule()
+            return new Management.Monitor.Management.Models.RecurrentSchedule()
             {
-                Days = this.ScheduleDays,
+                Days = this.ScheduleDay,
 
-                Hours = this.ScheduleHours,
-                Minutes = this.ScheduleMinutes,
+                Hours = this.ScheduleHour,
+                Minutes = this.ScheduleMinute,
                 TimeZone = this.ScheduleTimeZone,
             };
         }

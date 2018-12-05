@@ -17,10 +17,11 @@ using System.Management.Automation;
 using Microsoft.Azure.Commands.Batch.Models;
 
 using Constants = Microsoft.Azure.Commands.Batch.Utils.Constants;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Batch
 {
-    [Cmdlet(VerbsCommon.Get, Constants.AzureRmBatchApplication), OutputType(typeof(PSApplication))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "BatchApplication"), OutputType(typeof(PSApplication))]
     public class GetBatchApplicationCommand : BatchCmdletBase
     {
         [Parameter(Position = 0, ValueFromPipelineByPropertyName = true, Mandatory = true, HelpMessage = "Specifies the name of the Batch account.")]
@@ -28,6 +29,7 @@ namespace Microsoft.Azure.Commands.Batch
         public string AccountName { get; set; }
 
         [Parameter(Position = 1, ValueFromPipelineByPropertyName = true, Mandatory = true, HelpMessage = "Specifies the name of the resource group that contains the Batch account.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

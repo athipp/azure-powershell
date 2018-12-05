@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,9 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.Common;
 using Microsoft.Azure.Commands.Sql.ServerActiveDirectoryAdministrator.Model;
 using Microsoft.Azure.Commands.Sql.ServerActiveDirectoryAdministrator.Services;
@@ -30,6 +32,7 @@ namespace Microsoft.Azure.Commands.Sql.ServerActiveDirectoryAdministrator.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 1,
             HelpMessage = "The name of the Azure SQL Server the Azure Active Directory administrator is in.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string ServerName { get; set; }
 
@@ -38,9 +41,9 @@ namespace Microsoft.Azure.Commands.Sql.ServerActiveDirectoryAdministrator.Cmdlet
         /// </summary>
         /// <param name="subscription"></param>
         /// <returns></returns>
-        protected override AzureSqlServerActiveDirectoryAdministratorAdapter InitModelAdapter(AzureSubscription subscription)
+        protected override AzureSqlServerActiveDirectoryAdministratorAdapter InitModelAdapter(IAzureSubscription subscription)
         {
-            return new AzureSqlServerActiveDirectoryAdministratorAdapter(DefaultProfile.Context);
+            return new AzureSqlServerActiveDirectoryAdministratorAdapter(DefaultProfile.DefaultContext);
         }
     }
 }

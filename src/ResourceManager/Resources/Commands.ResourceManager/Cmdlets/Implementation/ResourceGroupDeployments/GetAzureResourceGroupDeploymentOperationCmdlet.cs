@@ -14,8 +14,11 @@
 
 namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
 {
+    using Commands.Common.Authentication.Abstractions;
+    using Common.ArgumentCompleters;
     using Microsoft.Azure.Commands.ResourceManager.Cmdlets.Components;
     using Microsoft.Azure.Commands.ResourceManager.Cmdlets.Extensions;
+    using Microsoft.Azure.Commands.ResourceManager.Common;
     using Newtonsoft.Json.Linq;
     using System;
     using System.Management.Automation;
@@ -24,7 +27,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
     /// <summary>
     /// Gets the deployment operation.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmResourceGroupDeploymentOperation"), OutputType(typeof(PSObject))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ResourceGroupDeploymentOperation"), OutputType(typeof(PSObject))]
     public class GetAzureResourceGroupDeploymentOperationCmdlet : ResourceManagerCmdletBase
     {
         /// <summary>
@@ -46,6 +49,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
         /// Gets or sets the resource group name parameter.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -58,7 +62,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
 
             if (this.SubscriptionId == null)
             {
-                this.SubscriptionId = DefaultContext.Subscription.Id;
+                this.SubscriptionId = DefaultContext.Subscription.GetId();
             }
 
             this.RunCmdlet();

@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +12,8 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using System;
+
 namespace Microsoft.Azure.Commands.Sql.Auditing.Model
 {
     /// <summary>
@@ -23,6 +25,12 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Model
     /// The possible states in which an auditing policy may be in
     /// </summary>
     public enum AuditStateType { Enabled, Disabled, New };
+
+    /// <summary>
+    /// The possible values of auditing type. 
+    /// NotSet is a temporary value in order to mark that AuditType parameter was not provided at all by the user. It is only initial value, and won't be returned to the user.
+    /// </summary>
+    public enum AuditType { NotSet, Table, Blob };
 
     /// <summary>
     /// The base class that defines the core properties of an auditing policy
@@ -50,6 +58,11 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Model
         public string StorageAccountName { get; set; }
 
         /// <summary>
+        /// Gets or sets the id of the storage account subscription.
+        /// </summary>
+        public Guid StorageAccountSubscriptionId { get; set; }
+
+        /// <summary>
         /// Gets or sets the storage key type
         /// </summary>
         public StorageKeyKind StorageKeyType { get; set; }
@@ -59,6 +72,9 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Model
         /// </summary>
         public uint? RetentionInDays { get; internal set; }
 
-        public abstract bool IsInUse();
+        /// <summary>
+        /// Gets or sets predicate expression
+        /// </summary>
+        public string PredicateExpression { get; set; }
     }
 }

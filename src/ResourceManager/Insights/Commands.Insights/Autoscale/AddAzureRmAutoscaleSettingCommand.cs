@@ -12,40 +12,43 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Hyak.Common;
+using System.Net;
 using Microsoft.Azure.Commands.Insights.OutputClasses;
 using Microsoft.Azure.Commands.Insights.Properties;
-using Microsoft.Azure.Management.Insights;
-using Microsoft.Azure.Management.Insights.Models;
+using Microsoft.Azure.Management.Monitor.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
+using Microsoft.Azure.Commands.Insights.TransitionalClasses;
 
 namespace Microsoft.Azure.Commands.Insights.Autoscale
 {
     /// <summary>
     /// Create or update an Autoscale setting
     /// </summary>
-    [Cmdlet(VerbsCommon.Add, "AzureRmAutoscaleSetting"), OutputType(typeof(AzureOperationResponse))]
+    [Cmdlet("Add", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "AutoscaleSetting", SupportsShouldProcess = true), OutputType(typeof(PSAddAutoscaleSettingOperationResponse))]
     public class AddAzureRmAutoscaleSettingCommand : ManagementCmdletBase
     {
-        internal const string AddAzureRmAutoscaleSettingCreateParamGroup = "Parameters for Add-AzureRmAutoscaleSetting cmdlet in the create semantics";
-        internal const string AddAzureRmAutoscaleSettingUpdateParamGroup = "Parameters for Add-AzureRmAutoscaleSetting cmdlet in the update semantics";
+        internal const string AddAzureRmAutoscaleSettingCreateParamGroup = "CreateAutoscaleSetting";
+        internal const string AddAzureRmAutoscaleSettingUpdateParamGroup = "UpdateAutoscaleSetting";
 
         #region Cmdlet parameters
 
         /// <summary>
-        /// Gets or sets the SettingSpec parameter of the cmdlet
+        /// Gets or sets the InputObject parameter of the cmdlet
         /// </summary>
         [Parameter(ParameterSetName = AddAzureRmAutoscaleSettingUpdateParamGroup, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The complete spec of an AutoscaleSetting")]
         [ValidateNotNullOrEmpty]
-        public PSAutoscaleSetting SettingSpec { get; set; }
+        [Alias("SettingSpec")]
+        public PSAutoscaleSetting InputObject { get; set; }
 
         /// <summary>
         /// Gets or sets the Location parameter of the cmdlet
         /// </summary>
         [Parameter(ParameterSetName = AddAzureRmAutoscaleSettingCreateParamGroup, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The location")]
+        [LocationCompleter("Microsoft.Insights/autoscalesettings")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
@@ -61,8 +64,10 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
         /// </summary>
         [Parameter(ParameterSetName = AddAzureRmAutoscaleSettingCreateParamGroup, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The resource group name")]
         [Parameter(ParameterSetName = AddAzureRmAutoscaleSettingUpdateParamGroup, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The resource group name")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
-        public string ResourceGroup { get; set; }
+        [Alias("ResourceGroup")]
+        public string ResourceGroupName { get; set; }
 
         /// <summary>
         /// Gets or sets the DisableSetting flag.
@@ -78,7 +83,7 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
         [Parameter(ParameterSetName = AddAzureRmAutoscaleSettingCreateParamGroup, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The list of profiles")]
         [Parameter(ParameterSetName = AddAzureRmAutoscaleSettingUpdateParamGroup, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The list of profiles")]
         [ValidateNotNullOrEmpty]
-        public List<AutoscaleProfile> AutoscaleProfiles { get; set; }
+        public List<Management.Monitor.Management.Models.AutoscaleProfile> AutoscaleProfile { get; set; }
 
         /// <summary>
         /// Gets or sets the TargetResourceId parameter
@@ -92,7 +97,7 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
         /// </summary>
         [Parameter(ParameterSetName = AddAzureRmAutoscaleSettingCreateParamGroup, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The list of notifications of the setting")]
         [Parameter(ParameterSetName = AddAzureRmAutoscaleSettingUpdateParamGroup, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The list of notifications of the setting")]
-        public List<AutoscaleNotification> Notifications { get; set; }
+        public List<Management.Monitor.Management.Models.AutoscaleNotification> Notification { get; set; }
 
         #endregion
 
@@ -101,53 +106,62 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
         /// </summary>
         protected override void ProcessRecordInternal()
         {
-            AutoscaleSettingCreateOrUpdateParameters parameters = this.CreateSdkCallParameters();
+            if (ShouldProcess(
+                target: string.Format("Create/update an autoscale setting: {0} from resource group: {1}", this.Name, this.ResourceGroupName),
+                action: "Create/update an autoscale setting"))
+            {
+                AutoscaleSettingResource parameters = this.CreateAutoscaleSettingResource();
 
-            var result = this.InsightsManagementClient.AutoscaleOperations.CreateOrUpdateSettingAsync(resourceGroupName: this.ResourceGroup, autoscaleSettingName: this.Name, parameters: parameters).Result;
+                // The result of this operation is operation (AutoscaleSettingResource) is being discarded for backwards compatibility
+                var result = this.MonitorManagementClient.AutoscaleSettings.CreateOrUpdateWithHttpMessagesAsync(resourceGroupName: this.ResourceGroupName, autoscaleSettingName: this.Name, parameters: parameters).Result;
+                var response = new PSAddAutoscaleSettingOperationResponse()
+                {
+                    RequestId = result.RequestId,
+                    StatusCode = result.Response != null ? result.Response.StatusCode : HttpStatusCode.OK,
+                    SettingSpec = TransitionHelpers.ConvertNamespace(result.Body)
+                };
 
-            WriteObject(result);
+                WriteObject(response);
+            }
         }
 
-        private AutoscaleSettingCreateOrUpdateParameters CreateSdkCallParameters()
+        private AutoscaleSettingResource CreateAutoscaleSettingResource()
         {
             bool enableSetting = !this.DisableSetting.IsPresent || !this.DisableSetting;
 
-            if (this.SettingSpec != null)
+            if (this.InputObject != null)
             {
 
                 // Receiving a single parameter with the whole spec for an autoscale setting
-                var property = this.SettingSpec.Properties;
+                var property = this.InputObject;
 
                 if (property == null)
                 {
                     throw new ArgumentException(ResourcesForAutoscaleCmdlets.PropertiresCannotBeNull);
                 }
 
-                this.Location = this.SettingSpec.Location;
-                this.Name = this.SettingSpec.Name;
+                this.Location = this.InputObject.Location;
+                this.Name = this.InputObject.Name;
 
                 // The semantics is if AutoscaleProfiles is given it will replace the existing Profiles
-                this.AutoscaleProfiles = this.AutoscaleProfiles ?? property.Profiles.ToList();
+                this.AutoscaleProfile = this.AutoscaleProfile ?? property.Profiles.ToList();
                 this.TargetResourceId = property.TargetResourceUri;
 
-                enableSetting = !this.DisableSetting.IsPresent && property.Enabled;
+                enableSetting = !this.DisableSetting.IsPresent && property.Enabled.HasValue && property.Enabled.Value;
 
                 // The semantics is if Notifications is given it will replace the existing ones
-                this.Notifications = this.Notifications ?? this.SettingSpec.Properties.Notifications.ToList();
+                this.Notification = this.Notification ?? this.InputObject.Notifications?.ToList();
             }
 
-            return new AutoscaleSettingCreateOrUpdateParameters()
+            return new AutoscaleSettingResource(
+                profiles: this.AutoscaleProfile?.Select(TransitionHelpers.ConvertNamespace).ToList(),
+                location: this.Location,
+                name: this.Name)
             {
-                Location = this.Location,
-                Properties = new AutoscaleSetting()
-                {
-                    Name = this.Name,
-                    Enabled = enableSetting,
-                    Profiles = this.AutoscaleProfiles,
-                    TargetResourceUri = this.TargetResourceId,
-                    Notifications = this.Notifications
-                },
-                Tags = this.SettingSpec != null ? new LazyDictionary<string, string>(this.SettingSpec.Tags.Content) : new LazyDictionary<string, string>()
+                Enabled = enableSetting,
+                TargetResourceUri = this.TargetResourceId,
+                Notifications = this.Notification?.Select(TransitionHelpers.ConvertNamespace).ToList(),
+                Tags = this.InputObject != null ? new Dictionary<string, string>(this.InputObject.Tags) : new Dictionary<string, string>()
             };
         }
     }

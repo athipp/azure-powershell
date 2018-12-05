@@ -13,18 +13,20 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.NotificationHubs.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.NotificationHubs.Commands.Namespace
 {
 
-    [Cmdlet(VerbsCommon.New, "AzureRmNotificationHubsNamespaceAuthorizationRules"), OutputType(typeof(SharedAccessAuthorizationRuleAttributes))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "NotificationHubsNamespaceAuthorizationRules", SupportsShouldProcess = true), OutputType(typeof(SharedAccessAuthorizationRuleAttributes))]
     public class NewAzureNotificationHubsNamespaceAuthorizationRules : AzureNotificationHubsCmdletBase
     {
         [Parameter(Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             Position = 0,
             HelpMessage = "The name of the resource group")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroup { get; set; }
 
@@ -61,10 +63,12 @@ namespace Microsoft.Azure.Commands.NotificationHubs.Commands.Namespace
                 sasRule = SASRule;
             }
 
-            // Create a new namespace authorizationRule
-            var authRule = Client.CreateOrUpdateNamespaceAuthorizationRules(ResourceGroup, Namespace, sasRule.Name, sasRule.Rights,
-                sasRule.PrimaryKey, sasRule.SecondaryKey == null ? null : sasRule.SecondaryKey);
-            WriteObject(authRule);
+            if (ShouldProcess(string.Empty, Resources.CreateNamespaceAuthorizationRule))
+            {
+                // Create a new namespace authorizationRule
+                var authRule = Client.CreateOrUpdateNamespaceAuthorizationRules(ResourceGroup, sasRule.Location, Namespace, sasRule.Name, sasRule.Rights);
+                WriteObject(authRule);
+            }
         }
     }
 }

@@ -14,6 +14,7 @@
 
 namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
 {
+    using Commands.Common.Authentication.Abstractions;
     using Microsoft.Azure.Commands.ResourceManager.Cmdlets.Components;
     using Microsoft.Azure.Commands.ResourceManager.Cmdlets.Entities.ResourceGroups;
     using Microsoft.Azure.Commands.ResourceManager.Cmdlets.Extensions;
@@ -26,7 +27,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
     /// <summary>
     /// Moves existing resources to a new resource group or subscription.
     /// </summary>
-    [Cmdlet(VerbsCommon.Move, "AzureRmResource", SupportsShouldProcess = true), OutputType(typeof(bool))]
+    [Cmdlet("Move", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "Resource", SupportsShouldProcess = true), OutputType(typeof(bool))]
     public class MoveAzureResourceCommand : ResourceManagerCmdletBase
     {
         /// <summary>
@@ -98,7 +99,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
                 .Concat(this.ResourceId)
                 .DistinctArray(StringComparer.InvariantCultureIgnoreCase);
 
-            this.DestinationSubscriptionId = this.DestinationSubscriptionId ?? DefaultContext.Subscription.Id;
+            this.DestinationSubscriptionId = this.DestinationSubscriptionId ?? DefaultContext.Subscription.GetId();
 
             var sourceResourceGroups = resourceIdsToUse
                 .Select(resourceId => ResourceIdUtility.GetResourceGroupId(resourceId))

@@ -19,16 +19,27 @@ using Microsoft.Azure.Management.Network;
 using System;
 using System.Collections.Generic;
 using System.Management.Automation;
+using System.Security;
+using Microsoft.Azure.Commands.Network.VirtualNetworkGateway;
+using Microsoft.WindowsAzure.Commands.Common;
 using MNM = Microsoft.Azure.Management.Network.Models;
+using System.Linq;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Set, "AzureRmVirtualNetworkGatewayVpnClientConfig"), OutputType(typeof(PSVirtualNetworkGateway))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VirtualNetworkGatewayVpnClientConfig",DefaultParameterSetName = VirtualNetworkGatewayParameterSets.Default,SupportsShouldProcess = true),OutputType(typeof(PSVirtualNetworkGateway))]
+    [Obsolete("Set-AzVirtualNetworkGatewayVpnClientConfig command let will be removed in next release. Please use Set-AzVirtualNetworkGateway command let instead.")]
     public class SetAzureVirtualNetworkGatewayVpnClientConfigCommand : VirtualNetworkGatewayBaseCmdlet
     {
         [Parameter(
             Mandatory = true,
             ValueFromPipeline = true,
+            ParameterSetName = VirtualNetworkGatewayParameterSets.RadiusServerConfiguration,
+            HelpMessage = "The VirtualNetworkGateway")]
+        [Parameter(
+            Mandatory = true,
+            ValueFromPipeline = true,
+            ParameterSetName = VirtualNetworkGatewayParameterSets.Default,
             HelpMessage = "The VirtualNetworkGateway")]
         [ValidateNotNull]
         public PSVirtualNetworkGateway VirtualNetworkGateway { get; set; }
@@ -36,9 +47,31 @@ namespace Microsoft.Azure.Commands.Network
         [Parameter(
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
+            ParameterSetName = VirtualNetworkGatewayParameterSets.RadiusServerConfiguration,
+            HelpMessage = "P2S VpnClient AddressPool")]
+        [Parameter(
+            Mandatory = true,
+            ValueFromPipelineByPropertyName = true,
+            ParameterSetName = VirtualNetworkGatewayParameterSets.Default,
             HelpMessage = "P2S VpnClient AddressPool")]
         [ValidateNotNullOrEmpty]
-        public List<string> VpnClientAddressPool { get; set; }
+        public string[] VpnClientAddressPool { get; set; }
+
+        [Parameter(
+            Mandatory = true,
+            ValueFromPipelineByPropertyName = true,
+            ParameterSetName = VirtualNetworkGatewayParameterSets.RadiusServerConfiguration,
+            HelpMessage = "P2S External Radius server address.")]
+        [ValidateNotNullOrEmpty]
+        public string RadiusServerAddress { get; set; }
+
+        [Parameter(
+            Mandatory = true,
+            ValueFromPipelineByPropertyName = true,
+            ParameterSetName = VirtualNetworkGatewayParameterSets.RadiusServerConfiguration,
+            HelpMessage = "P2S External Radius server secret.")]
+        [ValidateNotNullOrEmpty]
+        public SecureString RadiusServerSecret { get; set; }
 
         public override void Execute()
         {
@@ -46,7 +79,7 @@ namespace Microsoft.Azure.Commands.Network
 
             if (!this.IsVirtualNetworkGatewayPresent(this.VirtualNetworkGateway.ResourceGroupName, this.VirtualNetworkGateway.Name))
             {
-                throw new ArgumentException(Microsoft.Azure.Commands.Network.Properties.Resources.ResourceNotFound);
+                throw new ArgumentException(string.Format(Microsoft.Azure.Commands.Network.Properties.Resources.ResourceNotFound, this.VirtualNetworkGateway.Name));
             }
 
             if (this.VirtualNetworkGateway.VpnClientConfiguration == null)
@@ -54,18 +87,35 @@ namespace Microsoft.Azure.Commands.Network
                 this.VirtualNetworkGateway.VpnClientConfiguration = new PSVpnClientConfiguration();
             }
             this.VirtualNetworkGateway.VpnClientConfiguration.VpnClientAddressPool = new PSAddressSpace();
-            this.VirtualNetworkGateway.VpnClientConfiguration.VpnClientAddressPool.AddressPrefixes = this.VpnClientAddressPool;
+            this.VirtualNetworkGateway.VpnClientConfiguration.VpnClientAddressPool.AddressPrefixes = this.VpnClientAddressPool?.ToList();
+
+            if ((this.RadiusServerAddress != null && this.RadiusServerSecret == null) ||
+                (this.RadiusServerAddress == null && this.RadiusServerSecret != null))
+            {
+                throw new ArgumentException("Both radius server address and secret must be specified if external radius is being configured");
+            }
+
+            if (this.RadiusServerAddress != null)
+            {
+                this.VirtualNetworkGateway.VpnClientConfiguration.RadiusServerAddress = this.RadiusServerAddress;
+                this.VirtualNetworkGateway.VpnClientConfiguration.RadiusServerSecret = SecureStringExtensions.ConvertToString(this.RadiusServerSecret);
+            }
 
             // Map to the sdk object
-            var virtualnetGatewayModel = Mapper.Map<MNM.VirtualNetworkGateway>(this.VirtualNetworkGateway);
+            var virtualnetGatewayModel = NetworkResourceManagerProfile.Mapper.Map<MNM.VirtualNetworkGateway>(this.VirtualNetworkGateway);
             virtualnetGatewayModel.Tags = TagsConversionHelper.CreateTagDictionary(this.VirtualNetworkGateway.Tag, validate: true);
 
-            this.VirtualNetworkGatewayClient.CreateOrUpdate(this.VirtualNetworkGateway.ResourceGroupName, this.VirtualNetworkGateway.Name, virtualnetGatewayModel);
+            string shouldProcessMessage = string.Format("Execute AzureRmVirtualNetworkGatewayVpnClientConfig for ResourceGroupName {0} VirtualNetworkGateway {1}", this.VirtualNetworkGateway.ResourceGroupName, this.VirtualNetworkGateway.Name);
+            if (ShouldProcess(shouldProcessMessage, VerbsCommon.Set))
+            {
+                this.VirtualNetworkGatewayClient.CreateOrUpdate(this.VirtualNetworkGateway.ResourceGroupName,
+                    this.VirtualNetworkGateway.Name, virtualnetGatewayModel);
 
-            var getvirtualnetGateway = this.GetVirtualNetworkGateway(this.VirtualNetworkGateway.ResourceGroupName, this.VirtualNetworkGateway.Name);
+                var getvirtualnetGateway = this.GetVirtualNetworkGateway(this.VirtualNetworkGateway.ResourceGroupName,
+                    this.VirtualNetworkGateway.Name);
 
-            WriteObject(getvirtualnetGateway);
+                WriteObject(getvirtualnetGateway);
+            }
         }
     }
 }
-

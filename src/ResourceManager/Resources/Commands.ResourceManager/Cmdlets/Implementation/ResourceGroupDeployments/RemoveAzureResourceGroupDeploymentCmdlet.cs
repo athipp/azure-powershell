@@ -16,28 +16,29 @@ using System;
 using Microsoft.Azure.Commands.ResourceManager.Cmdlets.Components;
 using System.Management.Automation;
 using ProjectResources = Microsoft.Azure.Commands.ResourceManager.Cmdlets.Properties.Resources;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
 {
     /// <summary>
     /// Deletes a deployment.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "AzureRmResourceGroupDeployment", SupportsShouldProcess = true,
-        DefaultParameterSetName = RemoveAzureResourceGroupDeploymentCmdlet.DeploymentNameParameterSet), OutputType(typeof(bool))]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ResourceGroupDeployment", SupportsShouldProcess = true,DefaultParameterSetName = RemoveAzureResourceGroupDeploymentCmdlet.DeploymentNameParameterSet), OutputType(typeof(bool))]
     public class RemoveAzureResourceGroupDeploymentCmdlet : ResourceManagerCmdletBase
     {
         /// <summary>
         /// The deployment Id parameter set.
         /// </summary>
-        internal const string DeploymentIdParameterSet = "The deployment Id parameter set.";
+        internal const string DeploymentIdParameterSet = "RemoveByResourceGroupDeploymentId";
 
         /// <summary>
         /// The deployment name parameter set.
         /// </summary>
-        internal const string DeploymentNameParameterSet = "The deployment name parameter set.";
+        internal const string DeploymentNameParameterSet = "RemoveByResourceGroupName";
 
         [Parameter(Position = 0, ParameterSetName = RemoveAzureResourceGroupDeploymentCmdlet.DeploymentNameParameterSet, Mandatory = true,
             ValueFromPipelineByPropertyName = true, HelpMessage = "The name of the resource group.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -56,7 +57,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
         public override void ExecuteCmdlet()
         {
             ConfirmAction(
-                ProjectResources.DeleteResourceGroupDeploymentMessage,
+                ProjectResources.DeleteDeploymentMessage,
                 ResourceGroupName,
                 () =>
                 {

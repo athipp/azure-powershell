@@ -16,9 +16,10 @@
 namespace Microsoft.Azure.Commands.ApiManagement.Commands
 {
     using Microsoft.Azure.Commands.ApiManagement.Models;
+    using ResourceManager.Common.ArgumentCompleters;
     using System.Management.Automation;
 
-    [Cmdlet(VerbsCommon.Add, "AzureRmApiManagementRegion"), OutputType(typeof(PsApiManagement))]
+    [Cmdlet("Add", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApiManagementRegion"), OutputType(typeof(PsApiManagement))]
     public class AddAzureApiManagementRegion : AzureApiManagementCmdletBase
     {
         [Parameter(
@@ -32,14 +33,14 @@ namespace Microsoft.Azure.Commands.ApiManagement.Commands
             ValueFromPipelineByPropertyName = false,
             Mandatory = true,
             HelpMessage = "Location of the new deployment region.")]
-
+        [LocationCompleter("Microsoft.ApiManagement/service")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
         [Parameter(
             ValueFromPipelineByPropertyName = false,
             Mandatory = false,
-            HelpMessage = "Tier of the deployment region. Valid values are Developer, Standard and Premium. Default value is Developer.")]
+            HelpMessage = "Tier of the deployment region. Valid and Default value is Premium.")]
         public PsApiManagementSku? Sku { get; set; }
 
         [Parameter(
@@ -59,7 +60,7 @@ namespace Microsoft.Azure.Commands.ApiManagement.Commands
             ExecuteCmdLetWrap(
                 () =>
                 {
-                    ApiManagement.AddRegion(Location, Sku ?? PsApiManagementSku.Developer, Capacity ?? 1, VirtualNetwork);
+                    ApiManagement.AddRegion(Location, Sku ?? PsApiManagementSku.Premium, Capacity ?? 1, VirtualNetwork);
 
                     return ApiManagement;
                 },

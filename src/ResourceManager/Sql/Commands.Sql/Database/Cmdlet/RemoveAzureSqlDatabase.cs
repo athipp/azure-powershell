@@ -12,6 +12,7 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.Database.Model;
 using System.Collections.Generic;
 using System.Globalization;
@@ -19,8 +20,8 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Sql.Database.Cmdlet
 {
-    [Cmdlet(VerbsCommon.Remove, "AzureRmSqlDatabase", SupportsShouldProcess = true)]
-    public class RemoveAzureSqlDatabase : AzureSqlDatabaseCmdletBase
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlDatabase", SupportsShouldProcess = true), OutputType(typeof(AzureSqlDatabaseModel))]
+    public class RemoveAzureSqlDatabase : AzureSqlDatabaseCmdletBase<IEnumerable<AzureSqlDatabaseModel>>
     {
         /// <summary>
         /// Gets or sets the name of the database to remove.
@@ -29,6 +30,8 @@ namespace Microsoft.Azure.Commands.Sql.Database.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 2,
             HelpMessage = "The name of the Azure SQL Database to remove.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers/databases", "ResourceGroupName", "ServerName")]
+        [Alias("Name")]
         [ValidateNotNullOrEmpty]
         public string DatabaseName { get; set; }
 

@@ -21,11 +21,12 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
     using Microsoft.Azure.Management.Logic.Models;
     using Microsoft.WindowsAzure.Commands.Utilities.Common;
     using Newtonsoft.Json.Linq;
+    using ResourceManager.Common.ArgumentCompleters;
 
     /// <summary>
     /// Gets the callback URL for a trigger in a workflow
     /// </summary>
-    [Cmdlet(VerbsDiagnostic.Test, "AzureRmLogicApp"), OutputType(typeof(object))]
+    [Cmdlet("Test", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "LogicApp"), OutputType(typeof(void))]
     public class ValidateAzureLogicApp : LogicAppBaseCmdlet
     {
         #region private Variables
@@ -41,6 +42,7 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 
         [Parameter(Mandatory = true, HelpMessage = "The targeted resource group for the workflow.",
             ValueFromPipelineByPropertyName = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -51,6 +53,7 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
         public string Name { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The location of the workflow.", ValueFromPipelineByPropertyName = true)]
+        [LocationCompleter("Microsoft.Logic/workflows")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 

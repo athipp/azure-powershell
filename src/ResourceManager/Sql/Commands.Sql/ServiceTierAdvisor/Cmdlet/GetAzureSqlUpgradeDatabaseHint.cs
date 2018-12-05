@@ -12,16 +12,19 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.Common;
 using Microsoft.Azure.Commands.Sql.ServiceTierAdvisor.Services;
-using Microsoft.Azure.Management.Sql.Models;
+using Microsoft.Azure.Management.Sql.LegacySdk.Models;
 using System.Collections.Generic;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Sql.ServiceTierAdvisor.Cmdlet
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmSqlDatabaseUpgradeHint", ConfirmImpact = ConfirmImpact.None, SupportsShouldProcess = true)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlDatabaseUpgradeHint", ConfirmImpact = ConfirmImpact.None, SupportsShouldProcess = true)]
+    [OutputType(typeof(RecommendedDatabaseProperties))]
     public class GetAzureSqlDatabaseUpgradeHint : AzureSqlCmdletBase<IEnumerable<RecommendedDatabaseProperties>, AzureSqlServiceTierAdvisorAdapter>
     {
         /// <summary>
@@ -31,6 +34,7 @@ namespace Microsoft.Azure.Commands.Sql.ServiceTierAdvisor.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 1,
             HelpMessage = "The name of the Azure SQL Server.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string ServerName { get; set; }
 
@@ -40,6 +44,7 @@ namespace Microsoft.Azure.Commands.Sql.ServiceTierAdvisor.Cmdlet
         [Parameter(Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The name of the Azure SQL Database.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers/databases", "ResourceGroupName", "ServerName")]
         [ValidateNotNullOrEmpty]
         public string DatabaseName { get; set; }
 
@@ -79,9 +84,9 @@ namespace Microsoft.Azure.Commands.Sql.ServiceTierAdvisor.Cmdlet
         /// </summary>
         /// <param name="subscription">Subscription</param>
         /// <returns>Returns new AzureSqlServiceTierAdvisorAdapter</returns>
-        protected override AzureSqlServiceTierAdvisorAdapter InitModelAdapter(AzureSubscription subscription)
+        protected override AzureSqlServiceTierAdvisorAdapter InitModelAdapter(IAzureSubscription subscription)
         {
-            return new AzureSqlServiceTierAdvisorAdapter(DefaultProfile.Context);
+            return new AzureSqlServiceTierAdvisorAdapter(DefaultProfile.DefaultContext);
         }
     }
 }

@@ -13,11 +13,12 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.DataLakeStore.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.DataLakeStore
 {
-    [Cmdlet(VerbsDiagnostic.Test, "AzureRmDataLakeStoreAccount"), OutputType(typeof(bool))]
+    [Cmdlet("Test", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "DataLakeStoreAccount"), OutputType(typeof(bool))]
     [Alias("Test-AdlStore")]
     public class TestAzureDataLakeStoreAccount : DataLakeStoreCmdletBase
     {
@@ -28,6 +29,7 @@ namespace Microsoft.Azure.Commands.DataLakeStore
 
         [Parameter(ValueFromPipelineByPropertyName = true, Position = 1, Mandatory = false,
             HelpMessage = "Name of resource group under which want to test the account.")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

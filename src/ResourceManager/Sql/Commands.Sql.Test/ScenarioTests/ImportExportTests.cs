@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,6 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.ScenarioTest.SqlTests;
-using Microsoft.Azure.ServiceManagemenet.Common.Models;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Xunit.Abstractions;
@@ -22,20 +21,24 @@ namespace Microsoft.Azure.Commands.Sql.Test.ScenarioTests
 {
     public class ImportExportTests : SqlTestsBase
     {
-        public ImportExportTests(ITestOutputHelper output)
+        public ImportExportTests(ITestOutputHelper output) : base(output)
         {
-            XunitTracingInterceptor.AddToContext(new XunitTracingInterceptor(output));
         }
 
+
         [Fact]
-        [Trait(Category.AcceptanceType, Category.Sql)]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Sql, "Needs to be re-recorded")]
+        // TODO: Remove "CallSite.Target" from Get-SqlDatabaseImportExportTestEnvironmentParameters in GetName when re-recording
         public void TestExportDatabase()
         {
             RunPowerShellTest("Test-ExportDatabase");
         }
 
         [Fact]
-        [Trait(Category.AcceptanceType, Category.Sql)]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Sql, "Needs to be re-recorded")]
+        // TODO: Remove "CallSite.Target" from Get-SqlDatabaseImportExportTestEnvironmentParameters in GetName when re-recording
         public void TestImportDatabase()
         {
             RunPowerShellTest("Test-ImportDatabase");

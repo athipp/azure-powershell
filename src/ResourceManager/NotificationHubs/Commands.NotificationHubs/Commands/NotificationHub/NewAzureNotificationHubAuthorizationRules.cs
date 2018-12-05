@@ -13,18 +13,20 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.NotificationHubs.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.NotificationHubs.Commands.NotificationHub
 {
 
-    [Cmdlet(VerbsCommon.New, "AzureRmNotificationHubAuthorizationRules"), OutputType(typeof(SharedAccessAuthorizationRuleAttributes))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "NotificationHubAuthorizationRules", SupportsShouldProcess = true), OutputType(typeof(SharedAccessAuthorizationRuleAttributes))]
     public class NewAzureNotificationHubAuthorizationRules : AzureNotificationHubsCmdletBase
     {
         [Parameter(Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             Position = 0,
             HelpMessage = "The name of the resource group")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroup { get; set; }
 
@@ -68,10 +70,13 @@ namespace Microsoft.Azure.Commands.NotificationHubs.Commands.NotificationHub
                 sasRule = SASRule;
             }
 
-            // Create a new notificationHub authorizationRule
-            var authRule = Client.CreateOrUpdateNotificationHubAuthorizationRules(ResourceGroup, Namespace, NotificationHub,
-                                                    sasRule.Name, sasRule.Rights, sasRule.PrimaryKey, sasRule.SecondaryKey);
-            WriteObject(authRule);
+            if (ShouldProcess(string.Empty, Resources.CreateNotificationHubAuthorizationRule))
+            {
+                // Create a new notificationHub authorizationRule
+                var authRule = Client.CreateOrUpdateNotificationHubAuthorizationRules(ResourceGroup, sasRule.Location, Namespace, NotificationHub,
+                                                    sasRule.Name, sasRule.Rights);
+                WriteObject(authRule);
+            }
         }
     }
 }

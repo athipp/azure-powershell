@@ -53,7 +53,6 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Entities.Resources
         [JsonProperty(Required = Required.Default)]
         public ResourceSku Sku { get; set; }
 
-
         /// <summary>
         /// Gets or sets the kind of the resource definition.
         /// </summary>
@@ -91,15 +90,15 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Entities.Resources
         public DateTime? ChangedTime { get; set; }
 
         /// <summary>
-        /// Gets or sets the zones.
-        /// </summary>
-        [JsonProperty(Required = Required.Default)]
-        public string[] Zones { get; set; }
-
-        /// <summary>
         /// Gets or sets the tags.
         /// </summary>
         [JsonProperty(Required = Required.Default)]
         public InsensitiveDictionary<string> Tags { get; set; }
+
+        /// <summary>
+        /// The identity assigned to the resource.
+        /// </summary>
+        [JsonProperty(Required = Required.Default)]
+        public ResourceIdentity Identity { get; set; }
     }
 }

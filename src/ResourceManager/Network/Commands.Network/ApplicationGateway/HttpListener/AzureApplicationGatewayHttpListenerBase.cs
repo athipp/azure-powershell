@@ -13,6 +13,9 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Network.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Network
@@ -79,6 +82,11 @@ namespace Microsoft.Azure.Commands.Network
         [ValidateNotNullOrEmpty]
         public string Protocol { get; set; }
 
+        [Parameter(
+                HelpMessage = "Customer error of an application gateway")]
+        [ValidateNotNullOrEmpty]
+        public PSApplicationGatewayCustomError[] CustomErrorConfiguration { get; set; }
+
         public override void ExecuteCmdlet()
         {
             base.ExecuteCmdlet();
@@ -106,7 +114,20 @@ namespace Microsoft.Azure.Commands.Network
             httpListener.Name = this.Name;
             httpListener.Protocol = this.Protocol;
             httpListener.HostName = this.HostName;
-            httpListener.RequireServerNameIndication = this.RequireServerNameIndication;
+
+            if (string.Equals(this.RequireServerNameIndication, "true", StringComparison.OrdinalIgnoreCase))
+            {
+                httpListener.RequireServerNameIndication = true;
+            }
+            else if (string.Equals(this.RequireServerNameIndication, "false", StringComparison.OrdinalIgnoreCase))
+            {
+                httpListener.RequireServerNameIndication = false;
+            }
+            else if (string.Equals(this.Protocol, "https", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrEmpty(this.HostName))
+            {
+                // Set default as true to be at parity with portal.
+                httpListener.RequireServerNameIndication = true;
+            }
 
             if (!string.IsNullOrEmpty(this.FrontendIPConfigurationId))
             {
@@ -119,10 +140,16 @@ namespace Microsoft.Azure.Commands.Network
                 httpListener.FrontendPort = new PSResourceId();
                 httpListener.FrontendPort.Id = this.FrontendPortId;
             }
+
             if (!string.IsNullOrEmpty(this.SslCertificateId))
             {
                 httpListener.SslCertificate = new PSResourceId();
                 httpListener.SslCertificate.Id = this.SslCertificateId;
+            }
+
+            if (this.CustomErrorConfiguration != null)
+            {
+                httpListener.CustomErrorConfigurations = this.CustomErrorConfiguration?.ToList();
             }
 
             httpListener.Id = ApplicationGatewayChildResourceHelper.GetResourceNotSetId(

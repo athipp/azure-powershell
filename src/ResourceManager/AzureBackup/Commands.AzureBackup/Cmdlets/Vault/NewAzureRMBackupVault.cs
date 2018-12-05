@@ -12,21 +12,25 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using System;
+using System.Management.Automation;
 using Microsoft.Azure.Commands.AzureBackup.Helpers;
 using Microsoft.Azure.Commands.AzureBackup.Models;
 using Microsoft.Azure.Commands.AzureBackup.Properties;
-using System;
-using System.Management.Automation;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
+using Microsoft.WindowsAzure.Commands.Common.CustomAttributes;
 
 namespace Microsoft.Azure.Commands.AzureBackup.Cmdlets
 {
     /// <summary>
     /// Command to create an azure backup vault in a subscription
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmBackupVault"), OutputType(typeof(AzureRMBackupVault))]
+    [CmdletDeprecation("This module is going to be deprecated. Please use AzureRM.RecoveryServices.Backup or Az.RecoveryServices.Backup moving forward.")]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "BackupVault"), OutputType(typeof(AzureRMBackupVault))]
     public class NewAzureRMBackupVault : AzureBackupCmdletBase
     {
         [Parameter(Position = 0, Mandatory = true, HelpMessage = AzureBackupCmdletHelpMessage.ResourceGroupName)]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -35,6 +39,7 @@ namespace Microsoft.Azure.Commands.AzureBackup.Cmdlets
         public string Name { get; set; }
 
         [Parameter(Position = 2, Mandatory = true, HelpMessage = AzureBackupCmdletHelpMessage.Location)]
+        [LocationCompleter("Microsoft.Backup/BackupVault")]
         [ValidateNotNullOrEmpty]
         public string Region { get; set; }
 

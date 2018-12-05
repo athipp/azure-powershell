@@ -14,19 +14,21 @@
 
 using AutoMapper;
 using Microsoft.Azure.Commands.Network.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.Network;
 using System.Collections.Generic;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmEffectiveRouteTable"), OutputType(typeof(PSEffectiveRoute))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "EffectiveRouteTable"), OutputType(typeof(PSEffectiveRoute))]
     public class GetAzureEffectiveRouteTableCommand : NetworkInterfaceBaseCmdlet
     {
         [Parameter(
            Mandatory = true,
            ValueFromPipelineByPropertyName = true,
            HelpMessage = "The network interface name.")]
+        [ResourceNameCompleter("Microsoft.Network/networkInterfaces", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string NetworkInterfaceName { get; set; }
 
@@ -34,8 +36,12 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
+
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         public override void Execute()
         {
@@ -43,7 +49,7 @@ namespace Microsoft.Azure.Commands.Network
 
             var getEffectiveRouteTable = this.NetworkInterfaceClient.GetEffectiveRouteTable(this.ResourceGroupName, this.NetworkInterfaceName);
 
-            var psEffectiveRouteTable = Mapper.Map<List<PSEffectiveRoute>>(getEffectiveRouteTable.Value);
+            var psEffectiveRouteTable = NetworkResourceManagerProfile.Mapper.Map<List<PSEffectiveRoute>>(getEffectiveRouteTable.Value);
 
             WriteObject(psEffectiveRouteTable, true);
         }

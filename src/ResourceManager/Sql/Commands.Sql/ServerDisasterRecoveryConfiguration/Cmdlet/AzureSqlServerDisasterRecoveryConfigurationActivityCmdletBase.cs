@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,9 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.Common;
 using Microsoft.Azure.Commands.Sql.ServerDisasterRecoveryConfiguration.Model;
 using Microsoft.Azure.Commands.Sql.ServerDisasterRecoveryConfiguration.Services;
@@ -32,6 +34,7 @@ namespace Microsoft.Azure.Commands.Sql.ServerDisasterRecoveryConfiguration.Cmdle
             ValueFromPipelineByPropertyName = true,
             Position = 1,
             HelpMessage = "The name of the Azure SQL Server the Disaster Recovery Configuration is in.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string ServerName { get; set; }
 
@@ -58,9 +61,9 @@ namespace Microsoft.Azure.Commands.Sql.ServerDisasterRecoveryConfiguration.Cmdle
         /// </summary>
         /// <param name="subscription"></param>
         /// <returns></returns>
-        protected override AzureSqlServerDisasterRecoveryConfigurationAdapter InitModelAdapter(AzureSubscription subscription)
+        protected override AzureSqlServerDisasterRecoveryConfigurationAdapter InitModelAdapter(IAzureSubscription subscription)
         {
-            return new AzureSqlServerDisasterRecoveryConfigurationAdapter(DefaultProfile.Context);
+            return new AzureSqlServerDisasterRecoveryConfigurationAdapter(DefaultProfile.DefaultContext);
         }
     }
 }

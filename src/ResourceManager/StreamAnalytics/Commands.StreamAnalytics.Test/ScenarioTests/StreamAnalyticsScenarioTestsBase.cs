@@ -13,82 +13,83 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Common.Authentication;
-using Microsoft.Azure.Gallery;
-using Microsoft.Azure.Management.Authorization;
-using Microsoft.Azure.Management.Resources;
 using Microsoft.Azure.Management.StreamAnalytics;
-using Microsoft.Azure.Subscriptions;
-using Microsoft.Azure.Test;
+using Microsoft.Azure.ServiceManagemenet.Common.Models;
+using Microsoft.Azure.Test.HttpRecorder;
+using Microsoft.Rest.ClientRuntime.Azure.TestFramework;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Microsoft.WindowsAzure.Commands.Test.Utilities.Common;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using Microsoft.Azure.Management.Internal.Resources;
+using TestEnvironmentFactory = Microsoft.Rest.ClientRuntime.Azure.TestFramework.TestEnvironmentFactory;
 
 namespace Microsoft.Azure.Commands.StreamAnalytics.Test
 {
     public abstract class StreamAnalyticsScenarioTestsBase : RMTestBase
     {
-        private EnvironmentSetupHelper helper;
+        private readonly EnvironmentSetupHelper _helper;
 
         protected StreamAnalyticsScenarioTestsBase()
         {
-            helper = new EnvironmentSetupHelper();
+            _helper = new EnvironmentSetupHelper();
         }
 
-        protected void SetupManagementClients()
+        protected void SetupManagementClients(MockContext context)
         {
-            var streamAnalyticsManagementClient = GetStreamAnalyticsManagementClient();
-            var resourceManagementClient = GetResourceManagementClient();
-            var subscriptionsClient = GetSubscriptionClient();
-            var galleryClient = GetGalleryClient();
-            var authorizationManagementClient = GetAuthorizationManagementClient();
+            var streamAnalyticsManagementClient = GetStreamAnalyticsManagementClient(context);
+            var resourceManagementClient = GetResourceManagementClient(context);
 
-            helper.SetupManagementClients(streamAnalyticsManagementClient,
-                resourceManagementClient,
-                subscriptionsClient,
-                galleryClient,
-                authorizationManagementClient);
+            _helper.SetupManagementClients(streamAnalyticsManagementClient, resourceManagementClient);
         }
 
-        protected void RunPowerShellTest(params string[] scripts)
+        protected void RunPowerShellTest(XunitTracingInterceptor logger, params string[] scripts)
         {
-            using (UndoContext context = UndoContext.Current)
+            _helper.TracingInterceptor = logger;
+
+            var sf = new StackTrace().GetFrame(1);
+            var callingClassType = sf.GetMethod().ReflectedType?.ToString();
+            var mockName = sf.GetMethod().Name;
+
+            var d = new Dictionary<string, string>
             {
-                context.Start(TestUtilities.GetCallingClass(2), TestUtilities.GetCurrentMethodName(2));
+                {"Microsoft.Resources", null},
+                {"Microsoft.Features", null},
+                {"Microsoft.Authorization", null}
+            };
+            var providersToIgnore = new Dictionary<string, string>
+            {
+                {"Microsoft.Azure.Management.Resources.ResourceManagementClient", "2016-02-01"}
+            };
+            HttpMockServer.Matcher = new PermissiveRecordMatcherWithApiExclusion(true, d, providersToIgnore);
+            HttpMockServer.RecordsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SessionRecords");
 
-                SetupManagementClients();
+            using (var context = MockContext.Start(callingClassType, mockName))
+            {
+                SetupManagementClients(context);
 
-                helper.SetupEnvironment(AzureModule.AzureResourceManager);
-                helper.SetupModules(AzureModule.AzureResourceManager,
-                    "ScenarioTests\\" + this.GetType().Name + ".ps1",
-                    helper.RMProfileModule,
-                    helper.GetRMModulePath(@"AzureRM.StreamAnalytics.psd1"));
+                var callingClassName = callingClassType?.Split(new[] { "." }, StringSplitOptions.RemoveEmptyEntries).Last();
+                _helper.SetupEnvironment(AzureModule.AzureResourceManager);
+                _helper.SetupModules(AzureModule.AzureResourceManager,
+                    "ScenarioTests\\" + callingClassName + ".ps1",
+                    _helper.RMProfileModule,
+                    _helper.GetRMModulePath(@"AzureRM.StreamAnalytics.psd1"));
 
-                helper.RunPowerShellTest(scripts);
+                _helper.RunPowerShellTest(scripts);
             }
         }
 
-        protected StreamAnalyticsManagementClient GetStreamAnalyticsManagementClient()
+        protected StreamAnalyticsManagementClient GetStreamAnalyticsManagementClient(MockContext context)
         {
-            return TestBase.GetServiceClient<StreamAnalyticsManagementClient>(new CSMTestEnvironmentFactory());
+            return context.GetServiceClient<StreamAnalyticsManagementClient>(TestEnvironmentFactory.GetTestEnvironment());
         }
 
-        protected ResourceManagementClient GetResourceManagementClient()
+        protected ResourceManagementClient GetResourceManagementClient(MockContext context)
         {
-            return TestBase.GetServiceClient<ResourceManagementClient>(new CSMTestEnvironmentFactory());
-        }
-
-        protected SubscriptionClient GetSubscriptionClient()
-        {
-            return TestBase.GetServiceClient<SubscriptionClient>(new CSMTestEnvironmentFactory());
-        }
-
-        protected GalleryClient GetGalleryClient()
-        {
-            return TestBase.GetServiceClient<GalleryClient>(new CSMTestEnvironmentFactory());
-        }
-
-        protected AuthorizationManagementClient GetAuthorizationManagementClient()
-        {
-            return TestBase.GetServiceClient<AuthorizationManagementClient>(new CSMTestEnvironmentFactory());
+            return context.GetServiceClient<ResourceManagementClient>(TestEnvironmentFactory.GetTestEnvironment());
         }
     }
 }

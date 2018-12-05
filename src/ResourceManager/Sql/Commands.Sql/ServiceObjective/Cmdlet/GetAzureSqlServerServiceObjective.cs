@@ -19,9 +19,10 @@ using System.Management.Automation;
 namespace Microsoft.Azure.Commands.Sql.ServiceObjective.Cmdlet
 {
     /// <summary>
-    /// Defines the Get-AzureRmSqlDatabaseServer cmdlet
+    /// Defines the Get-AzSqlDatabaseServer cmdlet
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmSqlServerServiceObjective", ConfirmImpact = ConfirmImpact.None, SupportsShouldProcess = true)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlServerServiceObjective", ConfirmImpact = ConfirmImpact.None, SupportsShouldProcess = true)]
+    [OutputType(typeof(AzureSqlServerServiceObjectiveModel))]
     public class GetAzureSqlServerServiceObjective : AzureSqlServerServiceObjectiveCmdletBase
     {
         /// <summary>
@@ -44,8 +45,10 @@ namespace Microsoft.Azure.Commands.Sql.ServiceObjective.Cmdlet
 
             if (this.MyInvocation.BoundParameters.ContainsKey("ServiceObjectiveName"))
             {
-                results = new List<AzureSqlServerServiceObjectiveModel>();
-                results.Add(ModelAdapter.GetServiceObjective(this.ResourceGroupName, this.ServerName, this.ServiceObjectiveName));
+                results = new List<AzureSqlServerServiceObjectiveModel>
+                {
+                    ModelAdapter.GetServiceObjective(this.ResourceGroupName, this.ServerName, this.ServiceObjectiveName)
+                };
             }
             else
             {

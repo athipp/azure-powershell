@@ -12,18 +12,21 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
+using System.Globalization;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.NotificationHubs.Commands.NotificationHub
 {
 
-    [Cmdlet(VerbsCommon.Remove, "AzureRmNotificationHubAuthorizationRules")]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "NotificationHubAuthorizationRules", SupportsShouldProcess = true), OutputType(typeof(void))]
     public class RemoveAzureNotificationHubAuthorizationRules : AzureNotificationHubsCmdletBase
     {
         [Parameter(Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             Position = 0,
             HelpMessage = "The name of the resource group")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroup { get; set; }
 
@@ -48,11 +51,25 @@ namespace Microsoft.Azure.Commands.NotificationHubs.Commands.NotificationHub
         [ValidateNotNullOrEmpty]
         public string AuthorizationRule { get; set; }
 
+        /// <summary>
+        /// If present, do not ask for confirmation
+        /// </summary>
+        [Parameter(Mandatory = false,
+           HelpMessage = "Do not ask for confirmation.")]
+        public SwitchParameter Force { get; set; }
+
         public override void ExecuteCmdlet()
         {
-            // Delete notificationHub authorizationRule
-            var deleteAuthRule = Client.DeleteNotificationHubAuthorizationRules(ResourceGroup, Namespace, NotificationHub, AuthorizationRule);
-            WriteObject(deleteAuthRule);
+            ConfirmAction(
+                Force.IsPresent,
+                string.Format(CultureInfo.InvariantCulture, Resources.DeleteNotificationHubAuthorizationRule_Confirm, AuthorizationRule),
+                Resources.DeleteNotificationHubAuthorizationRule_WhatIf,
+                AuthorizationRule,
+                () =>
+                {
+                    // Delete notificationHub authorizationRule
+                    Client.DeleteNotificationHubAuthorizationRules(ResourceGroup, Namespace, NotificationHub, AuthorizationRule);
+                });
         }
     }
 }

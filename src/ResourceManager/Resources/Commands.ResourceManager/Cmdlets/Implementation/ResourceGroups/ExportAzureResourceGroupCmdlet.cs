@@ -14,6 +14,8 @@
 
 namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
 {
+    using Commands.Common.Authentication.Abstractions;
+    using Common.ArgumentCompleters;
     using Microsoft.Azure.Commands.ResourceManager.Cmdlets.Components;
     using Microsoft.Azure.Commands.ResourceManager.Cmdlets.Entities.ErrorResponses;
     using Microsoft.Azure.Commands.ResourceManager.Cmdlets.Entities.ResourceGroups;
@@ -26,8 +28,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
     /// <summary>
     /// Captures the specifies resource group as a template and saves it to a file on disk.
     /// </summary>
-    [Cmdlet(VerbsData.Export, "AzureRmResourceGroup", SupportsShouldProcess = true), 
-        OutputType(typeof(PSObject))]
+    [Cmdlet("Export", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ResourceGroup", SupportsShouldProcess = true), OutputType(typeof(PSObject))]
     public class ExportAzureResourceGroupCmdlet : ResourceManagerCmdletBase
     {
         /// <summary>
@@ -35,6 +36,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
         /// </summary>
         [Alias("ResourceGroup")]
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -154,7 +156,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
         protected string GetResourceId()
         {
             return ResourceIdUtility.GetResourceId(
-                subscriptionId: DefaultContext.Subscription.Id,
+                subscriptionId: DefaultContext.Subscription.GetId(),
                 resourceGroupName: this.ResourceGroupName,
                 resourceType: null,
                 resourceName: null);

@@ -14,15 +14,15 @@
 
 using AutoMapper;
 using Microsoft.Azure.Commands.Network.Models;
-using Microsoft.Azure.Commands.Tags.Model;
 using Microsoft.Azure.Management.Network;
 using System;
+using System.Collections.Generic;
 using System.Management.Automation;
 using MNM = Microsoft.Azure.Management.Network.Models;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Set, "AzureRmVirtualNetworkPeering"), OutputType(typeof(PSVirtualNetworkPeering))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VirtualNetworkPeering"), OutputType(typeof(PSVirtualNetworkPeering))]
     public class SetAzureVirtualNetworkPeeringCommand : VirtualNetworkPeeringBase
     {
         [Parameter(
@@ -30,6 +30,9 @@ namespace Microsoft.Azure.Commands.Network
             ValueFromPipeline = true,
             HelpMessage = "The virtual network peering")]
         public PSVirtualNetworkPeering VirtualNetworkPeering { get; set; }
+
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         public override void Execute()
         {
@@ -41,10 +44,24 @@ namespace Microsoft.Azure.Commands.Network
             }
 
             // Map to the sdk object
-            var vnetPeeringModel = Mapper.Map<MNM.VirtualNetworkPeering>(this.VirtualNetworkPeering);
+            var vnetPeeringModel = NetworkResourceManagerProfile.Mapper.Map<MNM.VirtualNetworkPeering>(this.VirtualNetworkPeering);
+
+            //Get the remote VNet Id nad ge then get th etoke for the resource Id if tis in a different tenant
+            var remoteVirtualNetworkId = this.VirtualNetworkPeering.RemoteVirtualNetwork.Id;
+            Dictionary<string, List<string>> auxAuthHeader = null;
+            if (remoteVirtualNetworkId != null)
+            {
+                List<string> resourceIds = new List<string>();
+                resourceIds.Add(remoteVirtualNetworkId);
+                var auxHeaderDictionary = GetAuxilaryAuthHeaderFromResourceIds(resourceIds);
+                if (auxHeaderDictionary != null && auxHeaderDictionary.Count > 0)
+                {
+                    auxAuthHeader = new Dictionary<string, List<string>>(auxHeaderDictionary);
+                }
+            }
 
             // Execute the Create VirtualNetwork call
-            this.VirtualNetworkPeeringClient.CreateOrUpdate(this.VirtualNetworkPeering.ResourceGroupName, this.VirtualNetworkPeering.VirtualNetworkName, this.VirtualNetworkPeering.Name, vnetPeeringModel);
+            this.VirtualNetworkPeeringClient.CreateOrUpdateWithHttpMessagesAsync(this.VirtualNetworkPeering.ResourceGroupName, this.VirtualNetworkPeering.VirtualNetworkName, this.VirtualNetworkPeering.Name, vnetPeeringModel, auxAuthHeader).GetAwaiter().GetResult();
 
             var getVirtualNetworkPeering = this.GetVirtualNetworkPeering(this.VirtualNetworkPeering.ResourceGroupName, this.VirtualNetworkPeering.VirtualNetworkName, this.VirtualNetworkPeering.Name);
 

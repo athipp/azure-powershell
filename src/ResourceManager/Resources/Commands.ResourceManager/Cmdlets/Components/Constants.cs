@@ -30,6 +30,16 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Components
         public static readonly string MicrosoftAuthorizationNamespace = "Microsoft.Authorization";
 
         /// <summary>
+        /// The <c>Microsoft.Management</c> namespace.
+        /// </summary>
+        public static readonly string MicrosoftManagementNamespace = "Microsoft.Management";
+
+        /// <summary>
+        /// The <c>Microsoft.Solutions</c> namespace.
+        /// </summary>
+        public static readonly string MicrosoftSolutionNamespace = "Microsoft.Solutions";
+
+        /// <summary>
         /// The string literal <c>ResourceGroups</c>
         /// </summary>
         public static readonly string ResourceGroups = "ResourceGroups";
@@ -55,9 +65,29 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Components
         public static readonly string DefaultApiVersion = "2015-01-01";
 
         /// <summary>
-        /// The default policy API version.
+        /// The default appliction API version.
         /// </summary>
-        public static readonly string PolicyApiVersion = "2016-04-01";
+        public static readonly string ApplicationApiVersion = "2017-09-01";
+
+        /// <summary>
+        /// The default resources API version.
+        /// </summary>
+        public static readonly string ResourcesApiVersion = "2016-09-01";
+
+        /// <summary>
+        /// The default policy definition API version.
+        /// </summary>
+        public static readonly string PolicyDefinitionApiVersion = "2018-05-01";
+
+        /// <summary>
+        /// The default policy set definition API version.
+        /// </summary>
+        public static readonly string PolicySetDefintionApiVersion = "2018-05-01";
+
+        /// <summary>
+        /// The default policy assignment API version.
+        /// </summary>
+        public static readonly string PolicyAssignmentApiVersion = "2018-05-01";
 
         /// <summary>
         /// The default providers API version.
@@ -72,7 +102,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Components
         /// <summary>
         /// The default deployment operation API version.
         /// </summary>
-        public static readonly string DeploymentOperationApiVersion = "2016-02-01";
+        public static readonly string DeploymentOperationApiVersion = "2018-05-01";
 
         /// <summary>
         /// The move action.
@@ -105,9 +135,29 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Components
         public static readonly string MicrosoftAuthorizationPolicyDefinitionType = Constants.MicrosoftAuthorizationNamespace + "/policydefinitions";
 
         /// <summary>
+        /// The policy set definition resource type.
+        /// </summary>
+        public static readonly string MicrosoftAuthorizationPolicySetDefinitionType = Constants.MicrosoftAuthorizationNamespace + "/policysetdefinitions";
+
+        /// <summary>
         /// The policy definition resource type.
         /// </summary>
         public static readonly string MicrosoftAuthorizationPolicyAssignmentType = Constants.MicrosoftAuthorizationNamespace + "/policyassignments";
+
+        /// <summary>
+        /// The management group resource type.
+        /// </summary>
+        public static readonly string MicrosoftManagementGroupDefinitionType = Constants.MicrosoftManagementNamespace + "/managementgroups";
+
+        /// <summary>
+        /// The application definition resource type.
+        /// </summary>
+        public static readonly string MicrosoftApplicationDefinitionType = Constants.MicrosoftSolutionNamespace + "/applicationdefinitions";
+
+        /// <summary>
+        /// The application resource type.
+        /// </summary>
+        public static readonly string MicrosoftApplicationType = Constants.MicrosoftSolutionNamespace + "/applications";
 
         /// <summary>
         /// The type name of the generic resource.

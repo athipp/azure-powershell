@@ -14,29 +14,29 @@
 using AutoMapper;
 using Microsoft.Azure.Commands.Compute.Common;
 using Microsoft.Azure.Commands.Compute.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.Compute;
 using Microsoft.Azure.Management.Compute.Models;
 using Newtonsoft.Json;
+using System;
 using System.Linq;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Compute
 {
-    [Cmdlet(
-        VerbsCommon.Set,
-        ProfileNouns.VirtualMachineSqlServerExtension)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VMSqlServerExtension")]
     [OutputType(typeof(PSAzureOperationResponse))]
     public class SetAzureSqlServerExtensionCommand : VirtualMachineExtensionBaseCmdlet
     {
         /// <summary>
-        /// The specific version of the SqlServer extension that Set-AzureRmVMSqlServerExtension will
+        /// The specific version of the SqlServer extension that Set-AzVMSqlServerExtension will
         /// apply the settings to.
         /// </summary>
         [Alias("HandlerVersion")]
         [Parameter(
             Position = 1,
             ValueFromPipelineByPropertyName = true,
-            HelpMessage = "The version of the SqlServer extension that Set-AzureRmVMSqlServerExtension will apply the settings to. " +
+            HelpMessage = "The version of the SqlServer extension that Set-AzVMSqlServerExtension will apply the settings to. " +
                           "Allowed format N.N")]
         [ValidateNotNullOrEmpty]
         public string Version { get; set; }
@@ -46,6 +46,7 @@ namespace Microsoft.Azure.Commands.Compute
            Position = 2,
            ValueFromPipelineByPropertyName = true,
            HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -54,6 +55,7 @@ namespace Microsoft.Azure.Commands.Compute
             Position = 3,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Name of the virtual machine where Sql Server extension handler would be installed.")]
+        [ResourceNameCompleter("Microsoft.Compute/virtualMachines", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string VMName { get; set; }
 
@@ -61,6 +63,7 @@ namespace Microsoft.Azure.Commands.Compute
             ValueFromPipelineByPropertyName = true,
             Position = 4,
             HelpMessage = "Name of the ARM resource that represents the extension. This is defaulted to 'Microsoft.SqlServer.Management.SqlIaaSAgent'.")]
+        [ResourceNameCompleter("Microsoft.Compute/virtualMachines/extensions", "ResourceGroupName", "VMName")]
         [ValidateNotNullOrEmpty]
         public string Name { get; set; }
 
@@ -93,6 +96,7 @@ namespace Microsoft.Azure.Commands.Compute
             Position = 8,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Location of the resource.")]
+        [LocationCompleter("Microsoft.Compute/virtualMachines")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
@@ -102,7 +106,7 @@ namespace Microsoft.Azure.Commands.Compute
 
 
             VirtualMachine vm = ComputeClient.ComputeManagementClient.VirtualMachines.Get(this.ResourceGroupName, this.VMName);
-            if (vm != null)
+            if (vm != null && vm.Resources != null)
             {
                 VirtualMachineExtension extension = vm.Resources.Where(x => x.Publisher.Equals(VirtualMachineSqlServerExtensionContext.ExtensionPublishedNamespace)).FirstOrDefault();
                 if (extension != null)
@@ -118,7 +122,7 @@ namespace Microsoft.Azure.Commands.Compute
             {
                 Location = this.Location,
                 Publisher = VirtualMachineSqlServerExtensionContext.ExtensionPublishedNamespace,
-                VirtualMachineExtensionType = VirtualMachineSqlServerExtensionContext.ExtensionPublishedName,
+                VirtualMachineExtensionType = VirtualMachineSqlServerExtensionContext.ExtensionPublishedType,
                 TypeHandlerVersion = string.IsNullOrEmpty(this.Version) ? VirtualMachineSqlServerExtensionContext.ExtensionDefaultVersion : this.Version,
                 Settings = this.GetPublicConfiguration(),
                 ProtectedSettings = this.GetPrivateConfiguration(),
@@ -135,7 +139,7 @@ namespace Microsoft.Azure.Commands.Compute
                     op = VirtualMachineExtensionClient.CreateOrUpdateWithHttpMessagesAsync(
                         ResourceGroupName,
                         VMName,
-                        Name ?? VirtualMachineSqlServerExtensionContext.ExtensionPublishedNamespace + "." + VirtualMachineSqlServerExtensionContext.ExtensionPublishedName,
+                        Name ?? VirtualMachineSqlServerExtensionContext.ExtensionPublishedName,
                         parameters).GetAwaiter().GetResult();
                     break;
                 }
@@ -153,7 +157,7 @@ namespace Microsoft.Azure.Commands.Compute
                     }
                 }
             }
-            var result = Mapper.Map<PSAzureOperationResponse>(op);
+            var result = ComputeAutoMapperProfile.Mapper.Map<PSAzureOperationResponse>(op);
             WriteObject(result);
         }
 
@@ -168,7 +172,8 @@ namespace Microsoft.Azure.Commands.Compute
                 AutoPatchingSettings = this.AutoPatchingSettings,
                 AutoBackupSettings = this.AutoBackupSettings,
                 KeyVaultCredentialSettings = this.KeyVaultCredentialSettings,
-                AutoTelemetrySettings = new AutoTelemetrySettings() { Region = this.Location }
+                AutoTelemetrySettings = new AutoTelemetrySettings() { Region = this.Location },
+                DeploymentToken = new Random().Next()
             };
         }
 

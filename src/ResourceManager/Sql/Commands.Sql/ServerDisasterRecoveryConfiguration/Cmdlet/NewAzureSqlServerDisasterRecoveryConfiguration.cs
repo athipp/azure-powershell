@@ -13,6 +13,7 @@
 // ----------------------------------------------------------------------------------
 
 using Hyak.Common;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.ServerDisasterRecoveryConfiguration.Model;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,8 +24,7 @@ namespace Microsoft.Azure.Commands.Sql.ServerDisasterRecoveryConfiguration.Cmdle
     /// <summary>
     /// Cmdlet to create a new Azure Sql Server Disaster Recovery Configuration
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmSqlServerDisasterRecoveryConfiguration",
-        ConfirmImpact = ConfirmImpact.Low, SupportsShouldProcess = true)]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlServerDisasterRecoveryConfiguration",ConfirmImpact = ConfirmImpact.Low, SupportsShouldProcess = true), OutputType(typeof(AzureSqlServerDisasterRecoveryConfigurationModel))]
     public class NewAzureSqlServerDisasterRecoveryConfiguration : AzureSqlServerDisasterRecoveryConfigurationCmdletBase
     {
         /// <summary>
@@ -40,6 +40,7 @@ namespace Microsoft.Azure.Commands.Sql.ServerDisasterRecoveryConfiguration.Cmdle
         /// </summary>
         [Parameter(Mandatory = true,
             HelpMessage = "The name of the partner resource group name for the Azure SQL Server Disaster Recovery Configuration to create.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string PartnerResourceGroupName { get; set; }
 
@@ -48,6 +49,7 @@ namespace Microsoft.Azure.Commands.Sql.ServerDisasterRecoveryConfiguration.Cmdle
         /// </summary>
         [Parameter(Mandatory = true,
             HelpMessage = "The name of the partner server for the Azure SQL Server Disaster Recovery Configuration to create.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers", "PartnerResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string PartnerServerName { get; set; }
 
@@ -58,6 +60,12 @@ namespace Microsoft.Azure.Commands.Sql.ServerDisasterRecoveryConfiguration.Cmdle
             HelpMessage = "The failover policy of the Azure SQL Server Disaster Recovery Configuration to create.")]
         [ValidateNotNullOrEmpty]
         public string FailoverPolicy { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether or not to run this cmdlet in the background as a job
+        /// </summary>
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         /// <summary>
         /// Get the entities from the service

@@ -13,8 +13,8 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Insights.OutputClasses;
-using Microsoft.Azure.Management.Insights.Models;
-using Microsoft.WindowsAzure.Commands.Common;
+using Microsoft.Azure.Management.Monitor;
+using Microsoft.Azure.Management.Monitor.Models;
 using System.Collections.Generic;
 using System.Management.Automation;
 using System.Threading;
@@ -24,7 +24,7 @@ namespace Microsoft.Azure.Commands.Insights.LogProfiles
     /// <summary>
     /// Get the log profiles.
     /// </summary>
-    [Cmdlet(VerbsCommon.Add, "AzureRmLogProfile"), OutputType(typeof(PSLogProfile))]
+    [Cmdlet("Add", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "LogProfile", SupportsShouldProcess = true), OutputType(typeof(PSLogProfile))]
     public class AddAzureRmLogProfileCommand : ManagementCmdletBase
     {
         private static readonly List<string> ValidCategories = new List<string> { "Delete", "Write", "Action" };
@@ -40,7 +40,7 @@ namespace Microsoft.Azure.Commands.Insights.LogProfiles
         /// <summary>
         /// Gets or sets the storage account parameter of the cmdlet
         /// </summary>
-        [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The storage account id")]
+        [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The storage account id")]
         [ValidateNotNullOrEmpty]
         public string StorageAccountId { get; set; }
 
@@ -63,50 +63,46 @@ namespace Microsoft.Azure.Commands.Insights.LogProfiles
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The locations that will be enabled for logging")]
         [ValidateNotNullOrEmpty]
-        public List<string> Locations { get; set; }
+        public List<string> Location { get; set; }
 
         /// <summary>
         /// Gets or sets the categories parameter of the cmdlet
         /// </summary>
         [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The categories that will be enabled for logging.  By default all categories will be enabled")]
         [ValidateNotNullOrEmpty]
-        public List<string> Categories { get; set; }
+        public List<string> Category { get; set; }
 
         #endregion
 
         protected override void ProcessRecordInternal()
         {
-            var putParameters = new LogProfileCreatOrUpdateParameters();
-
-            if (this.Categories == null)
+            if (ShouldProcess(
+                target: string.Format("Create/update a log profile: {0}", this.Name),
+                action: "Create/update a log profile"))
             {
-                this.Categories = new List<string>(ValidCategories);
-            }
+                var putParameters = new LogProfileResource()
+                {
+                    Location = string.Empty,
+                    Locations = this.Location
+                };
 
-            putParameters.Properties = new LogProfile
-            {
-                Categories = this.Categories,
-                Locations = this.Locations,
-                RetentionPolicy = new RetentionPolicy
+                if (this.Category == null)
+                {
+                    this.Category = new List<string>(ValidCategories);
+                }
+
+                putParameters.Categories = this.Category;
+                putParameters.RetentionPolicy = new RetentionPolicy
                 {
                     Days = this.RetentionInDays.HasValue ? this.RetentionInDays.Value : 0,
                     Enabled = this.RetentionInDays.HasValue
-                },
-                ServiceBusRuleId = this.ServiceBusRuleId,
-                StorageAccountId = this.StorageAccountId
-            };
+                };
+                putParameters.ServiceBusRuleId = this.ServiceBusRuleId;
+                putParameters.StorageAccountId = this.StorageAccountId;
 
-            this.InsightsManagementClient.LogProfilesOperations.CreateOrUpdateAsync(
-                this.Name,
-                putParameters,
-                CancellationToken.None).Wait();
-
-            PSLogProfile psResult = new PSLogProfile(
-                "/subscriptions/{0}/providers/microsoft.insights/logprofiles/{1}"
-                    .FormatInvariant(DefaultContext.Subscription.Id.ToString(), this.Name), 
-                this.Name,
-                putParameters.Properties);
-            WriteObject(psResult);
+                LogProfileResource result = this.MonitorManagementClient.LogProfiles.CreateOrUpdateAsync(logProfileName: this.Name, parameters: putParameters, cancellationToken: CancellationToken.None).Result;
+                WriteObject(new PSLogProfile(result));
+            }
         }
     }
 }

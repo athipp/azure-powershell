@@ -13,19 +13,20 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Sql.ServerUpgrade.Model;
-using Microsoft.Azure.Management.Sql.Models;
+using Microsoft.Azure.Management.Sql.LegacySdk.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
+using Microsoft.WindowsAzure.Commands.Common.CustomAttributes;
 
 namespace Microsoft.Azure.Commands.Sql.ServerUpgrade.Cmdlet
 {
     /// <summary>
-    /// Defines the Start-AzureRmSqlServerUpgrade cmdlet
+    /// Defines the Start-AzSqlServerUpgrade cmdlet
     /// </summary>
-    [Cmdlet(VerbsLifecycle.Start, "AzureRmSqlServerUpgrade",
-        ConfirmImpact = ConfirmImpact.Low)]
+    [CmdletDeprecation(ChangeDescription = "All Azure SQL DB Servers now have version 12.0 so there is nothing to upgrade.")]
+    [Cmdlet("Start", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlServerUpgrade",ConfirmImpact = ConfirmImpact.Low), OutputType(typeof(AzureSqlServerUpgradeStartModel))]
     public class StartAzureSqlServerUpgrade : AzureSqlServerUpgradeCmdletBase<AzureSqlServerUpgradeStartModel>
     {
         /// <summary>

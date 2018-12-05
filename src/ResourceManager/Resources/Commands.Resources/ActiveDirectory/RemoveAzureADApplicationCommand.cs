@@ -12,8 +12,8 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Commands.ActiveDirectory.Models;
-using Microsoft.Azure.Commands.Resources.Models.ActiveDirectory;
+using Microsoft.Azure.Graph.RBAC.Version1_6.ActiveDirectory;
+using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using System;
 using System.Management.Automation;
 using ProjectResources = Microsoft.Azure.Commands.Resources.Properties.Resources;
@@ -23,11 +23,23 @@ namespace Microsoft.Azure.Commands.ActiveDirectory
     /// <summary>
     /// Removes the AD application.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "AzureRmADApplication", SupportsShouldProcess = true)]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ADApplication", DefaultParameterSetName = ParameterSet.ObjectId, SupportsShouldProcess = true), OutputType(typeof(bool))]
     public class RemoveAzureADApplicationCommand : ActiveDirectoryBaseCmdlet
     {
-        [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The application object id.")]
+        [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = ParameterSet.ObjectId, HelpMessage = "The application object id.")]
         public Guid ObjectId { get; set; }
+
+        [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = ParameterSet.ApplicationId, HelpMessage = "The application id.")]
+        public Guid ApplicationId { get; set; }
+
+        [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = ParameterSet.ApplicationDisplayName, HelpMessage = "The display name of the application.")]
+        public string DisplayName { get; set; }
+
+        [Parameter(Mandatory = true, ValueFromPipeline = true, ParameterSetName = ParameterSet.InputObject, HelpMessage = "The application object.")]
+        public PSADApplication InputObject { get; set;}
+
+        [Parameter(Mandatory = false)]
+        public SwitchParameter PassThru { get; set; }
 
         [Parameter(Mandatory = false)]
         public SwitchParameter Force { get; set; }
@@ -36,12 +48,30 @@ namespace Microsoft.Azure.Commands.ActiveDirectory
         {
             ExecutionBlock(() =>
             {
+                if (this.IsParameterBound(c => c.InputObject))
+                {
+                    ObjectId = InputObject.ObjectId;
+                }
+                else if (this.IsParameterBound(c => c.ApplicationId))
+                {
+                    ObjectId = ActiveDirectoryClient.GetAppObjectIdFromApplicationId(ApplicationId);
+                }
+                else if (this.IsParameterBound(c => c.DisplayName))
+                {
+                    ObjectId = ActiveDirectoryClient.GetAppObjectIdFromDisplayName(DisplayName);
+                }
+
                 ConfirmAction(
-               Force.IsPresent,
-               string.Format(ProjectResources.RemovingApplication, ObjectId.ToString()),
-               ProjectResources.RemoveApplication,
-               ObjectId.ToString(),
-               () => ActiveDirectoryClient.RemoveApplication(ObjectId.ToString()));
+                    Force.IsPresent,
+                    string.Format(ProjectResources.RemovingApplication, ObjectId),
+                    ProjectResources.RemoveApplication,
+                    ObjectId.ToString(),
+                    () => ActiveDirectoryClient.RemoveApplication(ObjectId));
+
+                if (PassThru.IsPresent)
+                {
+                    WriteObject(true);
+                }
             });
         }
     }

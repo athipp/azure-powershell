@@ -14,23 +14,38 @@
 
 using Microsoft.Azure.ServiceManagemenet.Common.Models;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
+using Microsoft.WindowsAzure.Commands.Test.Utilities.Common;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Microsoft.Azure.Commands.RecoveryServices.Test.ScenarioTests
 {
-    public class RecoveryServicesTests : RecoveryServicesTestsBase
+    public class RecoveryServicesTests : RMTestBase
     {
-        public RecoveryServicesTests(ITestOutputHelper output)
+        public XunitTracingInterceptor _logger;
+
+        public RecoveryServicesTests(Xunit.Abstractions.ITestOutputHelper output)
         {
-            XunitTracingInterceptor.AddToContext(new XunitTracingInterceptor(output));
+            _logger = new XunitTracingInterceptor(output);
+            XunitTracingInterceptor.AddToContext(_logger);
         }
 
         [Fact]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
-        public void VaultCRUDTests()
+        public void TestRecoveryServicesVaultCRUD()
         {
-            this.RunPowerShellTest("Test-RecoveryServicesVaultCRUDTests");
+            TestController.NewInstance.RunPsTest(_logger, "Test-RecoveryServicesVaultCRUD");
+        }
+
+#if NETSTANDARD
+        [Fact(Skip = "Different parameter set used for NetStandard. Cannot process command because of one or more missing mandatory parameters: Certificate.")]
+#else
+        [Fact]
+#endif
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestGetRSVaultSettingsFile()
+        {
+            TestController.NewInstance.RunPsTest(_logger, "Test-GetRSVaultSettingsFile");
         }
     }
 }

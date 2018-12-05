@@ -12,16 +12,18 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Management.Storage.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.WindowsAzure.Commands.Common.Storage;
+using Microsoft.WindowsAzure.Commands.Storage.Adapters;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Microsoft.WindowsAzure.Storage;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Management.Storage
 {
-    [Cmdlet(VerbsCommon.Set, "AzureRmCurrentStorageAccount", DefaultParameterSetName = ResourceNameParameterSet),
-    OutputType(typeof(string))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CurrentStorageAccount", DefaultParameterSetName = ResourceNameParameterSet),OutputType(typeof(string))]
     public class SetAzureRmCurrentStorageAccount : StorageAccountBaseCmdlet
     {
         private const string StorageContextParameterSet = "UsingStorageContext";
@@ -30,10 +32,11 @@ namespace Microsoft.Azure.Commands.Management.Storage
         [Parameter(Mandatory = true, ParameterSetName = StorageContextParameterSet, ValueFromPipeline = true,
             ValueFromPipelineByPropertyName = true)]
         [ValidateNotNull]
-        public AzureStorageContext Context { get; set; }
+        public IStorageContext Context { get; set; }
 
         [Parameter(Mandatory = true, ParameterSetName = ResourceNameParameterSet,
             ValueFromPipelineByPropertyName = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -48,11 +51,11 @@ namespace Microsoft.Azure.Commands.Management.Storage
             CloudStorageAccount account;
             if (Context != null)
             {
-                account = Context.StorageAccount;
+                account = Context.GetCloudStorageAccount();
             }
             else
             {
-                account = StorageUtilities.GenerateCloudStorageAccount(new ARMStorageProvider(StorageClient), ResourceGroupName, Name);
+                account = (new ARMStorageProvider(StorageClient)).GetCloudStorageAccount(Name, ResourceGroupName);
             }
 
             // Clear the current storage account for both SM and RM

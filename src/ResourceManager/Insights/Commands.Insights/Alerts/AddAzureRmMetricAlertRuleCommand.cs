@@ -12,10 +12,12 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Hyak.Common;
-using Microsoft.Azure.Management.Insights.Models;
+using Microsoft.Azure.Commands.Insights.OutputClasses;
+using Microsoft.Azure.Commands.Insights.TransitionalClasses;
+using Microsoft.Azure.Management.Monitor.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Insights.Alerts
@@ -23,7 +25,7 @@ namespace Microsoft.Azure.Commands.Insights.Alerts
     /// <summary>
     /// Add an Alert rule
     /// </summary>
-    [Cmdlet(VerbsCommon.Add, "AzureRmMetricAlertRule"), OutputType(typeof(List<PSObject>))]
+    [Cmdlet("Add", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "MetricAlertRule", SupportsShouldProcess = true), OutputType(typeof(PSAddAlertRuleOperationResponse))]
     public class AddAzureRmMetricAlertRuleCommand : AddAzureRmAlertRuleCommandBase
     {
         /// <summary>
@@ -36,7 +38,7 @@ namespace Microsoft.Azure.Commands.Insights.Alerts
         /// Gets or sets the rule condition operator
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The rule condition operator")]
-        public ConditionOperator Operator { get; set; }
+        public Management.Monitor.Management.Models.ConditionOperator Operator { get; set; }
 
         /// <summary>
         /// Gets or sets the rule threshold
@@ -59,53 +61,49 @@ namespace Microsoft.Azure.Commands.Insights.Alerts
         public string MetricName { get; set; }
 
         /// <summary>
-        /// Gets or sets the TimeAggregationOperator parameter
+        /// Gets or sets the TimeAggregationType parameter
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The aggregation operation used to roll up multiple metric values across the window interval")]
-        public TimeAggregationOperator? TimeAggregationOperator { get; set; }
+        public Management.Monitor.Management.Models.TimeAggregationOperator? TimeAggregationOperator { get; set; }
 
         private ThresholdRuleCondition CreateThresholdRuleCondition()
         {
-            return new ThresholdRuleCondition()
+            return new ThresholdRuleCondition
             {
-                DataSource = new RuleMetricDataSource()
+                DataSource = new RuleMetricDataSource
                 {
                     MetricName = this.MetricName,
                     ResourceUri = this.TargetResourceId,
                 },
-                Operator = this.Operator,
+                OperatorProperty = TransitionHelpers.ConvertNamespace(this.Operator),
                 Threshold = this.Threshold,
-                TimeAggregation = this.TimeAggregationOperator,
+                TimeAggregation = TransitionHelpers.ConvertNamespace(this.TimeAggregationOperator),
                 WindowSize = this.WindowSize,
             };
         }
 
         private RuleCondition CreateRuleCondition()
         {
-            WriteVerboseWithTimestamp(String.Format("CreateRuleCondition: Creating threshold rule condition (metric-based rule"));
+            WriteVerboseWithTimestamp(String.Format("CreateRuleCondition: Creating threshold rule condition (metric-based rule)"));
             return this.CreateThresholdRuleCondition();
         }
 
-        protected override RuleCreateOrUpdateParameters CreateSdkCallParameters()
+        protected override AlertRuleResource CreateSdkCallParameters()
         {
             RuleCondition condition = this.CreateRuleCondition();
 
             WriteVerboseWithTimestamp(String.Format("CreateSdkCallParameters: Creating rule object"));
-            return new RuleCreateOrUpdateParameters()
+            return new AlertRuleResource()
             {
+                Description = this.Description ?? Utilities.GetDefaultDescription("metric alert rule"),
+                Condition = condition,
+                Actions = this.Action?.Select(TransitionHelpers.ToMirrorNamespace).ToList(),
                 Location = this.Location,
-                Properties = new Rule()
-                {
-                    Name = this.Name,
-                    IsEnabled = !this.DisableRule,
-                    Description = this.Description ?? Utilities.GetDefaultDescription("metric alert rule"),
-                    LastUpdatedTime = DateTime.Now,
-                    Condition = condition,
-                    Actions = this.Actions,
-                },
+                IsEnabled = !this.DisableRule,
+                AlertRuleResourceName = this.Name,
 
                 // DO NOT REMOVE OR CHANGE the following. The two elements in the Tags are required by other services.
-                Tags = new LazyDictionary<string, string>()
+                Tags = new Dictionary<string, string>()
                 {
                     {"$type" , "Microsoft.WindowsAzure.Management.Common.Storage.CasePreservedDictionary,Microsoft.WindowsAzure.Management.Common.Storage"},
                     {"hidden-link:" + this.TargetResourceId, "Resource" },

@@ -17,7 +17,6 @@ using AutoMapper;
 using Microsoft.Azure.Commands.Network.Models;
 using Microsoft.Azure.Commands.ResourceManager.Common.Tags;
 using Microsoft.Azure.Management.Network;
-using Microsoft.Azure.Management.Network.Models;
 using System.Net;
 
 namespace Microsoft.Azure.Commands.Network
@@ -61,13 +60,22 @@ namespace Microsoft.Azure.Commands.Network
             return psVirtualNetworkGateway;
         }
 
-        public PSVirtualNetworkGateway ToPsVirtualNetworkGateway(VirtualNetworkGateway vnetGateway)
+        public PSVirtualNetworkGateway ToPsVirtualNetworkGateway(Management.Network.Models.VirtualNetworkGateway vnetGateway)
         {
-            var psVirtualNetworkGateway = Mapper.Map<PSVirtualNetworkGateway>(vnetGateway);
+            var psVirtualNetworkGateway = NetworkResourceManagerProfile.Mapper.Map<PSVirtualNetworkGateway>(vnetGateway);
 
             psVirtualNetworkGateway.Tag = TagsConversionHelper.CreateTagHashtable(vnetGateway.Tags);
 
             return psVirtualNetworkGateway;
+        }
+
+        public PSVpnClientIPsecParameters GetVpnClientIpsecParameters(string resourceGroupName, string name)
+        {
+            var vpnClientIPsecParameters = this.VirtualNetworkGatewayClient.GetVpnclientIpsecParameters(resourceGroupName, name);
+
+            var psVpnClientIPsecParameters = NetworkResourceManagerProfile.Mapper.Map<PSVpnClientIPsecParameters>(vpnClientIPsecParameters);
+
+            return psVpnClientIPsecParameters;
         }
     }
 }

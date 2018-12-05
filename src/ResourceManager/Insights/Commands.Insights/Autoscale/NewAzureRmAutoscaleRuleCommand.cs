@@ -13,8 +13,7 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Insights.Properties;
-using Microsoft.Azure.Commands.ResourceManager.Common;
-using Microsoft.Azure.Management.Insights.Models;
+using Microsoft.Azure.Management.Monitor.Models;
 using System;
 using System.Management.Automation;
 
@@ -23,8 +22,8 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
     /// <summary>
     /// Create an Autoscale rule
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmAutoscaleRule"), OutputType(typeof(ScaleRule))]
-    public class NewAzureRmAutoscaleRuleCommand : AzureRMCmdlet
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "AutoscaleRule"), OutputType(typeof(Management.Monitor.Management.Models.ScaleRule))]
+    public class NewAzureRmAutoscaleRuleCommand : MonitorCmdletBase
     {
         private readonly TimeSpan MinimumTimeWindow = TimeSpan.FromMinutes(5);
         private readonly TimeSpan MinimumTimeGrain = TimeSpan.FromMinutes(1);
@@ -49,13 +48,13 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
         /// Gets or sets the setting condition operator
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The setting condition operator")]
-        public ComparisonOperationType Operator { get; set; }
+        public Management.Monitor.Management.Models.ComparisonOperationType Operator { get; set; }
 
         /// <summary>
         /// Gets or sets the MetricStatistic
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The setting metric statistic")]
-        public MetricStatisticType MetricStatistic { get; set; }
+        public Management.Monitor.Management.Models.MetricStatisticType MetricStatistic { get; set; }
 
         /// <summary>
         /// Gets or sets the Threshold
@@ -64,10 +63,10 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
         public double Threshold { get; set; }
 
         /// <summary>
-        /// Gets or sets the TimeAggregationOperator parameter
+        /// Gets or sets the TimeAggregationType parameter
         /// </summary>
         [Parameter(ValueFromPipelineByPropertyName = true, HelpMessage = "The time aggregation operator for the setting")]
-        public TimeAggregationType TimeAggregationOperator { get; set; }
+        public Management.Monitor.Management.Models.TimeAggregationType TimeAggregationOperator { get; set; }
 
         /// <summary>
         /// Gets or sets the time grain
@@ -91,13 +90,14 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
         /// Gets or sets the scale action direction
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The acale action direction for the setting")]
-        public ScaleDirection ScaleActionDirection { get; set; }
+        public Management.Monitor.Management.Models.ScaleDirection ScaleActionDirection { get; set; }
 
         /// <summary>
-        /// Gets or sets the scale action type
+        /// Gets or sets the scale action value
         /// </summary>
-        [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The scale action type for the setting")]
-        public ScaleType ScaleActionScaleType { get; set; }
+        [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The scale type for the setting. It supports these values: ChangeCount (default), PercentChangeCount, ExactCount")]
+        [ValidateNotNullOrEmpty]
+        public Management.Monitor.Management.Models.ScaleType ScaleActionScaleType { get; set; }
 
         /// <summary>
         /// Gets or sets the scale action value
@@ -107,6 +107,12 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
         public string ScaleActionValue { get; set; }
 
         #endregion
+
+        /// <summary>
+        /// Executes the Cmdlet. This is a callback function to simplify the exception handling
+        /// </summary>
+        protected override void ProcessRecordInternal()
+        { }
 
         /// <summary>
         /// Execute the cmdlet
@@ -121,7 +127,7 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
         /// Create an Autoscale setting rule based on the properties of the object
         /// </summary>
         /// <returns>A ScaleRule created based on the properties of the object</returns>
-        public ScaleRule CreateSettingRule()
+        public Management.Monitor.Management.Models.ScaleRule CreateSettingRule()
         {
             if (this.TimeWindow != default(TimeSpan) && this.TimeWindow < MinimumTimeWindow)
             {
@@ -133,11 +139,11 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
                 throw new ArgumentOutOfRangeException("TimeGrain", this.TimeGrain, ResourcesForAutoscaleCmdlets.MinimumTimeGrain1min);
             }
 
-            MetricTrigger trigger = new MetricTrigger()
+            var trigger = new Management.Monitor.Management.Models.MetricTrigger()
             {
                 MetricName = this.MetricName,
                 MetricResourceUri = this.MetricResourceId,
-                Operator = this.Operator,
+                OperatorProperty = this.Operator,
                 Statistic = this.MetricStatistic,
                 Threshold = this.Threshold,
                 TimeAggregation = this.TimeAggregationOperator,
@@ -145,19 +151,16 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
                 TimeWindow = this.TimeWindow == default(TimeSpan) ? MinimumTimeWindow : this.TimeWindow,
             };
 
-            ScaleAction action = new ScaleAction()
+            // Notice ChangeCount is (ScaleType)0, so this is the default in this version. It was the only value in the previous version.
+            var action = new Management.Monitor.Management.Models.ScaleAction()
             {
                 Cooldown = this.ScaleActionCooldown,
                 Direction = this.ScaleActionDirection,
-                Type = this.ScaleActionScaleType,
                 Value = this.ScaleActionValue,
+                Type = this.ScaleActionScaleType
             };
 
-            return new ScaleRule()
-            {
-                MetricTrigger = trigger,
-                ScaleAction = action,
-            };
+            return new Management.Monitor.Management.Models.ScaleRule(metricTrigger: trigger, scaleAction: action);
         }
     }
 }

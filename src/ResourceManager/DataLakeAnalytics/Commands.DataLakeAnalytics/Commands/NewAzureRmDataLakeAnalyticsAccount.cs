@@ -14,19 +14,22 @@
 
 using Microsoft.Azure.Commands.DataLakeAnalytics.Models;
 using Microsoft.Azure.Commands.DataLakeAnalytics.Properties;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.DataLake.Analytics.Models;
 using Microsoft.Rest.Azure;
+using System;
 using System.Collections;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.DataLakeAnalytics
 {
-    [Cmdlet(VerbsCommon.New, "AzureRmDataLakeAnalyticsAccount"), OutputType(typeof(DataLakeAnalyticsAccount))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "DataLakeAnalyticsAccount"), OutputType(typeof(PSDataLakeAnalyticsAccount))]
     [Alias("New-AdlAnalyticsAccount")]
     public class NewAzureDataLakeAnalyticsAccount : DataLakeAnalyticsCmdletBase
     {
         [Parameter(ValueFromPipelineByPropertyName = true, Position = 0, Mandatory = true,
             HelpMessage = "Name of resource group under which you want to create the account.")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -37,11 +40,8 @@ namespace Microsoft.Azure.Commands.DataLakeAnalytics
 
         [Parameter(ValueFromPipelineByPropertyName = true, Position = 2, Mandatory = true,
             HelpMessage = "Azure region where the account should be created.")]
+        [LocationCompleter("Microsoft.DataLakeAnalytics/accounts")]
         [ValidateNotNullOrEmpty]
-        [ValidateSet("North Central US", "South Central US", "Central US", "West Europe", "North Europe", "West US",
-            "East US",
-            "East US 2", "Japan East", "Japan West", "Brazil South", "Southeast Asia", "East Asia", "Australia East",
-            "Australia Southeast", IgnoreCase = true)]
         public string Location { get; set; }
 
         [Parameter(ValueFromPipelineByPropertyName = true, Position = 3, Mandatory = true,
@@ -52,7 +52,31 @@ namespace Microsoft.Azure.Commands.DataLakeAnalytics
         [Parameter(ValueFromPipelineByPropertyName = true, Position = 4, Mandatory = false,
             HelpMessage = "A string,string dictionary of tags associated with this account")]
         [ValidateNotNull]
-        public Hashtable Tags { get; set; }
+        public Hashtable Tag { get; set; }
+
+        [Parameter(ValueFromPipelineByPropertyName = true, Mandatory = false,
+            HelpMessage = "The maximum supported analytics units for this account.")]
+        [ValidateNotNull]
+        [ValidateRange(1, int.MaxValue)]
+        [Alias("MaxDegreeOfParallelism")]
+        public int? MaxAnalyticsUnits { get; set; }
+
+        [Parameter(ValueFromPipelineByPropertyName = true, Mandatory = false,
+            HelpMessage = "The maximum supported jobs running under the account at the same time.")]
+        [ValidateNotNull]
+        [ValidateRange(1, int.MaxValue)]
+        public int? MaxJobCount { get; set; }
+
+        [Parameter(ValueFromPipelineByPropertyName = true, Mandatory = false,
+            HelpMessage = "The number of days that job metadata is retained.")]
+        [ValidateNotNull]
+        [ValidateRange(1, 180)]
+        public int? QueryStoreRetention { get; set; }
+
+        [Parameter(ValueFromPipelineByPropertyName = true, Mandatory = false,
+            HelpMessage = "The desired commitment tier for this account to use.")]
+        [ValidateNotNull]
+        public TierType? Tier { get; set; }
 
         public override void ExecuteCmdlet()
         {
@@ -82,13 +106,23 @@ namespace Microsoft.Azure.Commands.DataLakeAnalytics
                 }
             }
 
-            var defaultStorage = new DataLakeStoreAccountInfo
+            var defaultStorage = new AddDataLakeStoreWithAccountParameters
             {
                 Name = DefaultDataLakeStore
             };
 
-            WriteObject(DataLakeAnalyticsClient.CreateOrUpdateAccount(ResourceGroupName, Name, Location, defaultStorage,
-                customTags: Tags));
+            WriteObject(
+                new PSDataLakeAnalyticsAccount(
+                    DataLakeAnalyticsClient.CreateOrUpdateAccount(
+                        ResourceGroupName,
+                        Name,
+                        Location,
+                        defaultStorage,
+                        customTags: Tag,
+                        maxAnalyticsUnits: MaxAnalyticsUnits,
+                        maxJobCount: MaxJobCount,
+                        queryStoreRetention: QueryStoreRetention,
+                        tier: Tier)));
         }
     }
 }

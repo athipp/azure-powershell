@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\..\..\..\tools\Common.Dependencies.targets" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -9,10 +10,11 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Microsoft.Azure.Commands.Insights</RootNamespace>
     <AssemblyName>Microsoft.Azure.Commands.Insights</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -42,82 +44,27 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Hyak.Common">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\packages\Hyak.Common.1.0.3\lib\portable-net403+win+wpa81\Hyak.Common.dll</HintPath>
+    <Reference Include="Microsoft.Azure.Management.Monitor">
+      <HintPath>..\..\..\packages\Microsoft.Azure.Management.Monitor.0.21.0-preview\lib\net452\Microsoft.Azure.Management.Monitor.dll</HintPath>
+      <Name>Microsoft.Azure.Management.Monitor</Name>
     </Reference>
-    <Reference Include="Microsoft.Azure.Common">
-      <HintPath>..\..\..\packages\Microsoft.Azure.Common.2.1.0\lib\net45\Microsoft.Azure.Common.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Azure.Common.NetFramework">
-      <HintPath>..\..\..\packages\Microsoft.Azure.Common.2.1.0\lib\net45\Microsoft.Azure.Common.NetFramework.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Azure.Insights">
-      <HintPath>..\..\..\packages\Microsoft.Azure.Insights.0.13.1-preview\lib\net45\Microsoft.Azure.Insights.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Azure.ResourceManager, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\packages\Microsoft.Azure.Management.Resources.2.20.0-preview\lib\net40\Microsoft.Azure.ResourceManager.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.Data.Edm">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\packages\Microsoft.Data.Edm.5.6.4\lib\net40\Microsoft.Data.Edm.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Data.OData">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\packages\Microsoft.Data.OData.5.6.4\lib\net40\Microsoft.Data.OData.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Data.Services.Client">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\packages\Microsoft.Data.Services.Client.5.6.4\lib\net40\Microsoft.Data.Services.Client.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.IdentityModel.Clients.ActiveDirectory, Version=2.28.1.741, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\Microsoft.IdentityModel.Clients.ActiveDirectory.2.28.1\lib\net45\Microsoft.IdentityModel.Clients.ActiveDirectory.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.IdentityModel.Clients.ActiveDirectory.WindowsForms, Version=2.28.1.741, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\Microsoft.IdentityModel.Clients.ActiveDirectory.2.28.1\lib\net45\Microsoft.IdentityModel.Clients.ActiveDirectory.WindowsForms.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Rest.ClientRuntime, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\Microsoft.Rest.ClientRuntime.2.3.2\lib\net45\Microsoft.Rest.ClientRuntime.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.Rest.ClientRuntime.Azure.Authentication, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\..\..\packages\Microsoft.Rest.ClientRuntime.Azure.Authentication.2.2.8-preview\lib\net45\Microsoft.Rest.ClientRuntime.Azure.Authentication.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Microsoft.WindowsAzure.Storage">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\packages\WindowsAzure.Storage.6.0.0\lib\net40\Microsoft.WindowsAzure.Storage.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Azure.KeyVault.Core">
-      <HintPath>..\..\..\packages\Microsoft.Azure.KeyVault.Core.1.0.0\lib\net40\Microsoft.Azure.KeyVault.Core.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
     <Reference Include="System.Collections" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Management.Automation, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
-    <Reference Include="System.Net" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Net.Http.WebRequest" />
-    <Reference Include="System.Spatial">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\packages\System.Spatial.5.6.4\lib\net40\System.Spatial.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ActivityLogAlert\ActivityLogAlertUtilities.cs" />
+    <Compile Include="ActivityLogAlert\DisableAzureRmActivityLogAlertCommand.cs" />
+    <Compile Include="ActivityLogAlert\SetAzureRmActivityLogAlertCommand.cs" />
+    <Compile Include="ActivityLogAlert\GetAzureRmActivityLogAlertCommand.cs" />
+    <Compile Include="ActivityLogAlert\NewAzureRmActionGroupCommand.cs" />
+    <Compile Include="ActivityLogAlert\NewAzureRmActivityLogAlertConditionCommand.cs" />
+    <Compile Include="ActivityLogAlert\RemoveAzureRmActivityLogAlertCommand.cs" />
+    <Compile Include="ActivityLogAlert\EnableAzureRmActivityLogAlertCommand.cs" />
+    <Compile Include="ActionGroups\SetAzureRmActionGroupCommand.cs" />
+    <Compile Include="ActionGroups\NewAzureRmActionGroupReceiverCommand.cs" />
+    <Compile Include="ActionGroups\RemoveAzureRmActionGroupCommand.cs" />
+    <Compile Include="ActionGroups\GetAzureRmActionGroupCommand.cs" />
     <Compile Include="Alerts\AddAzureRmAlertRuleCommandBase.cs" />
     <Compile Include="Alerts\AddAzureRmMetricAlertRuleCommand.cs" />
-    <Compile Include="Alerts\AddAzureRmLogAlertRuleCommand.cs" />
     <Compile Include="Alerts\AddAzureRmWebtestAlertRuleCommand.cs" />
     <Compile Include="Alerts\AlertRuleTypes.cs" />
     <Compile Include="Alerts\GetAzureRmAlertHistoryCommand.cs" />
@@ -133,34 +80,47 @@
     <Compile Include="Autoscale\GetAzureRmAutoscaleSettingCommand.cs" />
     <Compile Include="Autoscale\NewAzureRmAutoscaleWebhookCommand.cs" />
     <Compile Include="Autoscale\RemoveAzureRmAutoscaleSettingCommand.cs" />
+    <Compile Include="Diagnostics\RemoveAzureRmDiagnosticSettingCommand.cs" />
     <Compile Include="Diagnostics\SetAzureRmDiagnosticSettingCommand.cs" />
     <Compile Include="Diagnostics\GetAzureRmDiagnosticSettingCommand.cs" />
-    <Compile Include="EventCmdletBase.cs" />
-    <Compile Include="Events\GetAzureRmLogCommand.cs" />
-    <Compile Include="InsightsClientCmdletBase.cs" />
-    <Compile Include="InsightsCmdletBase.cs" />
+    <Compile Include="LogsCmdletBase.cs" />
+    <Compile Include="ActivityLogs\GetAzureRmLogCommand.cs" />
+    <Compile Include="Metrics\NewAzureRmMetricFilterCommand.cs" />
+    <Compile Include="MonitorCmdletBase.cs" />
     <Compile Include="LogProfiles\RemoveAzureRmLogProfileCommand.cs" />
     <Compile Include="LogProfiles\GetAzureRmLogProfileCommand.cs" />
     <Compile Include="LogProfiles\AddAzureRmLogProfileCommand.cs" />
     <Compile Include="ManagementCmdletBase.cs" />
     <Compile Include="Metrics\GetAzureRmMetricDefinitionCommand.cs" />
     <Compile Include="Metrics\GetAzureRmMetricCommand.cs" />
-    <Compile Include="OutputClasses\ConversionExtensions.cs" />
     <Compile Include="OutputClasses\CustomPrinter.cs" />
-    <Compile Include="OutputClasses\IPSEventData.cs" />
     <Compile Include="OutputClasses\IPSRuleCondition.cs" />
+    <Compile Include="OutputClasses\PSActivityLogAlertResource.cs" />
+    <Compile Include="OutputClasses\PSActionGroupReceiverBase.cs" />
+    <Compile Include="OutputClasses\PSActionGroupResource.cs" />
+    <Compile Include="OutputClasses\PSActionGroupProperty.cs" />
+    <Compile Include="OutputClasses\PSAddActionGroupOperationResponse.cs" />
+    <Compile Include="OutputClasses\PSAddAlertRuleOperationResponse.cs" />
+    <Compile Include="OutputClasses\PSAddAutoscaleSettingOperationResponse.cs" />
+    <Compile Include="OutputClasses\PSAlertRuleResource.cs" />
+    <Compile Include="OutputClasses\PSAutoscaleSettingNoDetails.cs" />
+    <Compile Include="OutputClasses\PSDiagnosticSettingOperationResponse.cs" />
+    <Compile Include="OutputClasses\PSEmailReceiver.cs" />
+    <Compile Include="OutputClasses\PSLocalizableString.cs" />
+    <Compile Include="OutputClasses\PSLocalizableStringNoDetails.cs" />
     <Compile Include="OutputClasses\PSLogProfileCollection.cs" />
     <Compile Include="OutputClasses\PSLogSettings.cs" />
+    <Compile Include="OutputClasses\PSManagementPropertyDescriptor.cs" />
+    <Compile Include="OutputClasses\PSMetricAvailability.cs" />
     <Compile Include="OutputClasses\PSMetricSettings.cs" />
     <Compile Include="OutputClasses\PSLogProfile.cs" />
+    <Compile Include="OutputClasses\PSAutoscaleProfilesList.cs" />
     <Compile Include="OutputClasses\PSRetentionPolicy.cs" />
     <Compile Include="OutputClasses\PSServiceDiagnosticSettings.cs" />
     <Compile Include="OutputClasses\PSAlertRule.cs" />
     <Compile Include="OutputClasses\PSAlertRuleNoDetails.cs" />
-    <Compile Include="OutputClasses\PSAlertRuleProperty.cs" />
     <Compile Include="OutputClasses\PSAutoscaleSetting.cs" />
-    <Compile Include="OutputClasses\PSAutoscaleSettingProperty.cs" />
-    <Compile Include="OutputClasses\PSAvailabilityCollection.cs" />
+    <Compile Include="OutputClasses\PSMetricAvailabilityCollection.cs" />
     <Compile Include="OutputClasses\PSDictionaryElement.cs" />
     <Compile Include="OutputClasses\PSEventData.cs" />
     <Compile Include="OutputClasses\PSEventDataAuthorization.cs" />
@@ -168,9 +128,6 @@
     <Compile Include="OutputClasses\PSEventDataNoDetails.cs" />
     <Compile Include="OutputClasses\PSEventRuleCondition.cs" />
     <Compile Include="OutputClasses\PSLocationThresholdRuleCondition.cs" />
-    <Compile Include="OutputClasses\PSManagementItemDescriptor.cs" />
-    <Compile Include="OutputClasses\PSManagementItemDescriptorWithDetails.cs" />
-    <Compile Include="OutputClasses\PSManagementPropertyDescriptor.cs" />
     <Compile Include="OutputClasses\PSMetric.cs" />
     <Compile Include="OutputClasses\PSMetricDefinition.cs" />
     <Compile Include="OutputClasses\PSMetricDefinitionNoDetails.cs" />
@@ -178,9 +135,10 @@
     <Compile Include="OutputClasses\PSMetricValue.cs" />
     <Compile Include="OutputClasses\PSMetricValuesCollection.cs" />
     <Compile Include="OutputClasses\PSMetricTabularResult.cs" />
+    <Compile Include="OutputClasses\PSSmsReceiver.cs" />
     <Compile Include="OutputClasses\PSThresholdRuleCondition.cs" />
     <Compile Include="OutputClasses\PSToStringExtensions.cs" />
-    <Compile Include="OutputClasses\PSUsageMetric.cs" />
+    <Compile Include="OutputClasses\PSWebhookReceiver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\ResourcesForAlertCmdlets.Designer.cs">
       <DependentUpon>ResourcesForAlertCmdlets.resx</DependentUpon>
@@ -197,12 +155,50 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>ResourcesForAutoscaleCmdlets.resx</DependentUpon>
     </Compile>
-    <Compile Include="UsageMetrics\GetAzureRmUsageCommand.cs" />
+    <Compile Include="TransitionalClasses\ActivityLogAlertActionGroup.cs" />
+    <Compile Include="TransitionalClasses\ActivityLogAlertActionList.cs" />
+    <Compile Include="TransitionalClasses\ActivityLogAlertAllOfCondition.cs" />
+    <Compile Include="TransitionalClasses\ActivityLogAlertLeafCondition.cs" />
+    <Compile Include="TransitionalClasses\ActivityLogAlertResource.cs" />
+    <Compile Include="TransitionalClasses\AlertRuleResource.cs" />
+    <Compile Include="TransitionalClasses\AutoscaleNotification.cs" />
+    <Compile Include="TransitionalClasses\AutoscaleProfile.cs" />
+    <Compile Include="TransitionalClasses\AutoscaleSettingResource.cs" />
+    <Compile Include="TransitionalClasses\ComparisonOperatorType.cs" />
+    <Compile Include="TransitionalClasses\ConditionOperator.cs" />
+    <Compile Include="TransitionalClasses\EmailNotification.cs" />
+    <Compile Include="TransitionalClasses\LocationThesholdRuleCondition.cs" />
+    <Compile Include="TransitionalClasses\LogProfileResource.cs" />
+    <Compile Include="TransitionalClasses\MetricTrigger.cs" />
+    <Compile Include="TransitionalClasses\ReceiverStatus.cs" />
+    <Compile Include="TransitionalClasses\Recurrence.cs" />
+    <Compile Include="TransitionalClasses\RecurrentSchedule.cs" />
+    <Compile Include="TransitionalClasses\RuleAction.cs" />
+    <Compile Include="TransitionalClasses\RuleCondition.cs" />
+    <Compile Include="TransitionalClasses\RuleDataSource.cs" />
+    <Compile Include="TransitionalClasses\RuleEmailAction.cs" />
+    <Compile Include="TransitionalClasses\RuleMetricDataSource.cs" />
+    <Compile Include="TransitionalClasses\RuleWebhookAction.cs" />
+    <Compile Include="TransitionalClasses\ScaleAction.cs" />
+    <Compile Include="TransitionalClasses\ScaleCapacity.cs" />
+    <Compile Include="TransitionalClasses\ThresholdRuleCondition.cs" />
+    <Compile Include="TransitionalClasses\TimeAggregationOperator.cs" />
+    <Compile Include="TransitionalClasses\TimeWindow.cs" />
+    <Compile Include="TransitionalClasses\TransitionHelpers.cs" />
+    <Compile Include="TransitionalClasses\LogSettings.cs" />
+    <Compile Include="TransitionalClasses\MetricSettings.cs" />
+    <Compile Include="TransitionalClasses\MetricStatisticType.cs" />
+    <Compile Include="TransitionalClasses\RecurrenceFrequency.cs" />
+    <Compile Include="TransitionalClasses\RetentionPolicy.cs" />
+    <Compile Include="TransitionalClasses\ScaleDirection.cs" />
+    <Compile Include="TransitionalClasses\ScaleRule.cs" />
+    <Compile Include="TransitionalClasses\ScaleType.cs" />
+    <Compile Include="TransitionalClasses\TimeAggregationType.cs" />
+    <Compile Include="TransitionalClasses\WebhookNotification.cs" />
     <Compile Include="Utilities.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\AzureRM.Insights.psd1">
-      <Link>AzureRM.Insights.psd1</Link>
+    <None Include="AzureRM.Insights.psd1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Content Include="Microsoft.Azure.Commands.Insights.format.ps1xml">
@@ -213,11 +209,7 @@
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Microsoft.Azure.Commands.Insights.dll-Help.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <None Include="StartupScripts\*.ps1" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\ResourcesForAlertCmdlets.resx">
@@ -235,18 +227,16 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Commands.Common.Authentication\Commands.Common.Authentication.csproj">
-      <Project>{d3804b64-c0d3-48f8-82ec-1f632f833c9e}</Project>
-      <Name>Commands.Common.Authentication</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\Common\Commands.Common\Commands.Common.csproj">
-      <Project>{5ee72c53-1720-4309-b54b-5fb79703195f}</Project>
-      <Name>Commands.Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Common\Commands.ResourceManager.Common\Commands.ResourceManager.Common.csproj">
-      <Project>{3819d8a7-c62c-4c47-8ddd-0332d9ce1252}</Project>
-      <Name>Commands.ResourceManager.Common</Name>
+    <ProjectReference Include="..\..\Profile\Commands.Profile\Commands.Profile.csproj">
+      <Project>{142d7b0b-388a-4ceb-a228-7f6d423c5c2e}</Project>
+      <Name>Commands.Profile</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="AfterBuild">
+    <ItemGroup>
+      <MarkdownFiles Include="$(ProjectDir)help\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(MarkdownFiles)" DestinationFolder="$(OutputPath)\help\" ContinueOnError="false" />
+  </Target>
 </Project>

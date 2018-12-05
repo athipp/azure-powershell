@@ -12,6 +12,7 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Cdn.Test.ScenarioTests.ScenarioTest;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 
@@ -26,7 +27,7 @@ namespace Microsoft.Azure.Commands.Cdn.Test.ScenarioTests.ScenarioTest
             _logger = new ServiceManagemenet.Common.Models.XunitTracingInterceptor(output);
             ServiceManagemenet.Common.Models.XunitTracingInterceptor.AddToContext(_logger);
         }
-
+        
         [Fact]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestEndpointCrudAndAction()
@@ -50,6 +51,13 @@ namespace Microsoft.Azure.Commands.Cdn.Test.ScenarioTests.ScenarioTest
 
         [Fact]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestEndpointCreateWithDsa()
+        {
+            TestController.NewInstance.RunPowerShellTest(_logger, "Test-EndpointCreateWithDSA");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestEndpointCrudAndActionWithAllPropertiesWithPiping()
         {
             TestController.NewInstance.RunPowerShellTest(_logger, "Test-EndpointCrudAndActionWithAllPropertiesWithPiping");
@@ -60,6 +68,27 @@ namespace Microsoft.Azure.Commands.Cdn.Test.ScenarioTests.ScenarioTest
         public void TestEndpointPipeline()
         {
             TestController.NewInstance.RunPowerShellTest(_logger, "Test-EndpointPipeline");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestEndpointGeoFilters()
+        {
+            TestController.NewInstance.RunPowerShellTest(_logger, "Test-EndpointGeoFilters");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestEndpointResourceUsage()
+        {
+            TestController.NewInstance.RunPowerShellTest(_logger, "Test-EndpointResourceUsage");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void EndpointValidateProbeUrl()
+        {
+            TestController.NewInstance.RunPowerShellTest(_logger, "Test-EndpointValidateProbeUrl");
         }
     }
 }

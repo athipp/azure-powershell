@@ -31,8 +31,10 @@ function Test-LocalNetworkGatewayCRUD
       $resourceGroup = New-AzureRmResourceGroup -Name $rgname -Location $rglocation -Tags @{ testtag = "testval" }             
 
       # Create & Get LocalNetworkGateway      
-      $actual = New-AzureRmLocalNetworkGateway -ResourceGroupName $rgname -name $rname -location $location -AddressPrefix 192.168.0.0/16 -GatewayIpAddress 192.168.3.4
-      $expected = Get-AzureRmLocalNetworkGateway -ResourceGroupName $rgname -name $rname
+      $job = New-AzureRmLocalNetworkGateway -ResourceGroupName $rgname -name $rname -location $location -AddressPrefix 192.168.0.0/16 -GatewayIpAddress 192.168.3.4 -AsJob
+      $job | Wait-Job
+	  $actual = $job | Receive-Job
+	  $expected = Get-AzureRmLocalNetworkGateway -ResourceGroupName $rgname -name $rname
       Assert-AreEqual $expected.ResourceGroupName $actual.ResourceGroupName	
       Assert-AreEqual $expected.Name $actual.Name	
       Assert-AreEqual "192.168.3.4" $expected.GatewayIpAddress
@@ -48,7 +50,9 @@ function Test-LocalNetworkGatewayCRUD
       Assert-AreEqual "192.168.3.4" $list[0].GatewayIpAddress
       
       # Set/Update LocalNetworkGateway
-      $actual = Set-AzureRmLocalNetworkGateway -LocalNetworkGateway $expected -AddressPrefix "200.168.0.0/16"
+      $job = Set-AzureRmLocalNetworkGateway -LocalNetworkGateway $expected -AddressPrefix "200.168.0.0/16" -AsJob
+	  $job | Wait-Job
+	  $actual = $job | Receive-Job
       $expected = Get-AzureRmLocalNetworkGateway -ResourceGroupName $rgname -name $rname    
       Assert-AreEqual "200.168.0.0/16" $expected.LocalNetworkAddressSpace.AddressPrefixes[0]
 
@@ -68,12 +72,23 @@ function Test-LocalNetworkGatewayCRUD
       $expected = Get-AzureRmLocalNetworkGateway -ResourceGroupName $rgname -name $rname    
       Assert-AreEqual $asn $expected.BgpSettings.Asn
 
+        # Test error handling
+        Assert-ThrowsContains { Set-AzureRmLocalNetworkGateway -LocalNetworkGateway $expected -PeerWeight -1 } "PeerWeight cannot be negative"
+
       # Delete LocalNetworkGateway
-      $delete = Remove-AzureRmLocalNetworkGateway -ResourceGroupName $actual.ResourceGroupName -name $rname -PassThru -Force
+      $job = Remove-AzureRmLocalNetworkGateway -ResourceGroupName $actual.ResourceGroupName -name $rname -PassThru -Force -AsJob
+	  $job | Wait-Job
+	  $delete = $job | Receive-Job
       Assert-AreEqual true $delete
       
       $list = Get-AzureRmLocalNetworkGateway -ResourceGroupName $actual.ResourceGroupName
       Assert-AreEqual 0 @($list).Count
+
+        # Test error handling
+        Assert-ThrowsContains { Set-AzureRmLocalNetworkGateway -LocalNetworkGateway $actual } "not found"
+        Assert-Throws { New-AzureRmLocalNetworkGateway -ResourceGroupName $rgname -name $rname -location $location -PeerWeight -1 } "PeerWeight cannot be negative"
+        Assert-ThrowsContains { New-AzureRmLocalNetworkGateway -ResourceGroupName $rgname -name $rname -location $location -Asn 64 } "ASN and BgpPeeringAddress must both be specified"
+        Assert-ThrowsContains { New-AzureRmLocalNetworkGateway -ResourceGroupName $rgname -name $rname -location $location -BgpPeeringAddress "1.2.3.4" } "ASN and BgpPeeringAddress must both be specified"
      }
      finally
      {

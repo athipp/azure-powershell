@@ -12,12 +12,15 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Management.Storage;
 using Microsoft.Azure.Management.Storage.Models;
 using Microsoft.WindowsAzure.Commands.Common.Storage;
+using Microsoft.WindowsAzure.Commands.Storage.Adapters;
 using Microsoft.WindowsAzure.Storage;
 using System;
 using System.Collections.Generic;
+using Microsoft.WindowsAzure.Commands.Common.Attributes;
 using StorageModels = Microsoft.Azure.Management.Storage.Models;
 
 namespace Microsoft.Azure.Commands.Management.Storage.Models
@@ -36,6 +39,7 @@ namespace Microsoft.Azure.Commands.Management.Storage.Models
             this.AccessTier = storageAccount.AccessTier;
             this.CreationTime = storageAccount.CreationTime;
             this.CustomDomain = storageAccount.CustomDomain;
+            this.Identity = storageAccount.Identity;
             this.LastGeoFailoverTime = storageAccount.LastGeoFailoverTime;
             this.PrimaryEndpoints = storageAccount.PrimaryEndpoints;
             this.PrimaryLocation = storageAccount.PrimaryLocation;
@@ -45,24 +49,38 @@ namespace Microsoft.Azure.Commands.Management.Storage.Models
             this.StatusOfPrimary = storageAccount.StatusOfPrimary;
             this.StatusOfSecondary = storageAccount.StatusOfSecondary;
             this.Tags = storageAccount.Tags;
+            this.EnableHttpsTrafficOnly = storageAccount.EnableHttpsTrafficOnly;
+            this.NetworkRuleSet = PSNetworkRuleSet.ParsePSNetworkRule(storageAccount.NetworkRuleSet);
+            this.EnableHierarchicalNamespace = storageAccount.IsHnsEnabled; 
         }
 
+        [Ps1Xml(Label = "ResourceGroupName", Target = ViewControl.Table, Position = 1)]
         public string ResourceGroupName { get; set; }
 
+        [Ps1Xml(Label = "StorageAccountName", Target = ViewControl.Table, Position = 0)]
         public string StorageAccountName { get; set; }
 
         public string Id { get; set; }
 
+        [Ps1Xml(Label = "Location", Target = ViewControl.Table, Position = 2)]
         public string Location { get; set; }
 
+        [Ps1Xml(Label = "SkuName", Target = ViewControl.Table, ScriptBlock = "$_.Sku.Name", Position = 3)]
         public Sku Sku { get; set; }
+
+        [Ps1Xml(Label = "Kind", Target = ViewControl.Table, Position = 4)]
         public Kind? Kind { get; set; }
         public Encryption Encryption { get; set; }
+
+        [Ps1Xml(Label = "AccessTier", Target = ViewControl.Table, Position = 5)]
         public AccessTier? AccessTier { get; set; }
 
+        [Ps1Xml(Label = "CreationTime", Target = ViewControl.Table, Position = 6)]
         public DateTime? CreationTime { get; set; }
 
         public CustomDomain CustomDomain { get; set; }
+
+        public Identity Identity { get; set; }
 
         public DateTime? LastGeoFailoverTime { get; set; }
 
@@ -70,6 +88,7 @@ namespace Microsoft.Azure.Commands.Management.Storage.Models
 
         public string PrimaryLocation { get; set; }
 
+        [Ps1Xml(Label = "ProvisioningState", Target = ViewControl.Table, Position = 7)]
         public ProvisioningState? ProvisioningState { get; set; }
 
         public Endpoints SecondaryEndpoints { get; set; }
@@ -82,17 +101,19 @@ namespace Microsoft.Azure.Commands.Management.Storage.Models
 
         public IDictionary<string, string> Tags { get; set; }
 
+        [Ps1Xml(Label = "EnableHttpsTrafficOnly", Target = ViewControl.Table, Position = 8)]
+        public bool? EnableHttpsTrafficOnly { get; set; }
+        
+        public bool? EnableHierarchicalNamespace { get; set; }
+
+        public PSNetworkRuleSet NetworkRuleSet { get; set; }
+
         public static PSStorageAccount Create(StorageModels.StorageAccount storageAccount, IStorageManagementClient client)
         {
             var result = new PSStorageAccount(storageAccount);
              result.Context = new LazyAzureStorageContext((s) => 
              { 
-                var credentials = StorageUtilities.GenerateStorageCredentials(new ARMStorageProvider(client), result.ResourceGroupName, s); 
-                 return new CloudStorageAccount(credentials, 
-                     ARMStorageService.GetUri(storageAccount.PrimaryEndpoints.Blob), 
-                     ARMStorageService.GetUri(storageAccount.PrimaryEndpoints.Queue), 
-                     ARMStorageService.GetUri(storageAccount.PrimaryEndpoints.Table), 
-                     ARMStorageService.GetUri(storageAccount.PrimaryEndpoints.File)); 
+                return (new ARMStorageProvider(client)).GetCloudStorageAccount(s, result.ResourceGroupName);  
              }, result.StorageAccountName) as AzureStorageContext; 
 
             return result;
@@ -110,7 +131,9 @@ namespace Microsoft.Azure.Commands.Management.Storage.Models
             return null;
         }
 
-        public AzureStorageContext Context { get; private set; }
+        public IStorageContext Context { get; private set; }
+
+        public IDictionary<string, string> ExtendedProperties { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Return a string representation of this storage account

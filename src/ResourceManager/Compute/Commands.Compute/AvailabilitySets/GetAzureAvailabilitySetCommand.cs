@@ -15,20 +15,22 @@
 using AutoMapper;
 using Microsoft.Azure.Commands.Compute.Common;
 using Microsoft.Azure.Commands.Compute.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System.Collections.Generic;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Compute
 {
-    [Cmdlet(VerbsCommon.Get, ProfileNouns.AvailabilitySet)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "AvailabilitySet")]
     [OutputType(typeof(PSAvailabilitySet))]
     public class GetAzureAvailabilitySetCommand : AvailabilitySetBaseCmdlet
     {
         [Parameter(
-           Mandatory = true,
+           Mandatory = false,
            Position = 0,
            ValueFromPipelineByPropertyName = true,
            HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -37,6 +39,7 @@ namespace Microsoft.Azure.Commands.Compute
             Position = 1,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The availability set name.")]
+        [ResourceNameCompleter("Microsoft.Compute/availabilitySets", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string Name { get; set; }
 
@@ -46,16 +49,55 @@ namespace Microsoft.Azure.Commands.Compute
 
             ExecuteClientAction(() =>
             {
-                if (string.IsNullOrEmpty(this.Name))
+                if (string.IsNullOrEmpty(this.ResourceGroupName) && string.IsNullOrEmpty(this.Name))
+                {
+                    var result = this.AvailabilitySetClient.ListBySubscriptionWithHttpMessagesAsync().GetAwaiter().GetResult();
+                    var psResultList = new List<PSAvailabilitySet>();
+                    foreach (var item in result.Body)
+                    {
+                        var psItem = ComputeAutoMapperProfile.Mapper.Map<PSAvailabilitySet>(result);
+                        psItem = ComputeAutoMapperProfile.Mapper.Map(item, psItem);
+                        psResultList.Add(psItem);
+                    }
+
+                    var nextPageLink = result.Body.NextPageLink;
+                    while (!string.IsNullOrEmpty(nextPageLink))
+                    {
+                        var pageResult = this.AvailabilitySetClient.ListBySubscriptionNextWithHttpMessagesAsync(nextPageLink).GetAwaiter().GetResult();
+                        foreach (var pageItem in pageResult.Body)
+                        {
+                            var psItem = ComputeAutoMapperProfile.Mapper.Map<PSAvailabilitySet>(pageResult);
+                            psItem = ComputeAutoMapperProfile.Mapper.Map(pageItem, psItem);
+                            psResultList.Add(psItem);
+                        }
+                        nextPageLink = pageResult.Body.NextPageLink;
+                    }
+
+                    WriteObject(psResultList, true);
+                }
+                else if (string.IsNullOrEmpty(this.Name))
                 {
                     var result = this.AvailabilitySetClient.ListWithHttpMessagesAsync(this.ResourceGroupName).GetAwaiter().GetResult();
 
                     var psResultList = new List<PSAvailabilitySet>();
                     foreach (var item in result.Body)
                     {
-                        var psItem = Mapper.Map<PSAvailabilitySet>(result);
-                        psItem = Mapper.Map(item, psItem);
+                        var psItem = ComputeAutoMapperProfile.Mapper.Map<PSAvailabilitySet>(result);
+                        psItem = ComputeAutoMapperProfile.Mapper.Map(item, psItem);
                         psResultList.Add(psItem);
+                    }
+
+                    var nextPageLink = result.Body.NextPageLink;
+                    while (!string.IsNullOrEmpty(nextPageLink))
+                    {
+                        var pageResult = this.AvailabilitySetClient.ListNextWithHttpMessagesAsync(nextPageLink).GetAwaiter().GetResult();
+                        foreach (var pageItem in pageResult.Body)
+                        {
+                            var psItem = ComputeAutoMapperProfile.Mapper.Map<PSAvailabilitySet>(pageResult);
+                            psItem = ComputeAutoMapperProfile.Mapper.Map(pageItem, psItem);
+                            psResultList.Add(psItem);
+                        }
+                        nextPageLink = pageResult.Body.NextPageLink;
                     }
 
                     WriteObject(psResultList, true);
@@ -63,10 +105,10 @@ namespace Microsoft.Azure.Commands.Compute
                 else
                 {
                     var result = this.AvailabilitySetClient.GetWithHttpMessagesAsync(this.ResourceGroupName, this.Name).GetAwaiter().GetResult();
-                    var psResult = Mapper.Map<PSAvailabilitySet>(result);
+                    var psResult = ComputeAutoMapperProfile.Mapper.Map<PSAvailabilitySet>(result);
                     if (result.Body != null)
                     {
-                        psResult = Mapper.Map(result.Body, psResult);
+                        psResult = ComputeAutoMapperProfile.Mapper.Map(result.Body, psResult);
                     }
                     WriteObject(psResult);
                 }

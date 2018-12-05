@@ -35,11 +35,11 @@ namespace Microsoft.Azure.Commands.LogicApp.Utilities
         {
             get
             {
-                this._integartionAccountClient = new IntegrationAccountClient(DefaultProfile.Context)
-                {
-                    VerboseLogger = WriteVerboseWithTimestamp,
-                    ErrorLogger = WriteErrorWithTimestamp                    
-                };                
+                this._integartionAccountClient = new IntegrationAccountClient(DefaultProfile.DefaultContext);
+
+                this._integartionAccountClient.VerboseLogger = WriteVerboseWithTimestamp;
+                this._integartionAccountClient.ErrorLogger = WriteErrorWithTimestamp;
+                                
                 return _integartionAccountClient;
             }
 
@@ -56,7 +56,7 @@ namespace Microsoft.Azure.Commands.LogicApp.Utilities
         {
             get
             {
-                this._websitesClient = new WebsitesClient(DefaultProfile.Context)
+                this._websitesClient = new WebsitesClient(DefaultProfile.DefaultContext)
                 {
                     VerboseLogger = WriteVerboseWithTimestamp,
                     ErrorLogger = WriteErrorWithTimestamp
@@ -83,7 +83,7 @@ namespace Microsoft.Azure.Commands.LogicApp.Utilities
         {
             get
             {
-                this._logicAppClient = new LogicAppClient(DefaultProfile.Context)
+                this._logicAppClient = new LogicAppClient(DefaultProfile.DefaultContext)
                 {
                     VerboseLogger = WriteVerboseWithTimestamp,
                     ErrorLogger = WriteErrorWithTimestamp

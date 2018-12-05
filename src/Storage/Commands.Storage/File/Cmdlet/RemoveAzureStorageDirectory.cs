@@ -18,11 +18,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
     using System.Globalization;
     using System.Management.Automation;
 
-    [Cmdlet(
-        VerbsCommon.Remove,
-        Constants.FileDirectoryCmdletName,
-        SupportsShouldProcess = true,
-        DefaultParameterSetName = Constants.ShareNameParameterSetName)]
+    [Cmdlet("Remove", Azure.Commands.ResourceManager.Common.AzureRMConstants.AzurePrefix + "StorageDirectory",SupportsShouldProcess = true,DefaultParameterSetName = Constants.ShareNameParameterSetName), OutputType(typeof(CloudFileDirectory))]
     public class RemoveAzureStorageDirectory : AzureStorageFileCmdletBase
     {
         [Parameter(
@@ -101,7 +97,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
             {
                 if (this.ShouldProcess(directoryToBeRemoved.GetFullPath(), "Remove directory"))
                 {
-                    await this.Channel.DeleteDirectoryAsync(directoryToBeRemoved, null, this.RequestOptions, this.OperationContext, this.CmdletCancellationToken);
+                    await this.Channel.DeleteDirectoryAsync(directoryToBeRemoved, null, this.RequestOptions, this.OperationContext, this.CmdletCancellationToken).ConfigureAwait(false);
                 }
 
                 if (this.PassThru)

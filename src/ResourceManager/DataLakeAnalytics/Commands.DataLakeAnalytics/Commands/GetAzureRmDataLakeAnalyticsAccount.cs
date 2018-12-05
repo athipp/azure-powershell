@@ -13,26 +13,29 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.DataLakeAnalytics.Models;
+using Microsoft.Azure.Commands.DataLakeAnalytics.Properties;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.DataLake.Analytics.Models;
 using System.Collections.Generic;
+using System.Linq;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.DataLakeAnalytics
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmDataLakeAnalyticsAccount", DefaultParameterSetName = BaseParameterSetName),
-     OutputType(typeof(List<DataLakeAnalyticsAccount>), typeof(DataLakeAnalyticsAccount))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "DataLakeAnalyticsAccount", DefaultParameterSetName = BaseParameterSetName),OutputType(typeof(PSDataLakeAnalyticsAccount))]
     [Alias("Get-AdlAnalyticsAccount")]
     public class GetAzureDataLakeAnalyticsAccount : DataLakeAnalyticsCmdletBase
     {
-        internal const string BaseParameterSetName = "All In Subscription";
-        internal const string ResourceGroupParameterSetName = "All In Resource Group";
-        internal const string AccountParameterSetName = "Specific Account";
+        internal const string BaseParameterSetName = "GetAllInSubscription";
+        internal const string ResourceGroupParameterSetName = "GetByResourceGroup";
+        internal const string AccountParameterSetName = "GetBySpecificAccount";
 
         [Parameter(ParameterSetName = ResourceGroupParameterSetName, ValueFromPipelineByPropertyName = true,
             Position = 0, Mandatory = true,
             HelpMessage = "Name of resource group under which want to retrieve the account.")]
         [Parameter(ParameterSetName = AccountParameterSetName, ValueFromPipelineByPropertyName = true, Position = 1,
             Mandatory = false, HelpMessage = "Name of resource group under which want to retrieve the account.")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -46,13 +49,15 @@ namespace Microsoft.Azure.Commands.DataLakeAnalytics
             if (!string.IsNullOrEmpty(Name))
             {
                 // Get for single account
-                WriteObject(DataLakeAnalyticsClient.GetAccount(ResourceGroupName, Name));
+                WriteObject(new PSDataLakeAnalyticsAccount(DataLakeAnalyticsClient.GetAccount(ResourceGroupName, Name)));
             }
             else
             {
+                WriteWarning(Resources.IncorrectOutputTypeWarning);
                 // List all accounts in given resource group if avaliable otherwise all accounts in the subscription
-                var list = DataLakeAnalyticsClient.ListAccounts(ResourceGroupName, null, null, null);
-                WriteObject(list, true);
+                WriteObject(DataLakeAnalyticsClient.ListAccounts(ResourceGroupName, null, null, null)
+                    .Select(element => new PSDataLakeAnalyticsAccountBasic(element))
+                    .ToList(), true);
             }
         }
     }

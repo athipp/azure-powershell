@@ -13,15 +13,17 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.OperationalInsights.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.OperationalInsights
 {
-    [Cmdlet(VerbsCommon.Get, Constants.SavedSearchResults), OutputType(typeof(PSSearchGetSearchResultsResponse))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "OperationalInsightsSavedSearchResults"), OutputType(typeof(PSSearchGetSearchResultsResponse))]
     public class GetAzureOperationalInsightsSavedSearchResultsCommand : OperationalInsightsBaseCmdlet
     {
         [Parameter(Position = 0, Mandatory = true, ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

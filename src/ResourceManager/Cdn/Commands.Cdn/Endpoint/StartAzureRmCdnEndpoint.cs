@@ -17,10 +17,11 @@ using Microsoft.Azure.Commands.Cdn.Common;
 using Microsoft.Azure.Commands.Cdn.Models.Endpoint;
 using Microsoft.Azure.Commands.Cdn.Properties;
 using Microsoft.Azure.Management.Cdn;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Cdn.Endpoint
 {
-    [Cmdlet(VerbsLifecycle.Start, "AzureRmCdnEndpoint", DefaultParameterSetName = FieldsParameterSet, SupportsShouldProcess = true), OutputType(typeof(bool))]
+    [Cmdlet("Start", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CdnEndpoint", DefaultParameterSetName = FieldsParameterSet, SupportsShouldProcess = true), OutputType(typeof(bool))]
     public class StartAzureRmCdnEndpoint : AzureCdnCmdletBase
     {
         [Parameter(Mandatory = true, ParameterSetName = FieldsParameterSet, HelpMessage = "Azure CDN endpoint name.")]
@@ -32,6 +33,7 @@ namespace Microsoft.Azure.Commands.Cdn.Endpoint
         public string ProfileName { get; set; }
 
         [Parameter(Mandatory = true, ParameterSetName = FieldsParameterSet, HelpMessage = "The resource group of the Azure CDN profile.")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -53,7 +55,7 @@ namespace Microsoft.Azure.Commands.Cdn.Endpoint
 
             ConfirmAction(MyInvocation.InvocationName,
                 EndpointName,
-                () => CdnManagementClient.Endpoints.Start(EndpointName, ProfileName, ResourceGroupName));
+                () => CdnManagementClient.Endpoints.Start(ResourceGroupName, ProfileName, EndpointName));
             
             WriteVerbose(Resources.Success);
             WriteVerbose(string.Format(Resources.Success_StartEndpoint, EndpointName, ProfileName, ResourceGroupName));

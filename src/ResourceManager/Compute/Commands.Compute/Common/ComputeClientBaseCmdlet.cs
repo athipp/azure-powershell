@@ -12,19 +12,22 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Commands.Compute.Common;
 using System;
+using System.Globalization;
+using System.Management.Automation;
+using System.Text.RegularExpressions;
+using Microsoft.Azure.Commands.Compute.Common;
+using Microsoft.Azure.Commands.ResourceManager.Common;
+using Microsoft.Azure.Management.Compute.Models;
 
 namespace Microsoft.Azure.Commands.Compute
 {
-    public abstract class ComputeClientBaseCmdlet : Microsoft.Azure.Commands.ResourceManager.Common.AzureRMCmdlet
+    public abstract class ComputeClientBaseCmdlet : AzureRMCmdlet
     {
         protected const string VirtualMachineExtensionType = "Microsoft.Compute/virtualMachines/extensions";
 
-        protected override bool IsUsageMetricEnabled
-        {
-            get { return true; }
-        }
+        protected override bool IsUsageMetricEnabled => true;
+        protected DateTime StartTime;
 
         private ComputeClient computeClient;
 
@@ -34,13 +37,11 @@ namespace Microsoft.Azure.Commands.Compute
             {
                 if (computeClient == null)
                 {
-                    computeClient = new ComputeClient(DefaultProfile.Context)
-                    {
-                        VerboseLogger = WriteVerboseWithTimestamp,
-                        ErrorLogger = WriteErrorWithTimestamp
-                    };
+                    computeClient = new ComputeClient(DefaultProfile.DefaultContext);
                 }
 
+                this.computeClient.VerboseLogger = WriteVerboseWithTimestamp;
+                this.computeClient.ErrorLogger = WriteErrorWithTimestamp;
                 return computeClient;
             }
 
@@ -49,8 +50,8 @@ namespace Microsoft.Azure.Commands.Compute
 
         public override void ExecuteCmdlet()
         {
+            StartTime = DateTime.Now;
             base.ExecuteCmdlet();
-            ComputeAutoMapperProfile.Initialize();
         }
 
         protected void ExecuteClientAction(Action action)
@@ -72,6 +73,51 @@ namespace Microsoft.Azure.Commands.Compute
 
                 throw new ComputeCloudException(ex);
             }
+        }
+
+        protected void ThrowInvalidArgumentError(string errorMessage, string arg)
+        {
+            ThrowTerminatingError
+                (new ErrorRecord(
+                    new ArgumentException(string.Format(CultureInfo.InvariantCulture,
+                        errorMessage, arg)),
+                    "InvalidArgument",
+                    ErrorCategory.InvalidArgument,
+                    null));
+        }
+
+        protected string GetDiskNameFromId(string Id)
+        {
+            return Id.Substring(Id.LastIndexOf('/') + 1);
+        }
+
+        public static string GetOperationIdFromUrlString(string Url)
+        {
+            Regex r = new Regex(@"(.*?)operations/(?<id>[a-f0-9]{8}[-]([a-f0-9]{4}[-]){3}[a-f0-9]{12})", RegexOptions.IgnoreCase);
+            Match m = r.Match(Url);
+            return m.Success ? m.Groups["id"].Value : null;
+        }
+
+        public static ManagedDiskParameters SetManagedDisk(string managedDiskId, string storageAccountType, ManagedDiskParameters managedDisk = null)
+        {
+            if (string.IsNullOrWhiteSpace(managedDiskId) && string.IsNullOrWhiteSpace(storageAccountType))
+            {
+                return managedDisk;
+            }
+
+            managedDisk = new ManagedDiskParameters();
+
+            if (!string.IsNullOrWhiteSpace(managedDiskId))
+            {
+                managedDisk.Id = managedDiskId;
+            }
+
+            if (!string.IsNullOrWhiteSpace(storageAccountType))
+            {
+                managedDisk.StorageAccountType = storageAccountType;
+            }
+
+            return managedDisk;
         }
     }
 }

@@ -15,10 +15,11 @@
 using System.Management.Automation;
 using Microsoft.Azure.Commands.Management.PowerBIEmbedded.Properties;
 using Microsoft.Azure.Management.PowerBIEmbedded;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Management.PowerBIEmbedded.WorkspaceCollection
 {
-    [Cmdlet(VerbsCommon.Remove, Nouns.WorkspaceCollection, SupportsShouldProcess = true)]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "PowerBIWorkspaceCollection", SupportsShouldProcess = true), OutputType(typeof(void))]
     public class RemoveWorkspaceCollection : WorkspaceCollectionBaseCmdlet
     {
         [Parameter(
@@ -26,6 +27,7 @@ namespace Microsoft.Azure.Commands.Management.PowerBIEmbedded.WorkspaceCollectio
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Resource Group Name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

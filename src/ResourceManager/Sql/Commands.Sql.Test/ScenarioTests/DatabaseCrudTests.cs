@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,6 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.ScenarioTest.SqlTests;
-using Microsoft.Azure.ServiceManagemenet.Common.Models;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Xunit.Abstractions;
@@ -22,9 +21,16 @@ namespace Microsoft.Azure.Commands.Sql.Test.ScenarioTests
 {
     public class DatabaseCrudTests : SqlTestsBase
     {
-        public DatabaseCrudTests(ITestOutputHelper output)
+        public DatabaseCrudTests(ITestOutputHelper output) : base(output)
         {
-            XunitTracingInterceptor.AddToContext(new XunitTracingInterceptor(output));
+        }
+
+        protected override void SetupManagementClients(Rest.ClientRuntime.Azure.TestFramework.MockContext context)
+        {
+            // Only SqlClient is needed.
+            var sqlClient = GetSqlClient(context);
+            var newResourcesClient = GetResourcesClient(context);
+            Helper.SetupSomeOfManagementClients(sqlClient, newResourcesClient);
         }
 
         [Fact]
@@ -36,9 +42,72 @@ namespace Microsoft.Azure.Commands.Sql.Test.ScenarioTests
 
         [Fact]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestVcoreDatabaseCreate()
+        {
+            RunPowerShellTest("Test-CreateVcoreDatabase");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestVcoreDatabaseCreateWithLicenseType()
+        {
+            RunPowerShellTest("Test-CreateVcoreDatabaseWithLicenseType");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestDatabaseCreateWithSampleName()
+        {
+            RunPowerShellTest("Test-CreateDatabaseWithSampleName");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestDatabaseCreateWithZoneRedundancy()
+        {
+            RunPowerShellTest("Test-CreateDatabaseWithZoneRedundancy");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestDatabaseUpdate()
         {
             RunPowerShellTest("Test-UpdateDatabase");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestVcoreDatabaseUpdate()
+        {
+            RunPowerShellTest("Test-UpdateVcoreDatabase");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestVcoreDatabaseUpdateWithLicenseType()
+        {
+            RunPowerShellTest("Test-UpdateVcoreDatabaseLicenseType");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestDatabaseUpdateWithZoneRedundancy()
+        {
+            RunPowerShellTest("Test-UpdateDatabaseWithZoneRedundant");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestDatabaseUpdateWithZoneRedundancyNotSpecified()
+        {
+            RunPowerShellTest("Test-UpdateDatabaseWithZoneRedundantNotSpecified");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestDatabaseRename()
+        {
+            RunPowerShellTest("Test-RenameDatabase");
         }
 
         [Fact]
@@ -50,6 +119,13 @@ namespace Microsoft.Azure.Commands.Sql.Test.ScenarioTests
 
         [Fact]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestDatabaseGetWithZoneRedundancy()
+        {
+            RunPowerShellTest("Test-GetDatabaseWithZoneRedundancy");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestDatabaseRemove()
         {
             RunPowerShellTest("Test-RemoveDatabase");
@@ -57,30 +133,9 @@ namespace Microsoft.Azure.Commands.Sql.Test.ScenarioTests
 
         [Fact]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
-        public void TestDatabaseCreateV2()
+        public void TestDatabaseCancelOperation()
         {
-            RunPowerShellTest("Test-CreateDatabaseV2");
-        }
-
-        [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
-        public void TestDatabaseUpdateV2()
-        {
-            RunPowerShellTest("Test-UpdateDatabaseV2");
-        }
-
-        [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
-        public void TestDatabaseGetV2()
-        {
-            RunPowerShellTest("Test-GetDatabaseV2");
-        }
-
-        [Fact]
-        [Trait(Category.AcceptanceType, Category.CheckIn)]
-        public void TestDatabaseRemoveV2()
-        {
-            RunPowerShellTest("Test-RemoveDatabaseV2");
+            RunPowerShellTest("Test-CancelDatabaseOperation");
         }
     }
 }

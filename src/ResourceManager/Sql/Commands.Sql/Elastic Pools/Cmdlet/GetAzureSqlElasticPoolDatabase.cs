@@ -12,6 +12,7 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.Database.Model;
 using Microsoft.Azure.Commands.Sql.ElasticPool.Model;
 using System.Collections.Generic;
@@ -19,8 +20,8 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Sql.ElasticPool.Cmdlet
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmSqlElasticPoolDatabase", SupportsShouldProcess = true,
-        ConfirmImpact = ConfirmImpact.None)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlElasticPoolDatabase", SupportsShouldProcess = true,ConfirmImpact = ConfirmImpact.None)]
+    [OutputType(typeof(AzureSqlDatabaseModel))]
     public class GetAzureSqlElasticPoolDatabase : AzureSqlElasticPoolCmdletBase
     {
         /// <summary>
@@ -30,6 +31,7 @@ namespace Microsoft.Azure.Commands.Sql.ElasticPool.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 2,
             HelpMessage = "The name of the Azure SQL Elastic Pool to retrieve.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers/elasticPools", "ResourceGroupName", "ServerName")]
         [ValidateNotNullOrEmpty]
         public string ElasticPoolName { get; set; }
 
@@ -39,6 +41,7 @@ namespace Microsoft.Azure.Commands.Sql.ElasticPool.Cmdlet
         [Parameter(Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The name of the Azure SQL Database to retrieve.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers/databases", "ResourceGroupName", "ServerName")]
         [ValidateNotNullOrEmpty]
         public string DatabaseName { get; set; }
 
@@ -68,7 +71,7 @@ namespace Microsoft.Azure.Commands.Sql.ElasticPool.Cmdlet
         /// </summary>
         public override void ExecuteCmdlet()
         {
-            ModelAdapter = InitModelAdapter(DefaultProfile.Context.Subscription);
+            ModelAdapter = InitModelAdapter(DefaultProfile.DefaultContext.Subscription);
 
             WriteObject(GetDatabase());
         }

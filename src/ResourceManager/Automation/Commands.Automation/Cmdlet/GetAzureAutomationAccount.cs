@@ -14,6 +14,7 @@
 
 using Microsoft.Azure.Commands.Automation.Common;
 using Microsoft.Azure.Commands.Automation.Model;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System.Collections.Generic;
 using System.Management.Automation;
 using System.Security.Permissions;
@@ -23,23 +24,23 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
     /// <summary>
     /// Gets azure automation accounts, filterd by automation account name and location.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmAutomationAccount", DefaultParameterSetName = AutomationCmdletParameterSets.ByAll)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "AutomationAccount", DefaultParameterSetName = AutomationCmdletParameterSets.ByAll)]
     [OutputType(typeof(AutomationAccount))]
     public class GetAzureAutomationAccount : ResourceManager.Common.AzureRMCmdlet
     {
         /// <summary>
         /// The automation client.
         /// </summary>
-        private IAutomationClient automationClient;
+        private IAutomationPSClient automationClient;
 
         /// <summary>
         /// Gets or sets the automation client base.
         /// </summary>
-        public IAutomationClient AutomationClient
+        public IAutomationPSClient AutomationClient
         {
             get
             {
-                return this.automationClient = this.automationClient ?? new AutomationClient(DefaultProfile.Context);
+                return this.automationClient = this.automationClient ?? new AutomationPSClient(DefaultProfile.DefaultContext);
             }
 
             set
@@ -53,6 +54,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
         /// </summary>
         [Parameter(ParameterSetName = AutomationCmdletParameterSets.ByAll, Position = 0, Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The resource group name.")]
         [Parameter(ParameterSetName = AutomationCmdletParameterSets.ByAutomationAccountName, Position = 0, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter()]
         public string ResourceGroupName { get; set; }
 
         /// <summary>

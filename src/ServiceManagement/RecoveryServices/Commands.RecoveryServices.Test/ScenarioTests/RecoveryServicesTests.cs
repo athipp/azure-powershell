@@ -20,42 +20,49 @@ namespace Microsoft.Azure.Commands.RecoveryServices.Test.ScenarioTests
     public class RecoveryServicesTests : RecoveryServicesTestsBase
     {
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void EnumerationTests()
         {
             this.RunPowerShellTest("Test-RecoveryServicesEnumerationTests -vaultSettingsFilePath \"" + vaultSettingsFilePath + "\"");
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void E2E_DeleteAndDissociateTest()
         {
             this.RunPowerShellTest("Test-E2E_DeleteAndDissociate -vaultSettingsFilePath \"" + vaultSettingsFilePath + "\"");
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void E2E_CreateAndAssociateTest()
         {
             this.RunPowerShellTest("Test-E2E_CreateAndAssociate -vaultSettingsFilePath \"" + vaultSettingsFilePath + "\"");
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void StorageMappingTest()
         {
             this.RunPowerShellTest("Test-StorageMapping -vaultSettingsFilePath \"" + vaultSettingsFilePath + "\"");
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void StorageUnMappingTest()
         {
             this.RunPowerShellTest("Test-StorageUnMapping -vaultSettingsFilePath \"" + vaultSettingsFilePath + "\"");
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void NetworkMappingTest()
         {
             this.RunPowerShellTest("Test-NetworkMapping -vaultSettingsFilePath \"" + vaultSettingsFilePath + "\"");
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void NetworkUnMappingTest()
         {
             this.RunPowerShellTest("Test-NetworkUnMapping -vaultSettingsFilePath \"" + vaultSettingsFilePath + "\"");
@@ -154,6 +161,18 @@ namespace Microsoft.Azure.Commands.RecoveryServices.Test.ScenarioTests
         public void CommitRPTest()
         {
             this.RunPowerShellTest("Test-CommitRP -vaultSettingsFilePath \"" + vaultSettingsFilePath + "\"");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void VaultUpgradeTest()
+        {
+            this.RunPowerShellTest(
+                "Test-VaultUpgrade" +
+                " -ResourceType \"" + resourceType + "\"" +
+                " -VaultName \"" + vaultName + "\"" +
+                " -Location \"" + location + "\"" +
+                " -TargetResourceGroupName \"" + targetRgName + "\"");
         }
     }
 }

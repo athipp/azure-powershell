@@ -17,15 +17,14 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Management.Automation;
-using Microsoft.Azure.Management.Sql.Models;
+using Microsoft.Azure.Management.Sql.LegacySdk.Models;
 
 namespace Microsoft.Azure.Commands.Sql.RecommendedAction.Cmdlet
 {
     /// <summary>
-    /// Defines the Set-AzureRmSqlDatabaseRecommendedActionState cmdlet
+    /// Defines the Set-AzSqlDatabaseRecommendedActionState cmdlet
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "AzureRmSqlDatabaseRecommendedActionState",
-        SupportsShouldProcess = true)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlDatabaseRecommendedActionState",SupportsShouldProcess = true), OutputType(typeof(AzureSqlDatabaseRecommendedActionModel))]
     public class SetAzureSqlDatabaseRecommendedActionState : AzureSqlDatabaseRecommendedActionCmdletBase
     {
         /// <summary>

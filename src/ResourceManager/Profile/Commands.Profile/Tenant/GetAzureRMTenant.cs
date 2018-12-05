@@ -1,5 +1,6 @@
 ﻿// ----------------------------------------------------------------------------------
 //
+//
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,6 +13,8 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.Azure.Commands.Profile.Models;
 using Microsoft.Azure.Commands.ResourceManager.Common;
 using Microsoft.WindowsAzure.Commands.Common;
@@ -23,8 +26,8 @@ namespace Microsoft.Azure.Commands.Profile
     /// <summary>
     /// Cmdlet to get user tenant information. 
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmTenant")]
-    [Alias("Get-AzureRmDomain")]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "Tenant")]
+    [Alias("Get-AzureRmDomain", "Get-AzDomain")]
     [OutputType(typeof(PSAzureTenant))]
     public class GetAzureRMTenantCommand : AzureRMCmdlet
     {
@@ -35,9 +38,9 @@ namespace Microsoft.Azure.Commands.Profile
 
         public override void ExecuteCmdlet()
         {
-            var profileClient = new RMProfileClient(AzureRmProfileProvider.Instance.Profile);
+            var profileClient = new RMProfileClient(AzureRmProfileProvider.Instance.GetProfile<AzureRmProfile>());
 
-            WriteObject(profileClient.ListTenants(TenantId).Select((t) => (PSAzureTenant)t), enumerateCollection: true);
+            WriteObject(profileClient.ListTenants(TenantId).Select((t) => new PSAzureTenant(t)), enumerateCollection: true);
         }
     }
 }

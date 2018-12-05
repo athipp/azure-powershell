@@ -15,14 +15,17 @@
 using System.Collections;
 using System.Management.Automation;
 using Microsoft.Azure.Management.OperationalInsights.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
+using System.Net;
 
 namespace Microsoft.Azure.Commands.OperationalInsights
 {
-    [Cmdlet(VerbsCommon.Set, Constants.SavedSearch)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "OperationalInsightsSavedSearch"), OutputType(typeof(HttpStatusCode))]
     public class SetAzureOperationalInsightsSavedSearchCommand : OperationalInsightsBaseCmdlet
     {
         [Parameter(Position = 0, Mandatory = true, ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -55,7 +58,7 @@ namespace Microsoft.Azure.Commands.OperationalInsights
         [Parameter(Position = 6, Mandatory = false, ValueFromPipelineByPropertyName = true,
         HelpMessage = "The saved search tags.")]
         [ValidateNotNullOrEmpty]
-        public Hashtable Tags { get; set; }
+        public Hashtable Tag { get; set; }
 
         [Parameter(Position = 7, Mandatory = false, ValueFromPipelineByPropertyName = true,
         HelpMessage = "The saved search version.")]
@@ -69,7 +72,7 @@ namespace Microsoft.Azure.Commands.OperationalInsights
 
         protected override void ProcessRecord()
         {
-            SavedSearchProperties properties = new SavedSearchProperties()
+            SavedSearch properties = new SavedSearch()
             {
                 Category = this.Category,
                 DisplayName = this.DisplayName,
@@ -77,9 +80,8 @@ namespace Microsoft.Azure.Commands.OperationalInsights
                 Version = this.Version
             };
 
-            properties.Tags = SearchCommandHelper.PopulateAndValidateTagsForProperties(this.Tags, properties.Query);
-
-            WriteObject(OperationalInsightsClient.CreateOrUpdateSavedSearch(ResourceGroupName, WorkspaceName, SavedSearchId, properties, true, ConfirmAction), true);
+            properties.Tags = SearchCommandHelper.PopulateAndValidateTagsForProperties(this.Tag, properties.Query);
+            WriteObject(OperationalInsightsClient.CreateOrUpdateSavedSearch(ResourceGroupName, WorkspaceName, SavedSearchId, properties, true, ConfirmAction, ETag), true);
         }
 
     }

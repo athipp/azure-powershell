@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,14 +13,13 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Common.Authentication;
-using Microsoft.Azure.Commands.Common.Authentication.Models;
-using Microsoft.Azure.Commands.Sql.Common;
-using Microsoft.Azure.Management.Resources;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Management.Sql;
-using Microsoft.Azure.Management.Sql.Models;
-using Microsoft.WindowsAzure.Management.Storage;
+using Microsoft.Azure.Management.Sql.LegacySdk;
+using Microsoft.Azure.Management.Sql.LegacySdk.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Microsoft.Azure.Commands.Sql.ReplicationLink.Services
 {
@@ -32,79 +31,87 @@ namespace Microsoft.Azure.Commands.Sql.ReplicationLink.Services
         /// <summary>
         /// The Sql client to be used by this end points communicator
         /// </summary>
-        private static SqlManagementClient SqlClient { get; set; }
+        private static Management.Sql.LegacySdk.SqlManagementClient LegacySqlClient { get; set; }
 
         /// <summary>
         /// Gets or set the Azure subscription
         /// </summary>
-        private static AzureSubscription Subscription { get; set; }
+        private static IAzureSubscription Subscription { get; set; }
 
         /// <summary>
         /// Gets or sets the Azure profile
         /// </summary>
-        public AzureContext Context { get; set; }
+        public IAzureContext Context { get; set; }
 
         /// <summary>
         /// Creates a communicator for Azure SQL Databases
         /// </summary>
         /// <param name="profile"></param>
         /// <param name="subscription"></param>
-        public AzureSqlDatabaseReplicationCommunicator(AzureContext context)
+        public AzureSqlDatabaseReplicationCommunicator(IAzureContext context)
         {
             Context = context;
             if (context.Subscription != Subscription)
             {
                 Subscription = context.Subscription;
-                SqlClient = null;
+                LegacySqlClient = null;
             }
         }
 
         /// <summary>
-        /// Gets the Azure SQL Database
+        /// Gets the specified Azure SQL Database replication link with Lagecy sdk
         /// </summary>
-        public Management.Sql.Models.ReplicationLink GetLink(string resourceGroupName, string serverName, string databaseName, Guid linkId, string clientRequestId)
+        public Management.Sql.LegacySdk.Models.ReplicationLink GetLink(string resourceGroupName, string serverName, string databaseName, Guid linkId)
         {
-            return GetCurrentSqlClient(clientRequestId).DatabaseReplicationLinks.Get(resourceGroupName, serverName, databaseName, linkId.ToString()).ReplicationLink;
+            return GetLegacySqlClient().DatabaseReplicationLinks.Get(resourceGroupName, serverName, databaseName, linkId.ToString()).ReplicationLink;
         }
 
         /// <summary>
-        /// Lists Azure SQL Databases
+        /// Lists Azure SQL Databases replication links with Legacy sdk
         /// </summary>
-        public IList<Management.Sql.Models.ReplicationLink> ListLinks(string resourceGroupName, string serverName, string databaseName, string clientRequestId)
+        public IList<Management.Sql.LegacySdk.Models.ReplicationLink> ListLinks(string resourceGroupName, string serverName, string databaseName)
         {
-            return GetCurrentSqlClient(clientRequestId).DatabaseReplicationLinks.List(resourceGroupName, serverName, databaseName).ReplicationLinks;
+            return GetLegacySqlClient().DatabaseReplicationLinks.List(resourceGroupName, serverName, databaseName).ReplicationLinks;
         }
 
         /// <summary>
-        /// Creates a copy of a Azure SQL Database
+        /// Creates a copy of a Azure SQL Database with Legacy SDK model
         /// </summary>
-        public Management.Sql.Models.DatabaseCreateOrUpdateResponse CreateCopy(string resourceGroupName, string serverName, string databaseName, string clientRequestId, DatabaseCreateOrUpdateParameters parameters)
+        public Management.Sql.LegacySdk.Models.DatabaseCreateOrUpdateResponse CreateCopy(string resourceGroupName, string serverName, string databaseName, DatabaseCreateOrUpdateParameters parameters)
         {
-            return GetCurrentSqlClient(clientRequestId).Databases.CreateOrUpdate(resourceGroupName, serverName, databaseName, parameters);
+            return GetLegacySqlClient().Databases.CreateOrUpdate(resourceGroupName, serverName, databaseName, parameters);
+        }
+
+        /// <summary>
+        /// Creates a copy of a Azure SQL Database with new Autorest SDK
+        /// </summary>
+        public Management.Sql.Models.Database CreateCopy(string resourceGroupName, string serverName, string databaseName, Management.Sql.Models.Database parameters)
+        {
+            return GetCurrentSqlClient().Databases.CreateOrUpdate(resourceGroupName, serverName, databaseName, parameters);
         }
 
         /// <summary>
         /// Deletes a Replication Link
         /// </summary>
-        public void RemoveLink(string resourceGroupName, string serverName, string databaseName, Guid linkId, string clientRequestId)
+        public void RemoveLink(string resourceGroupName, string serverName, string databaseName, Guid linkId)
         {
-            GetCurrentSqlClient(clientRequestId).DatabaseReplicationLinks.Delete(resourceGroupName, serverName, databaseName, linkId.ToString());
+            GetLegacySqlClient().DatabaseReplicationLinks.Delete(resourceGroupName, serverName, databaseName, linkId.ToString());
         }
 
         /// <summary>
         /// Fails over a Replication Link without data loss
         /// </summary>
-        public void FailoverLink(string resourceGroupName, string serverName, string databaseName, Guid linkId, string clientRequestId)
+        public void FailoverLink(string resourceGroupName, string serverName, string databaseName, Guid linkId)
         {
-            GetCurrentSqlClient(clientRequestId).DatabaseReplicationLinks.Failover(resourceGroupName, serverName, databaseName, linkId.ToString());
+            GetLegacySqlClient().DatabaseReplicationLinks.Failover(resourceGroupName, serverName, databaseName, linkId.ToString());
         }
 
         /// <summary>
         /// Fails over a Replication Link with data loss
         /// </summary>
-        public void FailoverLinkAllowDataLoss(string resourceGroupName, string serverName, string databaseName, Guid linkId, string clientRequestId)
+        public void FailoverLinkAllowDataLoss(string resourceGroupName, string serverName, string databaseName, Guid linkId)
         {
-            GetCurrentSqlClient(clientRequestId).DatabaseReplicationLinks.FailoverAllowDataLoss(resourceGroupName, serverName, databaseName, linkId.ToString());
+            GetLegacySqlClient().DatabaseReplicationLinks.FailoverAllowDataLoss(resourceGroupName, serverName, databaseName, linkId.ToString());
         }
 
         /// <summary>
@@ -112,16 +119,28 @@ namespace Microsoft.Azure.Commands.Sql.ReplicationLink.Services
         /// id tracing headers for the current cmdlet invocation.
         /// </summary>
         /// <returns>The SQL Management client for the currently selected subscription.</returns>
-        private SqlManagementClient GetCurrentSqlClient(String clientRequestId)
+        private Management.Sql.SqlManagementClient GetCurrentSqlClient()
         {
             // Get the SQL management client for the current subscription
-            if (SqlClient == null)
+            // Note: client is not cached in static field because that causes ObjectDisposedException in functional tests
+            var sqlClient = AzureSession.Instance.ClientFactory.CreateArmClient<Management.Sql.SqlManagementClient>(Context, AzureEnvironment.Endpoint.ResourceManager);
+
+            return sqlClient;
+        }
+
+        /// <summary>
+        /// Retrieve the SQL Management client for the currently selected subscription, adding the session and request
+        /// id tracing headers for the current cmdlet invocation.
+        /// </summary>
+        /// <returns>The SQL Management client for the currently selected subscription.</returns>
+        private Management.Sql.LegacySdk.SqlManagementClient GetLegacySqlClient()
+        {
+            // Get the SQL management client for the current subscription
+            if (LegacySqlClient == null)
             {
-                SqlClient = AzureSession.ClientFactory.CreateClient<SqlManagementClient>(Context, AzureEnvironment.Endpoint.ResourceManager);
+                LegacySqlClient = AzureSession.Instance.ClientFactory.CreateClient<Management.Sql.LegacySdk.SqlManagementClient>(Context, AzureEnvironment.Endpoint.ResourceManager);
             }
-            SqlClient.HttpClient.DefaultRequestHeaders.Remove(Constants.ClientRequestIdHeaderName);
-            SqlClient.HttpClient.DefaultRequestHeaders.Add(Constants.ClientRequestIdHeaderName, clientRequestId);
-            return SqlClient;
+            return LegacySqlClient;
         }
     }
 }

@@ -20,14 +20,11 @@ using Microsoft.Azure.Commands.Compute.Models;
 using Microsoft.Azure.Management.Compute;
 using Microsoft.Azure.Management.Compute.Models;
 using Microsoft.Rest.Azure;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Compute.Extension.Chef
 {
-    [Cmdlet(
-        VerbsCommon.Get,
-        ProfileNouns.VirtualMachineChefExtension),
-    OutputType(
-        typeof(PSVirtualMachineExtension))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VMChefExtension"),OutputType(typeof(PSVirtualMachineExtension))]
     public class GetAzureRmVMChefExtension : VirtualMachineExtensionBaseCmdlet
     {
         private string ExtensionDefaultPublisher = "Chef.Bootstrap.WindowsAzure";
@@ -42,6 +39,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.Chef
            Position = 0,
            ValueFromPipelineByPropertyName = true,
            HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -51,6 +49,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.Chef
             Position = 1,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The virtual machine name.")]
+        [ResourceNameCompleter("Microsoft.Compute/virtualMachines", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string VMName { get; set; }
 
@@ -60,6 +59,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.Chef
             Position = 2,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Extension Name.")]
+        [ResourceNameCompleter("Microsoft.Compute/virtualMachines/extensions", "ResourceGroupName", "VMName")]
         public string Name { get; set; }
 
         [Parameter(

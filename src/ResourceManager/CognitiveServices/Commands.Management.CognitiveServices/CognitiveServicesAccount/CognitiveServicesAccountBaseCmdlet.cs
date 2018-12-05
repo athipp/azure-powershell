@@ -12,7 +12,6 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Commands.Management.CognitiveServices;
 using Microsoft.Azure.Commands.Management.CognitiveServices.Models;
 using Microsoft.Azure.Commands.ResourceManager.Common;
 using Microsoft.Azure.Management.CognitiveServices;
@@ -21,7 +20,6 @@ using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Management.Automation;
 using CognitiveServicesModels = Microsoft.Azure.Management.CognitiveServices.Models;
 
@@ -31,9 +29,11 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
     {
         private CognitiveServicesManagementClientWrapper cognitiveServicesClientWrapper;
 
-        protected const string CognitiveServicesAccountNounStr = "AzureRmCognitiveServicesAccount";
+         protected const string CognitiveServicesAccountNounStr = ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CognitiveServicesAccount";
         protected const string CognitiveServicesAccountKeyNounStr = CognitiveServicesAccountNounStr + "Key";
         protected const string CognitiveServicesAccountSkusNounStr = CognitiveServicesAccountNounStr + "Skus";
+        protected const string CognitiveServicesAccountTypeNounStr = CognitiveServicesAccountNounStr + "Type";
+        protected const string CognitiveServicesAccountUsagesNounStr = CognitiveServicesAccountNounStr + "Usage";
 
         protected const string CognitiveServicesAccountNameAlias = "CognitiveServicesAccountName";
         protected const string AccountNameAlias = "AccountName";
@@ -41,43 +41,23 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
         protected const string CognitiveServicesAccountTypeAlias = "CognitiveServicesAccountType";
         protected const string AccountTypeAlias = "AccountType";
         protected const string KindAlias = "Kind";
+        protected const string CognitiveServicesAccountTypeNameAlias = "CognitiveServicesAccountTypeName";
+        protected const string AccountTypeNameAlias = "AccountTypeName";
+        protected const string KindNameAlias = "KindName";
 
         protected const string TagsAlias = "Tags";
-        
-        protected struct AccountSkuString 
-        {
-            internal const string F0 = "F0";
-            internal const string S0 = "S0";
-            internal const string S1 = "S1";
-            internal const string S2 = "S2";
-            internal const string S3 = "S3";
-            internal const string S4 = "S4";
-        }
-        protected struct AccountType
-        {
-            internal const string ComputerVision = "ComputerVision";
-            internal const string Emotion = "Emotion";
-            internal const string Face = "Face";
-            internal const string LUIS = "LUIS";
-            internal const string Recommendations = "Recommendations";
-            internal const string Speech = "Speech";
-            internal const string TextAnalytics = "TextAnalytics";
-            internal const string WebLM = "WebLM";
-        }
-        
+
         public ICognitiveServicesManagementClient CognitiveServicesClient
         {
             get
             {
                 if (cognitiveServicesClientWrapper == null)
                 {
-                    cognitiveServicesClientWrapper = new CognitiveServicesManagementClientWrapper(DefaultProfile.Context)
-                    {
-                        VerboseLogger = WriteVerboseWithTimestamp,
-                        ErrorLogger = WriteErrorWithTimestamp
-                    };
+                    cognitiveServicesClientWrapper = new CognitiveServicesManagementClientWrapper(DefaultProfile.DefaultContext);
                 }
 
+                this.cognitiveServicesClientWrapper.VerboseLogger = WriteVerboseWithTimestamp;
+                this.cognitiveServicesClientWrapper.ErrorLogger = WriteErrorWithTimestamp;
                 return cognitiveServicesClientWrapper.CognitiveServicesManagementClient;
             }
 
@@ -88,7 +68,7 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
         {
             get
             {
-                return DefaultProfile.Context.Subscription.Id.ToString();
+                return DefaultProfile.DefaultContext.Subscription.Id.ToString();
             }
         }
 
@@ -108,29 +88,6 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
             }
         }
 
-        protected static SkuName ParseSkuName(string skuName)
-        {
-            SkuName returnSkuName;
-            if (!Enum.TryParse<SkuName>(skuName.Replace("_", ""), true, out returnSkuName))
-            {
-                throw new ArgumentOutOfRangeException("SkuName");
-            }
-            return returnSkuName;
-        }
-
-        protected static Kind? ParseAccountKind(string accountKind)
-        {
-            Kind returnKind;
-            if (accountKind == null)
-            {
-                return null;
-            }
-            else if (!Enum.TryParse<Kind>(accountKind, true, out returnKind))
-            {
-                throw new ArgumentOutOfRangeException("Kind");
-            }
-            return returnKind;
-        }
 
         protected void WriteCognitiveServicesAccount(
             CognitiveServicesModels.CognitiveServicesAccount cognitiveServicesAccount)
@@ -149,7 +106,7 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
             {
                 cognitiveServicesAccounts.ForEach(cognitiveServicesAccount => output.Add(PSCognitiveServicesAccount.Create(cognitiveServicesAccount)));
             }
-            
+
             WriteObject(output, true);
         }
 
@@ -165,7 +122,7 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
 
 
                 return new KeyValuePair<string, string>(
-                    hashtable["Name"].ToString(), 
+                    hashtable["Name"].ToString(),
                     hashtable.ContainsKey("Value") ? hashtable["Value"].ToString() : string.Empty);
             }
 

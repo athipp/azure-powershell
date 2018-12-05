@@ -14,14 +14,14 @@
 
 using Microsoft.Azure.Commands.OperationalInsights.Models;
 using Microsoft.Azure.Commands.OperationalInsights.Properties;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System.Globalization;
 using System.Management.Automation;
 using System.Net;
 
 namespace Microsoft.Azure.Commands.OperationalInsights
 {
-    [Cmdlet(VerbsCommon.Remove, Constants.StorageInsight, SupportsShouldProcess = true,
-        DefaultParameterSetName = ByWorkspaceName)]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "OperationalInsightsStorageInsight", SupportsShouldProcess = true,DefaultParameterSetName = ByWorkspaceName), OutputType(typeof(void))]
     public class RemoveAzureOperationalInsightsStorageInsightCommand : OperationalInsightsBaseCmdlet
     {
         [Parameter(Position = 0, ParameterSetName = ByWorkspaceObject, Mandatory = true, ValueFromPipeline = true,
@@ -31,6 +31,7 @@ namespace Microsoft.Azure.Commands.OperationalInsights
 
         [Parameter(Position = 1, ParameterSetName = ByWorkspaceName, Mandatory = true, ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

@@ -13,16 +13,15 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-
 using System.Management.Automation;
+using Microsoft.Azure.Commands.WebApps.Properties;
 
 namespace Microsoft.Azure.Commands.WebApps.Cmdlets.DeploymentSlots
 {
     /// <summary>
     /// this commandlet will let you delete an Azure web app slot
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "AzureRmWebAppSlot", SupportsShouldProcess = true), 
-        OutputType(typeof(AzureOperationResponse))]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "WebAppSlot", SupportsShouldProcess = true), OutputType(typeof(AzureOperationResponse))]
     public class RemoveAzureWebAppSlotCmdlet : WebAppSlotBaseCmdlet
     {
         //always delete the slots, 
@@ -37,6 +36,9 @@ namespace Microsoft.Azure.Commands.WebApps.Cmdlets.DeploymentSlots
         [Parameter(Mandatory = false, HelpMessage = "Do not ask for confirmation.")]
         public SwitchParameter Force { get; set; }
 
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
+
         public override void ExecuteCmdlet()
         {
             base.ExecuteCmdlet();
@@ -49,6 +51,3 @@ namespace Microsoft.Azure.Commands.WebApps.Cmdlets.DeploymentSlots
         }
     }
 }
-
-
-

@@ -13,18 +13,20 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.NotificationHubs.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.NotificationHubs.Commands.NotificationHub
 {
 
-    [Cmdlet(VerbsCommon.New, "AzureRmNotificationHub"), OutputType(typeof(NotificationHubAttributes))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "NotificationHub", SupportsShouldProcess = true), OutputType(typeof(NotificationHubAttributes))]
     public class NewAzureNotificationHub : AzureNotificationHubsCmdletBase
     {
         [Parameter(Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             Position = 0,
             HelpMessage = "The name of the resource group")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroup { get; set; }
 
@@ -61,8 +63,11 @@ namespace Microsoft.Azure.Commands.NotificationHubs.Commands.NotificationHub
                 hub = NotificationHubObj;
             }
 
-            var hubAttributes = Client.CreateNotificationHub(ResourceGroup, Namespace, hub);
-            WriteObject(hubAttributes);
+            if (ShouldProcess(string.Empty, Resources.CreateNotificationHub))
+            {
+                var hubAttributes = Client.CreateNotificationHub(ResourceGroup, Namespace, hub);
+                WriteObject(hubAttributes);
+            }
         }
     }
 }

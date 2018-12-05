@@ -28,8 +28,8 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Blob.Cmdlet
     /// <summary>
     /// List azure storage container
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, StorageNouns.Container, DefaultParameterSetName = NameParameterSet),
-        OutputType(typeof(AzureStorageContainer))]
+    [Cmdlet("Get", Azure.Commands.ResourceManager.Common.AzureRMConstants.AzurePrefix + "StorageContainer", DefaultParameterSetName = NameParameterSet),OutputType(typeof(AzureStorageContainer))]
+    [Alias("Get-" + Azure.Commands.ResourceManager.Common.AzureRMConstants.AzurePrefix + "StorageContainerAcl")]
     public class GetAzureStorageContainerCommand : StorageCloudBlobCmdletBase
     {
         /// <summary>
@@ -47,6 +47,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Blob.Cmdlet
             ValueFromPipeline = true,
              ValueFromPipelineByPropertyName = true,
            ParameterSetName = NameParameterSet)]
+        [SupportsWildcards()]
         public string Name { get; set; }
 
         [Parameter(HelpMessage = "Container Prefix",
@@ -205,6 +206,17 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Blob.Cmdlet
                 return;
             }
 
+            // Only write warning for SAS when use cmdlet alias Get-AzStorageContainerAcl, since the cmdlets alias specified get container ACL
+            if (this.MyInvocation.Line.ToLower().Contains("get-azstoragecontaineracl"))
+            {
+                // Write warning when user SAS credential since get container ACL will fail
+                AzureStorageContext storageContext = this.GetCmdletStorageContext();
+                if (storageContext != null && storageContext.StorageAccount != null && storageContext.StorageAccount.Credentials != null && storageContext.StorageAccount.Credentials.IsSAS)
+                {
+                    WriteWarning("Get container permission will fail with SAS token credentials, it needs storage Account key credentials.");
+                }
+            }
+
             IStorageBlobManagement localChannel = Channel;
             foreach (Tuple<CloudBlobContainer, BlobContinuationToken> containerInfo in containerList)
             {
@@ -228,15 +240,12 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Blob.Cmdlet
             try
             {
                 permissions = await localChannel.GetContainerPermissionsAsync(container, accessCondition,
-                    requestOptions, OperationContext, CmdletCancellationToken);
+                    requestOptions, OperationContext, CmdletCancellationToken).ConfigureAwait(false);
             }
-            catch (StorageException e)
+            catch (StorageException e) when (e.IsNotFoundException() || e.IsForbiddenException())
             {
-                if (!e.IsNotFoundException())
-                {
-                    throw;
-                }
-                //404 Not found means we don't have permission to query the Permission of the specified container.
+                // 404 Not found, or 403 Forbidden means we don't have permission to query the Permission of the specified container.
+                // Just skip return container permission in this case.
             }
             WriteCloudContainerObject(taskId, localChannel, container, permissions, continuationToken);
         }

@@ -19,7 +19,7 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -88,6 +88,78 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Add aliases.
+        /// </summary>
+        internal static string AddAlias {
+            get {
+                return ResourceManager.GetString("AddAlias", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to LocalMachine scope can only be set in PowerShell administrative mode..
+        /// </summary>
+        internal static string AliasImportFailure {
+            get {
+                return ResourceManager.GetString("AliasImportFailure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Turning Autosave off because an AzureRmContext was passed as a parameter..
+        /// </summary>
+        internal static string AutosaveDisabledForContextParameter {
+            get {
+                return ResourceManager.GetString("AutosaveDisabledForContextParameter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Using Autosave scope &apos;{0}&apos;.
+        /// </summary>
+        internal static string AutosaveSettingFinalValue {
+            get {
+                return ResourceManager.GetString("AutosaveSettingFinalValue", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Using autosave setting from environment variable &apos;{0}&apos;=&apos;{1}&apos;..
+        /// </summary>
+        internal static string AutosaveSettingFromEnvironment {
+            get {
+                return ResourceManager.GetString("AutosaveSettingFromEnvironment", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Read context save mode from file &apos;{0}&apos;, Mode = &apos;{1}&apos;..
+        /// </summary>
+        internal static string AutosaveSettingFromFile {
+            get {
+                return ResourceManager.GetString("AutosaveSettingFromFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Setting Autosave scope to &apos;{0}&apos; as specified in the cmdlet parameters..
+        /// </summary>
+        internal static string AutosaveSettingFromScope {
+            get {
+                return ResourceManager.GetString("AutosaveSettingFromScope", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Autosave setting from startup session: &apos;{0}&apos;.
+        /// </summary>
+        internal static string AutosaveSettingFromSession {
+            get {
+                return ResourceManager.GetString("AutosaveSettingFromSession", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Selected profile must not be null..
         /// </summary>
         internal static string AzureProfileMustNotBeNull {
@@ -102,6 +174,33 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
         internal static string BothSubscriptionIdAndNameProvided {
             get {
                 return ResourceManager.GetString("BothSubscriptionIdAndNameProvided", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot create a context for subscription with id &apos;{0}&apos;..
+        /// </summary>
+        internal static string CannotCreateContext {
+            get {
+                return ResourceManager.GetString("CannotCreateContext", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to get context name for subscription with id &apos;{0}&apos;..
+        /// </summary>
+        internal static string CannotGetContextName {
+            get {
+                return ResourceManager.GetString("CannotGetContextName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to set default context &apos;{0}&apos;..
+        /// </summary>
+        internal static string CannotSetDefaultContext {
+            get {
+                return ResourceManager.GetString("CannotSetDefaultContext", resourceCulture);
             }
         }
         
@@ -133,11 +232,65 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Could not authenticate your user account {0} with the common tenant. Please login again using Login-AzureRmAccount..
+        ///   Looks up a localized string similar to Remove all accounts and subscriptions for the current process..
+        /// </summary>
+        internal static string ClearContextProcessMessage {
+            get {
+                return ResourceManager.GetString("ClearContextProcessMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Current process context.
+        /// </summary>
+        internal static string ClearContextProcessTarget {
+            get {
+                return ResourceManager.GetString("ClearContextProcessTarget", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remove all accounts and subscriptions in all sessions for the current user?.
+        /// </summary>
+        internal static string ClearContextUserContinueMessage {
+            get {
+                return ResourceManager.GetString("ClearContextUserContinueMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remove all accounts and subscriptions for all sessiosn started by the current user.
+        /// </summary>
+        internal static string ClearContextUserProcessMessage {
+            get {
+                return ResourceManager.GetString("ClearContextUserProcessMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to All contexts for the current user.
+        /// </summary>
+        internal static string ClearContextUserTarget {
+            get {
+                return ResourceManager.GetString("ClearContextUserTarget", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Could not authenticate your user account {0} with the common tenant. Please login again using Connect-AzAccount..
         /// </summary>
         internal static string CommonTenantAuthFailed {
             get {
                 return ResourceManager.GetString("CommonTenantAuthFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Context cannot be null.  Please log in using Connect-AzAccount..
+        /// </summary>
+        internal static string ContextCannotBeNull {
+            get {
+                return ResourceManager.GetString("ContextCannotBeNull", resourceCulture);
             }
         }
         
@@ -147,6 +300,42 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
         internal static string ContextChangeWarning {
             get {
                 return ResourceManager.GetString("ContextChangeWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Context &apos;{0}&apos;.
+        /// </summary>
+        internal static string ContextNameTarget {
+            get {
+                return ResourceManager.GetString("ContextNameTarget", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No autosave setting detected in environment variable &apos;{0}&apos;. .
+        /// </summary>
+        internal static string CouldNotRetrieveAutosaveSetting {
+            get {
+                return ResourceManager.GetString("CouldNotRetrieveAutosaveSetting", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create Resource Group?.
+        /// </summary>
+        internal static string CreateResourceGroupCaption {
+            get {
+                return ResourceManager.GetString("CreateResourceGroupCaption", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create new resource group &apos;{0}&apos; and set as default?.
+        /// </summary>
+        internal static string CreateResourceGroupMessage {
+            get {
+                return ResourceManager.GetString("CreateResourceGroupMessage", resourceCulture);
             }
         }
         
@@ -178,6 +367,42 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Changing default resource group to &apos;{0}&apos;.
+        /// </summary>
+        internal static string DefaultResourceGroupChangeWarning {
+            get {
+                return ResourceManager.GetString("DefaultResourceGroupChangeWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Default Resource Group.
+        /// </summary>
+        internal static string DefaultResourceGroupKey {
+            get {
+                return ResourceManager.GetString("DefaultResourceGroupKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Removing default resource group.
+        /// </summary>
+        internal static string DefaultResourceGroupRemovalWarning {
+            get {
+                return ResourceManager.GetString("DefaultResourceGroupRemovalWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Current context.
+        /// </summary>
+        internal static string DefaultResourceGroupTarget {
+            get {
+                return ResourceManager.GetString("DefaultResourceGroupTarget", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Turn off data collection for Azure PowerShell cmdlets.
         /// </summary>
         internal static string DisableDataCollection {
@@ -192,6 +417,15 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
         internal static string EnableDataCollection {
             get {
                 return ResourceManager.GetString("EnableDataCollection", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to retrieve variable value &apos;{0}&apos; to determine AutoSaveSetting, received exception &apos;{1}&apos;..
+        /// </summary>
+        internal static string ErrorRetrievingAutosaveSetting {
+            get {
+                return ResourceManager.GetString("ErrorRetrievingAutosaveSetting", resourceCulture);
             }
         }
         
@@ -223,6 +457,33 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unable to import authentication information into the global cache.  Please try executing the command again..
+        /// </summary>
+        internal static string ImportAuthenticationFailure {
+            get {
+                return ResourceManager.GetString("ImportAuthenticationFailure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Current context.
+        /// </summary>
+        internal static string ImportContextTarget {
+            get {
+                return ResourceManager.GetString("ImportContextTarget", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Endpoint provided is invalid. Please check the value and retry again with the correct value..
+        /// </summary>
+        internal static string InvalidEndpointProvided {
+            get {
+                return ResourceManager.GetString("InvalidEndpointProvided", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The provided subscription ID &quot;{0}&quot; is not a valid Guid..
         /// </summary>
         internal static string InvalidSubscriptionId {
@@ -241,6 +502,15 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Please ensure that the managed service identity found on this machine has proper permissions to the provided tenant domain..
+        /// </summary>
+        internal static string MSITenantDomainNotFound {
+            get {
+                return ResourceManager.GetString("MSITenantDomainNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to (no account provided).
         /// </summary>
         internal static string NoAccountProvided {
@@ -250,11 +520,38 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Please provide a valid tenant Id on the command line or execute Login-AzureRmAccount..
+        ///   Looks up a localized string similar to Please provide a valid tenant Id on the command line or execute Connect-AzAccount..
         /// </summary>
         internal static string NoValidTenant {
             get {
                 return ResourceManager.GetString("NoValidTenant", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Overwrite context &apos;{0}&apos; with context &apos;{1}&apos;.
+        /// </summary>
+        internal static string OverwriteContextWarning {
+            get {
+                return ResourceManager.GetString("OverwriteContextWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set the target account, tenant, and subscription of cmdlets executed in this session to the context stored in {0}.
+        /// </summary>
+        internal static string ProcessImportContextFromFile {
+            get {
+                return ResourceManager.GetString("ProcessImportContextFromFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set the target account, tenant, and subscription of cmdlets executed in this session to the provided context.
+        /// </summary>
+        internal static string ProcessImportContextFromObject {
+            get {
+                return ResourceManager.GetString("ProcessImportContextFromObject", resourceCulture);
             }
         }
         
@@ -295,11 +592,137 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unable to set profile because environment variable &apos;${0}&apos; is null..
+        /// </summary>
+        internal static string ProfilePathNull {
+            get {
+                return ResourceManager.GetString("ProfilePathNull", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Personally identifiable information and secrets may be written to the file at &apos;{0}&apos;.  Please ensure that the saved file is assigned appropriate access controls.
         /// </summary>
         internal static string ProfileWriteWarning {
             get {
                 return ResourceManager.GetString("ProfileWriteWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remove context &apos;{0}&apos;.
+        /// </summary>
+        internal static string RemoveContextMessage {
+            get {
+                return ResourceManager.GetString("RemoveContextMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Context.
+        /// </summary>
+        internal static string RemoveContextTarget {
+            get {
+                return ResourceManager.GetString("RemoveContextTarget", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remove Default Context.
+        /// </summary>
+        internal static string RemoveDefaultContextCaption {
+            get {
+                return ResourceManager.GetString("RemoveDefaultContextCaption", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &apos;{0}&apos; is the default context used for communicating with Azure.  Are you sure you want to remove the default context?.
+        /// </summary>
+        internal static string RemoveDefaultContextQuery {
+            get {
+                return ResourceManager.GetString("RemoveDefaultContextQuery", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remove defaults?.
+        /// </summary>
+        internal static string RemoveDefaultsCaption {
+            get {
+                return ResourceManager.GetString("RemoveDefaultsCaption", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remove all existing defaults in the current context?.
+        /// </summary>
+        internal static string RemoveDefaultsMessage {
+            get {
+                return ResourceManager.GetString("RemoveDefaultsMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Module deletion failed. Please close all PowerShell sessions to ensure no AzureRM modules are currently loaded, and rerun this cmdlet in Administrator mode..
+        /// </summary>
+        internal static string RemoveModuleError {
+            get {
+                return ResourceManager.GetString("RemoveModuleError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rename context &apos;{0}&apos; to &apos;{1}&apos;.
+        /// </summary>
+        internal static string RenameContextMessage {
+            get {
+                return ResourceManager.GetString("RenameContextMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Overwrite existing context &apos;{0}&apos;.
+        /// </summary>
+        internal static string ReplaceContextCaption {
+            get {
+                return ResourceManager.GetString("ReplaceContextCaption", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to replace existing context &apos;{0}&apos;?.
+        /// </summary>
+        internal static string ReplaceContextQuery {
+            get {
+                return ResourceManager.GetString("ReplaceContextQuery", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Resource Manager context was not properly initialized.  Please load the module again..
+        /// </summary>
+        internal static string RmProfileNull {
+            get {
+                return ResourceManager.GetString("RmProfileNull", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Run Connect-AzAccount to login..
+        /// </summary>
+        internal static string RunLoginCmdlet {
+            get {
+                return ResourceManager.GetString("RunLoginCmdlet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Change the current context.
+        /// </summary>
+        internal static string SelectContextPrompt {
+            get {
+                return ResourceManager.GetString("SelectContextPrompt", resourceCulture);
             }
         }
         
@@ -313,11 +736,92 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Please provide either a subscription ID, subscription name, tenant Id or domain..
+        ///   Looks up a localized string similar to Please enter your email if you are interested in providing follow up information:.
         /// </summary>
-        internal static string SetAzureRmContextNoParameterSet {
+        internal static string SendFeedbackEmailQuestion {
             get {
-                return ResourceManager.GetString("SetAzureRmContextNoParameterSet", resourceCulture);
+                return ResourceManager.GetString("SendFeedbackEmailQuestion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Upon what could Azure PowerShell improve? .
+        /// </summary>
+        internal static string SendFeedbackNegativeCommentsQuestion {
+            get {
+                return ResourceManager.GetString("SendFeedbackNegativeCommentsQuestion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} must be issued in interactive mode..
+        /// </summary>
+        internal static string SendFeedbackNonInteractiveMessage {
+            get {
+                return ResourceManager.GetString("SendFeedbackNonInteractiveMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The value entered was either not convertible to an integer or out of range [0, 10]..
+        /// </summary>
+        internal static string SendFeedbackOutOfRangeMessage {
+            get {
+                return ResourceManager.GetString("SendFeedbackOutOfRangeMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to What does Azure PowerShell do well?.
+        /// </summary>
+        internal static string SendFeedbackPositiveCommentsQuestion {
+            get {
+                return ResourceManager.GetString("SendFeedbackPositiveCommentsQuestion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to With zero (0) being the least and ten (10) being the most, how likely are you to recommend Azure PowerShell to a friend or colleague?.
+        /// </summary>
+        internal static string SendFeedbackRecommendationQuestion {
+            get {
+                return ResourceManager.GetString("SendFeedbackRecommendationQuestion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please ensure that the provided service principal &apos;{0}&apos; is found in the provided tenant domain..
+        /// </summary>
+        internal static string ServicePrincipalTenantDomainNotFound {
+            get {
+                return ResourceManager.GetString("ServicePrincipalTenantDomainNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The provided service principal secret will be included in the &apos;{0}&apos; file found in the user profile ( {1} ). Please ensure that this directory has appropriate protections..
+        /// </summary>
+        internal static string ServicePrincipalWarning {
+            get {
+                return ResourceManager.GetString("ServicePrincipalWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Setting property &apos;{0}&apos;=&apos;{1}&apos;.
+        /// </summary>
+        internal static string SetPropertyAction {
+            get {
+                return ResourceManager.GetString("SetPropertyAction", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Removing module &apos;{0}&apos; from your machine.
+        /// </summary>
+        internal static string ShouldRemoveModule {
+            get {
+                return ResourceManager.GetString("ShouldRemoveModule", resourceCulture);
             }
         }
         
@@ -340,6 +844,15 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Provided subscription &apos;{0}&apos; does not exist..
+        /// </summary>
+        internal static string SubscriptionNameOrIdNotFound {
+            get {
+                return ResourceManager.GetString("SubscriptionNameOrIdNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Subscription {0} was not found in tenant {1}. Please verify that the subscription exists in this tenant..
         /// </summary>
         internal static string SubscriptionNotFoundError {
@@ -349,7 +862,25 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Could not authenticate with tenant {0}. Please ensure that your account has access to this tenant and log in with Login-AzureRmAccount.
+        ///   Looks up a localized string similar to Must supply Subscription Id and Tenant Id when using -SkipValidation.
+        /// </summary>
+        internal static string SubscriptionOrTenantMissing {
+            get {
+                return ResourceManager.GetString("SubscriptionOrTenantMissing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please provide a valid tenant or a valid subscription..
+        /// </summary>
+        internal static string SubscriptionOrTenantRequired {
+            get {
+                return ResourceManager.GetString("SubscriptionOrTenantRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Could not authenticate with tenant {0}. Please ensure that your account has access to this tenant and log in with Connect-AzAccount.
         /// </summary>
         internal static string TenantAuthFailed {
             get {
@@ -363,6 +894,15 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
         internal static string TenantChangeWarning {
             get {
                 return ResourceManager.GetString("TenantChangeWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Could not find tenant id for provided tenant domain &apos;{0}&apos;..
+        /// </summary>
+        internal static string TenantDomainNotFound {
+            get {
+                return ResourceManager.GetString("TenantDomainNotFound", resourceCulture);
             }
         }
         
@@ -394,7 +934,7 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Could not authenticate user account &apos;{0}&apos; with tenant &apos;{1}&apos;. Subscriptions in this tenant will not be listed. Please login again using Login-AzureRmAccount to view the subscriptions in this tenant..
+        ///   Looks up a localized string similar to Could not authenticate user account &apos;{0}&apos; with tenant &apos;{1}&apos;. Subscriptions in this tenant will not be listed. Please login again using Connect-AzAccount to view the subscriptions in this tenant..
         /// </summary>
         internal static string UnableToLogin {
             get {
@@ -408,6 +948,15 @@ namespace Microsoft.Azure.Commands.Profile.Properties {
         internal static string UnknownEnvironment {
             get {
                 return ResourceManager.GetString("UnknownEnvironment", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please ensure that the provided user is found in the provided tenant domain..
+        /// </summary>
+        internal static string UserTenantDomainNotFound {
+            get {
+                return ResourceManager.GetString("UserTenantDomainNotFound", resourceCulture);
             }
         }
     }

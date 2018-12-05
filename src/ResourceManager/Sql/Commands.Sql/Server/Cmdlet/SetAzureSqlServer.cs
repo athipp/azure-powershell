@@ -1,4 +1,4 @@
-// ----------------------------------------------------------------------------------
+﻿// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,9 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.ResourceManager.Common.Tags;
+using Microsoft.Azure.Commands.Sql.Common;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,11 +24,9 @@ using System.Security;
 namespace Microsoft.Azure.Commands.Sql.Server.Cmdlet
 {
     /// <summary>
-    /// Defines the Get-AzureRmSqlServer cmdlet
+    /// Defines the Get-AzSqlServer cmdlet
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "AzureRmSqlServer",
-        SupportsShouldProcess = true,
-        ConfirmImpact = ConfirmImpact.Medium)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlServer", SupportsShouldProcess = true,ConfirmImpact = ConfirmImpact.Medium), OutputType(typeof(Model.AzureSqlServerModel))]
     public class SetAzureSqlServer : AzureSqlServerCmdletBase
     {
         /// <summary>
@@ -36,6 +36,8 @@ namespace Microsoft.Azure.Commands.Sql.Server.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 1,
             HelpMessage = "SQL Database server name.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers", "ResourceGroupName")]
+        [Alias("Name")]
         [ValidateNotNullOrEmpty]
         public string ServerName { get; set; }
 
@@ -63,20 +65,16 @@ namespace Microsoft.Azure.Commands.Sql.Server.Cmdlet
         [ValidateNotNullOrEmpty]
         public string ServerVersion { get; set; }
 
+        [Parameter(Mandatory = false,
+            HelpMessage = "Generate and assign an Azure Active Directory Identity for this server for use with key management services like Azure KeyVault.")]
+        public SwitchParameter AssignIdentity { get; set; }
+
         /// <summary>
         /// Defines whether it is ok to skip the requesting of rule removal confirmation
         /// </summary>
         [Parameter(HelpMessage = "Skip confirmation message for performing the action")]
         public SwitchParameter Force { get; set; }
-
-        /// <summary>
-        /// Overriding to add warning message
-        /// </summary>
-        public override void ExecuteCmdlet()
-        {
-            base.ExecuteCmdlet();
-        }
-
+        
         /// <summary>
         /// Get the server to update
         /// </summary>
@@ -100,9 +98,10 @@ namespace Microsoft.Azure.Commands.Sql.Server.Cmdlet
                 ResourceGroupName = this.ResourceGroupName,
                 ServerName = this.ServerName,
                 SqlAdministratorPassword = this.SqlAdministratorPassword,
-                Tags = TagsConversionHelper.CreateTagDictionary(Tags, validate: true),
+                Tags = TagsConversionHelper.ReadOrFetchTags(this, model.FirstOrDefault().Tags),
                 ServerVersion = this.ServerVersion,
                 Location = model.FirstOrDefault().Location,
+                Identity = model.FirstOrDefault().Identity ?? ResourceIdentityHelper.GetIdentityObjectFromType(this.AssignIdentity.IsPresent),
             });
             return updateData;
         }

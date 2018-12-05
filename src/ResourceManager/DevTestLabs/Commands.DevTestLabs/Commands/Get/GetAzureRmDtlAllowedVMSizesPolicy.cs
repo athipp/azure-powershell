@@ -14,26 +14,20 @@
 
 using Microsoft.Azure.Commands.DevTestLabs.Models;
 using Microsoft.Azure.Management.DevTestLabs;
-using System;
-using System.Linq;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.DevTestLabs
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmDtlAllowedVMSizesPolicy",
-        HelpUri = Constants.DevTestLabsHelpUri)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "DtlAllowedVMSizesPolicy",HelpUri = Constants.DevTestLabsHelpUri)]
     [OutputType(typeof(PSPolicy))]
     public class GetAzureRmDtlAllowedVMSizesPolicy : DevTestLabsCmdletBase
     {
         public override void ExecuteCmdlet()
         {
-            var policy = DataServiceClient.Policy.GetResource
-                (
-                ResourceGroupName,
+            var policy = DataServiceClient.Policies.Get(
                 LabName,
                 Constants.Default,
-                WellKnownPolicyNames.AllowedVmSizesInLab
-                );
+                WellKnownPolicyNames.AllowedVmSizesInLab);
 
             WriteObject(policy);
         }

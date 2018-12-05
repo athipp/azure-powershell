@@ -19,11 +19,13 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
     using Microsoft.Azure.Commands.LogicApp.Utilities;
     using Microsoft.Azure.Management.Logic.Models;
     using Microsoft.WindowsAzure.Commands.Utilities.Common;
+    using ResourceManager.Common.ArgumentCompleters;
 
     /// <summary>
     /// Creates a new integration account map.
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmIntegrationAccountMap", SupportsShouldProcess = true), OutputType(typeof(object))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "IntegrationAccountMap", SupportsShouldProcess = true)]
+    [OutputType(typeof(IntegrationAccountMap))]
     public class NewAzureIntegrationAccountMapCommand : LogicAppBaseCmdlet
     {
 
@@ -45,13 +47,14 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 
         [Parameter(Mandatory = true, HelpMessage = "The integration account resource group name.",
             ValueFromPipelineByPropertyName = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The integration account name.",
             ValueFromPipelineByPropertyName = true)]
-        [Alias("ResourceName")]
         [ValidateNotNullOrEmpty]
+        [Alias("IntegrationAccountName", "ResourceName")]
         public string Name { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The integration account map name.",
@@ -114,9 +117,8 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
                 new IntegrationAccountMap
                 {
                     ContentType = this.ContentType,
-                    Name = this.MapName,
                     Content = this.MapDefinition,
-                    MapType = (MapType) Enum.Parse(typeof (MapType), this.MapType),
+                    MapType = (MapType) Enum.Parse(typeof(MapType), this.MapType),
                     Metadata = this.Metadata
                 }), true);
         }

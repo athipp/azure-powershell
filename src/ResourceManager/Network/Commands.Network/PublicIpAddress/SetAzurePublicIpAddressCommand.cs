@@ -22,7 +22,7 @@ using MNM = Microsoft.Azure.Management.Network.Models;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Set, "AzureRmPublicIpAddress"), OutputType(typeof(PSPublicIpAddress))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "PublicIpAddress"), OutputType(typeof(PSPublicIpAddress))]
     public class SetAzurePublicIpAddressCommand : PublicIpAddressBaseCmdlet
     {
         [Parameter(
@@ -30,6 +30,9 @@ namespace Microsoft.Azure.Commands.Network
             ValueFromPipeline = true,
             HelpMessage = "The PublicIpAddress")]
         public PSPublicIpAddress PublicIpAddress { get; set; }
+
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         public override void Execute()
         {
@@ -41,7 +44,7 @@ namespace Microsoft.Azure.Commands.Network
             }
 
             // Map to the sdk object
-            var publicIpModel = Mapper.Map<MNM.PublicIPAddress>(this.PublicIpAddress);
+            var publicIpModel = NetworkResourceManagerProfile.Mapper.Map<MNM.PublicIPAddress>(this.PublicIpAddress);
             publicIpModel.Tags = TagsConversionHelper.CreateTagDictionary(this.PublicIpAddress.Tag, validate: true);
 
             this.PublicIpAddressClient.CreateOrUpdate(this.PublicIpAddress.ResourceGroupName, this.PublicIpAddress.Name, publicIpModel);

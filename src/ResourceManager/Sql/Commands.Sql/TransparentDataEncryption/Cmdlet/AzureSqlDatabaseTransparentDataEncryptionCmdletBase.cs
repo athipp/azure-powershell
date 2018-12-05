@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,9 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.Common;
 using Microsoft.Azure.Commands.Sql.TransparentDataEncryption.Adapter;
 using Microsoft.Azure.Commands.Sql.TransparentDataEncryption.Model;
@@ -30,6 +32,7 @@ namespace Microsoft.Azure.Commands.Sql.TransparentDataEncryption.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 1,
             HelpMessage = "The Azure Sql Server name.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string ServerName { get; set; }
 
@@ -40,6 +43,7 @@ namespace Microsoft.Azure.Commands.Sql.TransparentDataEncryption.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 2,
             HelpMessage = "The name of the Azure SQL Database.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers/databases", "ResourceGroupName", "ServerName")]
         [ValidateNotNullOrEmpty]
         public string DatabaseName { get; set; }
 
@@ -48,9 +52,9 @@ namespace Microsoft.Azure.Commands.Sql.TransparentDataEncryption.Cmdlet
         /// </summary>
         /// <param name="subscription">The subscription the cmdlets are operation under</param>
         /// <returns>The server adapter</returns>
-        protected override AzureSqlDatabaseTransparentDataEncryptionAdapter InitModelAdapter(AzureSubscription subscription)
+        protected override AzureSqlDatabaseTransparentDataEncryptionAdapter InitModelAdapter(IAzureSubscription subscription)
         {
-            return new AzureSqlDatabaseTransparentDataEncryptionAdapter(DefaultProfile.Context);
+            return new AzureSqlDatabaseTransparentDataEncryptionAdapter(DefaultProfile.DefaultContext);
         }
     }
 }

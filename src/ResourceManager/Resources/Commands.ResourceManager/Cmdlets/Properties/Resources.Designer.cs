@@ -19,7 +19,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -70,20 +70,20 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cancelling active deployment ....
+        /// </summary>
+        internal static string CancelDeploymentMessage {
+            get {
+                return ResourceManager.GetString("CancelDeploymentMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Are you sure you want to cancel the active deployment of resource group &apos;{0}&apos;?.
         /// </summary>
         internal static string CancelResourceGroupDeployment {
             get {
                 return ResourceManager.GetString("CancelResourceGroupDeployment", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cancelling active resource group deployment ....
-        /// </summary>
-        internal static string CancelResourceGroupDeploymentMessage {
-            get {
-                return ResourceManager.GetString("CancelResourceGroupDeploymentMessage", resourceCulture);
             }
         }
         
@@ -169,6 +169,15 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Deleting the deployment ....
+        /// </summary>
+        internal static string DeleteDeploymentMessage {
+            get {
+                return ResourceManager.GetString("DeleteDeploymentMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Are you sure you want to delete the deployment &apos;{0}&apos;?.
         /// </summary>
         internal static string DeleteResourceGroupDeployment {
@@ -178,20 +187,20 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Deleting the deployment ....
+        ///   Looks up a localized string similar to Deployment &apos;{0}&apos; doesn&apos;t exist in subscription..
         /// </summary>
-        internal static string DeleteResourceGroupDeploymentMessage {
+        internal static string DeploymentDoesntExistAtSubscriptionScope {
             get {
-                return ResourceManager.GetString("DeleteResourceGroupDeploymentMessage", resourceCulture);
+                return ResourceManager.GetString("DeploymentDoesntExistAtSubscriptionScope", resourceCulture);
             }
         }
         
         /// <summary>
         ///   Looks up a localized string similar to Deployment &apos;{0}&apos; doesn&apos;t exist under resource group &apos;{1}&apos;.
         /// </summary>
-        internal static string DeploymentDoesntExist {
+        internal static string DeploymentDoesntExistInResourceGroup {
             get {
-                return ResourceManager.GetString("DeploymentDoesntExist", resourceCulture);
+                return ResourceManager.GetString("DeploymentDoesntExistInResourceGroup", resourceCulture);
             }
         }
         
@@ -313,6 +322,15 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The provided file {0} doesn&apos;t exist.
+        /// </summary>
+        internal static string InvalidFilePath {
+            get {
+                return ResourceManager.GetString("InvalidFilePath", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid format of the resource group identifier. Expected &apos;subscriptions/{subscriptionId}/resourcegroups/{resourceGroupName}&apos;..
         /// </summary>
         internal static string InvalidFormatOfResourceGroupId {
@@ -358,6 +376,15 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The paramater -RollbackToLastDeployment and -RollBackDeploymentName can&apos;t be defined at the same time..
+        /// </summary>
+        internal static string InvalidRollbackParameters {
+            get {
+                return ResourceManager.GetString("InvalidRollbackParameters", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid tag format. Expect @{tagName = $null} or @{tagName = &quot;tagValue&quot;}.
         /// </summary>
         internal static string InvalidTagFormat {
@@ -381,6 +408,33 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Properties {
         internal static string InvalidTemplateIdentity {
             get {
                 return ResourceManager.GetString("InvalidTemplateIdentity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The uri {0} is inaccessible, or the content is invalid..
+        /// </summary>
+        internal static string InvalidUriContent {
+            get {
+                return ResourceManager.GetString("InvalidUriContent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please make sure the uri starts with http:// or https://..
+        /// </summary>
+        internal static string InvalidUriScheme {
+            get {
+                return ResourceManager.GetString("InvalidUriScheme", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The specified uri string {0} is invalid..
+        /// </summary>
+        internal static string InvalidUriString {
+            get {
+                return ResourceManager.GetString("InvalidUriString", resourceCulture);
             }
         }
         
@@ -507,6 +561,15 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Properties {
         internal static string NoRunningDeployments {
             get {
                 return ResourceManager.GetString("NoRunningDeployments", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to There are no running deployment called &apos;{0}&apos; at the current subscription scope..
+        /// </summary>
+        internal static string NoRunningDeploymentsAtSubscriptionScope {
+            get {
+                return ResourceManager.GetString("NoRunningDeploymentsAtSubscriptionScope", resourceCulture);
             }
         }
         
@@ -907,7 +970,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The DeploymentDebug setting has been enabled. This can potentially log secrets like passwords used in resource property or listKeys operations when you retrieve the deployment operations through Get-AzureRmResourceGroupDeploymentOperation.
+        ///   Looks up a localized string similar to The DeploymentDebug setting has been enabled. This can potentially log secrets like passwords used in resource property or listKeys operations when you retrieve the deployment operations through Get-AzResourceGroupDeploymentOperation.
         /// </summary>
         internal static string WarnOnDeploymentDebugSetting {
             get {

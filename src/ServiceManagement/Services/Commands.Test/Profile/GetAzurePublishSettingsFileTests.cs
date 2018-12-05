@@ -24,6 +24,7 @@ using Microsoft.Azure.Commands.Common.Authentication;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
 using System.IO;
 using Microsoft.Azure.ServiceManagemenet.Common;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 
 namespace Microsoft.WindowsAzure.Commands.Test.Profile
 {
@@ -31,10 +32,11 @@ namespace Microsoft.WindowsAzure.Commands.Test.Profile
     public class GetAzurePublishSettingsFileTests
     {
         [Fact (Skip = "Consider removing these.")]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void GetsPublishSettingsFileUrl()
         {
             // Setup
-            AzureSession.DataStore = new MemoryDataStore();
+            AzureSession.Instance.DataStore = new MemoryDataStore();
             Mock<ICommandRuntime> commandRuntimeMock = new Mock<ICommandRuntime>();
             GetAzurePublishSettingsFileCommand cmdlet = new GetAzurePublishSettingsFileCommand()
             {
@@ -43,7 +45,7 @@ namespace Microsoft.WindowsAzure.Commands.Test.Profile
                 Environment = EnvironmentName.AzureCloud,
                 Realm = "microsoft.com"
             };
-            cmdlet.ProfileClient = new ProfileClient(new AzureSMProfile(Path.Combine(AzureSession.ProfileDirectory, AzureSession.ProfileFile)));
+            cmdlet.ProfileClient = new ProfileClient(new AzureSMProfile(Path.Combine(AzureSession.Instance.ProfileDirectory, AzureSession.Instance.ProfileFile)));
 
             // Test
             cmdlet.ExecuteCmdlet();

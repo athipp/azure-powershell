@@ -19,11 +19,13 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
     using Microsoft.Azure.Commands.LogicApp.Utilities;
     using Microsoft.Azure.Management.Logic.Models;
     using Newtonsoft.Json.Linq;
+    using ResourceManager.Common.ArgumentCompleters;
 
     /// <summary>
     /// Creates a new integration account 
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmIntegrationAccount", SupportsShouldProcess = true), OutputType(typeof(object))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "IntegrationAccount", SupportsShouldProcess = true)]
+    [OutputType(typeof(IntegrationAccount))]
     public class NewAzureIntegrationAccountCommand : LogicAppBaseCmdlet
     {
 
@@ -31,17 +33,19 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 
         [Parameter(Mandatory = true, HelpMessage = "The integration account resource group name.",
             ValueFromPipelineByPropertyName = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The integration account name.",
             ValueFromPipelineByPropertyName = true)]
-        [Alias("ResourceName")]
         [ValidateNotNullOrEmpty]
+        [Alias("IntegrationAccountName", "ResourceName")]
         public string Name { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The integration account location.",
             ValueFromPipelineByPropertyName = true)]
+        [LocationCompleter("Microsoft.Logic/integrationAccounts")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
@@ -65,7 +69,7 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
                     Location = this.Location,
                     Sku = new IntegrationAccountSku
                     {
-                        Name = (SkuName) Enum.Parse(typeof (SkuName), this.Sku)
+                        Name = (IntegrationAccountSkuName) Enum.Parse(typeof(IntegrationAccountSkuName), this.Sku)
                     },
                     Properties = new JObject()
 

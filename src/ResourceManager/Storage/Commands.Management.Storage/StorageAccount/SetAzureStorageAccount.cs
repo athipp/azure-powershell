@@ -1,4 +1,4 @@
-// ----------------------------------------------------------------------------------
+﻿// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,20 +19,35 @@ using Microsoft.Azure.Commands.ResourceManager.Common.Tags;
 using Microsoft.Azure.Management.Storage;
 using Microsoft.Azure.Management.Storage.Models;
 using StorageModels = Microsoft.Azure.Management.Storage.Models;
+using Microsoft.Azure.Commands.Management.Storage.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
+using System;
 
 namespace Microsoft.Azure.Commands.Management.Storage
 {
     /// <summary>
     /// Lists all storage services underneath the subscription.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, StorageAccountNounStr, SupportsShouldProcess = true), OutputType(typeof(StorageModels.StorageAccount))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "StorageAccount", SupportsShouldProcess = true, DefaultParameterSetName = StorageEncryptionParameterSet), OutputType(typeof(PSStorageAccount))]
     public class SetAzureStorageAccountCommand : StorageAccountBaseCmdlet
     {
+
+        /// <summary>
+        /// Storage Encryption parameter set name
+        /// </summary>
+        private const string StorageEncryptionParameterSet = "StorageEncryption";
+
+        /// <summary>
+        /// Keyvault Encryption parameter set name
+        /// </summary>
+        private const string KeyvaultEncryptionParameterSet = "KeyvaultEncryption";
+
         [Parameter(
             Position = 0,
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Resource Group Name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -88,22 +103,89 @@ namespace Microsoft.Azure.Commands.Management.Storage
 
         [Parameter(
             Mandatory = false,
-            HelpMessage = "Storage Service that will enable encryption.")]
-        public EncryptionSupportServiceEnum? EnableEncryptionService { get; set; }
-
-        [Parameter(
-            Mandatory = false,
-            HelpMessage = "Storage Service that will disable encryption.")]
-        public EncryptionSupportServiceEnum? DisableEncryptionService { get; set; }
-
-        [Parameter(
-            Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Storage Account Tags.")]
         [AllowEmptyCollection]
         [ValidateNotNull]
         [Alias(TagsAlias)]
         public Hashtable Tag { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            ValueFromPipelineByPropertyName = true,
+            HelpMessage = "Storage Account EnableHttpsTrafficOnly.")]
+        public bool EnableHttpsTrafficOnly
+        {
+            get
+            {
+                return enableHttpsTrafficOnly.Value;
+            }
+            set
+            {
+                enableHttpsTrafficOnly = value;
+            }
+        }
+        private bool? enableHttpsTrafficOnly = null;
+
+        [Parameter(HelpMessage = "Whether to set Storage Account Encryption KeySource to Microsoft.Storage or not.", Mandatory = false, ParameterSetName = StorageEncryptionParameterSet)]
+        public SwitchParameter StorageEncryption
+        {
+            get { return storageEncryption; }
+            set { storageEncryption = value; }
+        }
+        private bool storageEncryption = false;
+
+        [Parameter(HelpMessage = "Whether to set Storage Account encryption keySource to Microsoft.Keyvault or not. " +
+            "If you specify KeyName, KeyVersion and KeyvaultUri, Storage Account Encryption KeySource will also be set to Microsoft.Keyvault weather this parameter is set or not.",
+            Mandatory = false, ParameterSetName = KeyvaultEncryptionParameterSet)]
+        public SwitchParameter KeyvaultEncryption
+        {
+            get { return keyvaultEncryption; }
+            set { keyvaultEncryption = value; }
+        }
+        private bool keyvaultEncryption = false;
+
+        [Parameter(HelpMessage = "Storage Account encryption keySource KeyVault KeyName",
+                    Mandatory = true,
+                    ParameterSetName = KeyvaultEncryptionParameterSet)]
+        [ValidateNotNullOrEmpty]
+        public string KeyName { get; set; }
+
+        [Parameter(HelpMessage = "Storage Account encryption keySource KeyVault KeyVersion",
+        Mandatory = true,
+        ParameterSetName = KeyvaultEncryptionParameterSet)]
+        [ValidateNotNullOrEmpty]
+        public string KeyVersion { get; set; }
+
+        [Parameter(HelpMessage = "Storage Account encryption keySource KeyVault KeyVaultUri",
+        Mandatory = true,
+        ParameterSetName = KeyvaultEncryptionParameterSet)]
+        [ValidateNotNullOrEmpty]
+        public string KeyVaultUri
+        {
+            get; set;
+        }
+
+        [Parameter(
+        Mandatory = false,
+        HelpMessage = "Generate and assign a new Storage Account Identity for this storage account for use with key management services like Azure KeyVault.")]
+        public SwitchParameter AssignIdentity { get; set; }
+
+        [Parameter(HelpMessage = "Storage Account NetworkRule",
+            Mandatory = false)]
+        [ValidateNotNullOrEmpty]
+        public PSNetworkRuleSet NetworkRuleSet
+        {
+            get; set;
+        }
+
+        [Parameter(
+            Mandatory = false,
+            HelpMessage = "Upgrade Storage Account Kind to StorageV2.")]
+        public SwitchParameter UpgradeToStorageV2 { get; set; }
+
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         public override void ExecuteCmdlet()
         {
@@ -138,14 +220,36 @@ namespace Microsoft.Azure.Commands.Management.Storage
                         throw new System.ArgumentException(string.Format("UseSubDomain must be set together with CustomDomainName."));
                     }
 
-                    if (this.EnableEncryptionService != null || this.DisableEncryptionService != null)
-                    {
-                        updateParameters.Encryption = ParseEncryption(EnableEncryptionService, DisableEncryptionService);
-                    }
-
                     if (this.AccessTier != null)
                     {
                         updateParameters.AccessTier = ParseAccessTier(AccessTier);
+                    }
+                    if (enableHttpsTrafficOnly != null)
+                    {
+                        updateParameters.EnableHttpsTrafficOnly = enableHttpsTrafficOnly;
+                    }
+
+                    if (AssignIdentity.IsPresent)
+                    {
+                        updateParameters.Identity = new Identity();
+                    }
+
+                    if (StorageEncryption || (ParameterSetName == KeyvaultEncryptionParameterSet))
+                    {
+                        if (ParameterSetName == KeyvaultEncryptionParameterSet)
+                        {
+                            keyvaultEncryption = true;
+                        }
+                        updateParameters.Encryption = ParseEncryption(StorageEncryption, keyvaultEncryption, KeyName, KeyVersion, KeyVaultUri);
+                    }
+                    if (NetworkRuleSet != null)
+                    {
+                        updateParameters.NetworkRuleSet = PSNetworkRuleSet.ParseStorageNetworkRule(NetworkRuleSet);
+                    }
+
+                    if (UpgradeToStorageV2.IsPresent)
+                    {
+                        updateParameters.Kind = Kind.StorageV2;
                     }
 
                     var updatedAccountResponse = this.StorageClient.StorageAccounts.Update(

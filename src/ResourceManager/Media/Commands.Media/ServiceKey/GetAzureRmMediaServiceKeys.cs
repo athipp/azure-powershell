@@ -19,13 +19,14 @@ using Microsoft.Azure.Commands.Media.Common;
 using Microsoft.Azure.Commands.Media.Models;
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Media.ServiceKey
 {
     /// <summary>
     /// List key information for accessing the REST endpoint associated with the media service.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, MediaServiceKeysNounStr), OutputType(typeof(PSServiceKeys))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "MediaServiceKeys"), OutputType(typeof(PSServiceKeys))]
     public class GetAzureRmMediaServiceKeys : AzureMediaServiceCmdletBase
     {
         [Parameter(
@@ -33,6 +34,7 @@ namespace Microsoft.Azure.Commands.Media.ServiceKey
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

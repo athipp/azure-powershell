@@ -12,7 +12,9 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Management.CognitiveServices.ArgumentCompleters;
 using Microsoft.Azure.Commands.Management.CognitiveServices.Properties;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.CognitiveServices;
 using Microsoft.Azure.Management.CognitiveServices.Models;
 using System.Collections;
@@ -25,7 +27,7 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
     /// <summary>
     /// Create a new Cognitive Services Account, specify it's type (resource kind)
     /// </summary>
-    [Cmdlet(VerbsCommon.New, CognitiveServicesAccountNounStr, SupportsShouldProcess = true), OutputType(typeof(CognitiveServicesModels.PSCognitiveServicesAccount))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CognitiveServicesAccount", SupportsShouldProcess = true), OutputType(typeof(CognitiveServicesModels.PSCognitiveServicesAccount))]
     public class NewAzureCognitiveServicesAccountCommand : CognitiveServicesAccountBaseCmdlet
     {
         [Parameter(
@@ -33,6 +35,7 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Resource Group Name.")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -44,7 +47,7 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
         [Alias(CognitiveServicesAccountNameAlias, AccountNameAlias)]
         [ValidateNotNullOrEmpty]
         [ValidatePattern("^[a-zA-Z0-9][a-zA-Z0-9_.-]*$")]
-        [ValidateLength(3, 24)]
+        [ValidateLength(2, 64)]
         public string Name { get; set; }
 
         [Parameter(
@@ -53,16 +56,7 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Cognitive Services Account Type.")]
         [Alias(CognitiveServicesAccountTypeAlias, AccountTypeAlias, KindAlias)]
-        [ValidateSet(
-            AccountType.ComputerVision,
-            AccountType.Emotion,
-            AccountType.Face,
-            AccountType.LUIS,
-            AccountType.Recommendations,
-            AccountType.Speech,
-            AccountType.TextAnalytics,
-            AccountType.WebLM,
-            IgnoreCase = true)]
+        [AccountTypeCompleter()]
         public string Type { get; set; }
 
         [Parameter(
@@ -70,14 +64,7 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Cognitive Services Account Sku Name.")]
-        [ValidateSet(
-            AccountSkuString.F0, 
-            AccountSkuString.S0, 
-            AccountSkuString.S1, 
-            AccountSkuString.S2, 
-            AccountSkuString.S3, 
-            AccountSkuString.S4, 
-            IgnoreCase = true)]
+        [AccountSkuCompleter()]
         public string SkuName { get; set; }
 
         [Parameter(
@@ -85,20 +72,21 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Cognitive Services Account Location.")]
+        [LocationCompleter("Microsoft.CognitiveServices/accounts")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
         [Parameter(
             Mandatory = false,
             HelpMessage = "Cognitive Services Account Tags.")]
-        [Alias (TagsAlias)]
+        [Alias(TagsAlias)]
         [ValidateNotNull]
         [AllowEmptyCollection]
         public Hashtable[] Tag { get; set; }
-        
+
         [Parameter(Mandatory = false, HelpMessage = "Don't ask for confirmation.")]
         public SwitchParameter Force { get; set; }
-        
+
         public override void ExecuteCmdlet()
         {
             base.ExecuteCmdlet();
@@ -108,24 +96,34 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
                 CognitiveServicesAccountCreateParameters createParameters = new CognitiveServicesAccountCreateParameters()
                 {
                     Location = this.Location,
-                    Kind = ParseAccountKind(this.Type).Value, // must have value, mandatory parameter
-                    Sku = new Sku(ParseSkuName(this.SkuName)),
+                    Kind = this.Type, // must have value, mandatory parameter
+                    Sku = new Sku(this.SkuName),
                     Tags = TagsConversionHelper.CreateTagDictionary(Tag),
                     Properties = new object(), // Must not be null according to Azure RM spec. Also there is no actual properties to pass, so not exposing it through cmdlet
                 };
 
                 if (ShouldProcess(
-                    this.Name, string.Format(CultureInfo.CurrentCulture, Resources.NewAccount_ProcessMessage, this.Name, this.Type, this.SkuName, this.Location))
-                    ||
-                    Force.IsPresent)
+                    this.Name, string.Format(CultureInfo.CurrentCulture, Resources.NewAccount_ProcessMessage, this.Name, this.Type, this.SkuName, this.Location)))
                 {
+                    if (Force.IsPresent)
+                    {
+                        WriteWarning(Resources.NewAccount_Notice);
+                    }
+                    else
+                    {
+                        bool yesToAll = false, noToAll = false;
+                        if (!ShouldContinue(Resources.NewAccount_Notice, "Notice", true, ref yesToAll, ref noToAll))
+                        {
+                            return;
+                        }
+                    }
 
-                    var createAccountResponse = this.CognitiveServicesClient.CognitiveServicesAccounts.Create(
+                    var createAccountResponse = this.CognitiveServicesClient.Accounts.Create(
                                     this.ResourceGroupName,
                                     this.Name,
                                     createParameters);
 
-                    var cognitiveServicesAccount = this.CognitiveServicesClient.CognitiveServicesAccounts.GetProperties(this.ResourceGroupName, this.Name);
+                    var cognitiveServicesAccount = this.CognitiveServicesClient.Accounts.GetProperties(this.ResourceGroupName, this.Name);
 
                     this.WriteCognitiveServicesAccount(cognitiveServicesAccount);
                 }

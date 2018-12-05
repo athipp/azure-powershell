@@ -20,10 +20,11 @@ using Microsoft.Azure.Commands.Cdn.Properties;
 using Microsoft.Azure.Management.Cdn;
 using System.Linq;
 using Microsoft.Azure.Commands.Cdn.Models.Profile;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Cdn.Endpoint
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmCdnEndpoint", DefaultParameterSetName = FieldsParameterSet), OutputType(typeof(PSEndpoint))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CdnEndpoint", DefaultParameterSetName = FieldsParameterSet), OutputType(typeof(PSEndpoint))]
     public class GetAzureRmCdnEndpoint : AzureCdnCmdletBase
     {
         [Parameter(Mandatory = false, HelpMessage = "Azure CDN endpoint name.")]
@@ -35,6 +36,7 @@ namespace Microsoft.Azure.Commands.Cdn.Endpoint
         public string ProfileName { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The resource group of the Azure CDN Profile.", ParameterSetName = FieldsParameterSet)]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -52,13 +54,13 @@ namespace Microsoft.Azure.Commands.Cdn.Endpoint
 
             if (EndpointName != null)
             {
-                var endpoint = CdnManagementClient.Endpoints.Get(EndpointName, ProfileName, ResourceGroupName);
+                var endpoint = CdnManagementClient.Endpoints.Get(ResourceGroupName, ProfileName, EndpointName);
                 WriteVerbose(Resources.Success);
                 WriteObject(endpoint.ToPsEndpoint());
             }
             else
             {
-                var endpoints = CdnManagementClient.Endpoints.ListByProfile(ProfileName, ResourceGroupName).Select(e => e.ToPsEndpoint());
+                var endpoints = CdnManagementClient.Endpoints.ListByProfile(ResourceGroupName, ProfileName).Select(e => e.ToPsEndpoint());
                 WriteVerbose(Resources.Success);
                 WriteObject(endpoints, true);
             }

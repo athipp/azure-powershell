@@ -22,7 +22,7 @@ function Test-DatabasePauseResume
 	$location = "Southeast Asia"
 	$serverVersion = "12.0";
 	$rg = Create-ResourceGroupForTest
-	$server = Create-ServerForTest $rg $serverVersion $location
+	$server = Create-ServerForTest $rg $location
 
 	# Create data warehouse database with all parameters.
 	$databaseName = Get-DatabaseName
@@ -43,7 +43,10 @@ function Test-DatabasePauseResume
 		Assert-AreEqual $dwdb2.Status "Paused"
 		
 		# Resume the database. Make sure the database specs remain the same and its Status is Online.
-		$dwdb3 = Resume-AzureRmSqlDatabase -ResourceGroupName $rg.ResourceGroupName -ServerName $server.ServerName -DatabaseName $dwdb.DatabaseName
+		$job = Resume-AzureRmSqlDatabase -ResourceGroupName $rg.ResourceGroupName -ServerName $server.ServerName -DatabaseName $dwdb.DatabaseName -AsJob
+		$job | Wait-Job
+		$dwdb3 = $job.Output
+
 		Assert-AreEqual $dwdb3.DatabaseName $databaseName
 		Assert-AreEqual $dwdb3.MaxSizeBytes $maxSizeBytes
 		Assert-AreEqual $dwdb3.Edition DataWarehouse
@@ -64,13 +67,13 @@ function Test-DatabasePauseResume
 function Test-DatabasePauseResumePiped
 {
 	# Setup
-	$location = "Japan East"
+	$location = "westcentralus"
 	$serverVersion = "12.0";
 	$rg = Create-ResourceGroupForTest
 
 	try
 	{
-		$server = Create-ServerForTest $rg $serverVersion $location
+		$server = Create-ServerForTest $rg $location
 
 		# Create data warehouse database with all parameters.
 		$databaseName = Get-DatabaseName
@@ -81,7 +84,10 @@ function Test-DatabasePauseResumePiped
 
 
 		# Pause the database. Make sure the database specs remain the same and its Status is Paused.
-		$dwdb2 = $dwdb | Suspend-AzureRmSqlDatabase
+		$job = $dwdb | Suspend-AzureRmSqlDatabase -AsJob
+		$job | Wait-Job
+		$dwdb2 = $job.Output
+
 		Assert-AreEqual $dwdb2.DatabaseName $databaseName
 		Assert-AreEqual $dwdb2.MaxSizeBytes $maxSizeBytes
 		Assert-AreEqual $dwdb2.Edition DataWarehouse

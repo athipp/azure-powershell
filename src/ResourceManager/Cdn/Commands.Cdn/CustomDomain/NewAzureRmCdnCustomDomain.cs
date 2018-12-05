@@ -26,11 +26,14 @@ using Microsoft.Azure.Management.Cdn;
 using Microsoft.Azure.Management.Cdn.Models;
 using Microsoft.Azure.Commands.Cdn.Models.Endpoint;
 using System.Linq;
+using Microsoft.WindowsAzure.Commands.Common;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Cdn.CustomDomain
 {
-    [Cmdlet(VerbsCommon.New, "AzureRmCdnCustomDomain", DefaultParameterSetName = FieldsParameterSet, SupportsShouldProcess = true), OutputType(typeof(PSCustomDomain))]
-    public class NewAzureRmCdnCustomDomain : AzureCdnCmdletBase, IModuleAssemblyInitializer
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CdnCustomDomain", DefaultParameterSetName = FieldsParameterSet, SupportsShouldProcess = true), OutputType(typeof(PSCustomDomain))]
+    public class NewAzureRmCdnCustomDomain : AzureCdnCmdletBase
     {
         [Parameter(Mandatory = true, HelpMessage = "Host name (address) of the Azure CDN custom domain name.")]
         [ValidateNotNullOrEmpty]
@@ -49,6 +52,7 @@ namespace Microsoft.Azure.Commands.Cdn.CustomDomain
         public string ProfileName { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The resource group of the Azure CDN profile.", ParameterSetName = FieldsParameterSet)]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -66,9 +70,9 @@ namespace Microsoft.Azure.Commands.Cdn.CustomDomain
                 EndpointName = CdnEndpoint.Name;
             }
 
-            var existingCustomDomain = CdnManagementClient.CustomDomains.ListByEndpoint(EndpointName, ProfileName, ResourceGroupName)
-                .Where(cd => cd.Name.ToLower() == CustomDomainName.ToLower())
-                .FirstOrDefault();
+            var existingCustomDomain = CdnManagementClient.CustomDomains
+                .ListByEndpoint(ResourceGroupName, ProfileName, EndpointName)
+                .FirstOrDefault(cd => cd.Name.ToLower() == CustomDomainName.ToLower());
 
             if (existingCustomDomain != null)
             {
@@ -88,31 +92,14 @@ namespace Microsoft.Azure.Commands.Cdn.CustomDomain
         private void NewCustomDomain()
         {
             var customDomain = CdnManagementClient.CustomDomains.Create(
-                CustomDomainName,
-                EndpointName,
-                ProfileName,
                 ResourceGroupName,
+                ProfileName,
+                EndpointName,
+                CustomDomainName,
                 HostName);
 
             WriteVerbose(Resources.Success);
             WriteObject(customDomain.ToPsCustomDomain());
-        }
-
-        public void OnImport()
-        {
-            try
-            {
-                System.Management.Automation.PowerShell invoker = null;
-                invoker = System.Management.Automation.PowerShell.Create(RunspaceMode.CurrentRunspace);
-                invoker.AddScript(File.ReadAllText(FileUtilities.GetContentFilePath(
-                    Path.GetDirectoryName(AppDomain.CurrentDomain.BaseDirectory),
-                    "CdnStartup.ps1")));
-                invoker.Invoke();
-            }
-            catch
-            {
-                // This may throw exception for tests, ignore.
-            }
         }
     }
 }

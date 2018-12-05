@@ -18,13 +18,14 @@ using System.Text.RegularExpressions;
 using Microsoft.Azure.Commands.Media.Common;
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Media.ServiceKey
 {
     /// <summary>
     /// Synchronizes storage account keys for a storage account associated with the Media Service.
     /// </summary>
-    [Cmdlet(VerbsData.Sync, MediaServiceStorageKeysNounStr, SupportsShouldProcess = true), OutputType(typeof(bool))]
+    [Cmdlet("Sync", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "MediaServiceStorageKeys", SupportsShouldProcess = true), OutputType(typeof(bool))]
     public class SyncAzureRmMediaServiceStorageKeys : AzureMediaServiceCmdletBase
     {
         private const string SyncMediaServiceStorageKeysWhatIfMessage = "Sync MediaService storage keys";
@@ -34,6 +35,7 @@ namespace Microsoft.Azure.Commands.Media.ServiceKey
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

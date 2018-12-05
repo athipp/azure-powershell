@@ -24,7 +24,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Automation.Test.UnitTests
     [TestClass]
     public class RegisterAzureAutomationScheduledJobTest : RMTestBase
     {
-        private Mock<IAutomationClient> mockAutomationClient;
+        private Mock<IAutomationPSClient> mockAutomationClient;
 
         private MockCommandRuntime mockCommandRuntime;
 
@@ -33,7 +33,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Automation.Test.UnitTests
         [TestInitialize]
         public void SetupTest()
         {
-            this.mockAutomationClient = new Mock<IAutomationClient>();
+            this.mockAutomationClient = new Mock<IAutomationPSClient>();
             this.mockCommandRuntime = new MockCommandRuntime();
             this.cmdlet = new RegisterAzureAutomationScheduledRunbook
             {
@@ -52,7 +52,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Automation.Test.UnitTests
             string scheduleName = "schedule";
 
             this.mockAutomationClient.Setup(
-                f => f.RegisterScheduledRunbook(resourceGroupName, accountName, runbookName, scheduleName, null));
+                f => f.RegisterScheduledRunbook(resourceGroupName, accountName, runbookName, scheduleName, null, null));
 
             // Test
             this.cmdlet.ResourceGroupName = resourceGroupName;
@@ -62,7 +62,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Automation.Test.UnitTests
             this.cmdlet.ExecuteCmdlet();
 
             // Assert
-            this.mockAutomationClient.Verify(f => f.RegisterScheduledRunbook(resourceGroupName, accountName, runbookName, scheduleName, null), Times.Once());
+            this.mockAutomationClient.Verify(f => f.RegisterScheduledRunbook(resourceGroupName, accountName, runbookName, scheduleName, null, null), Times.Once());
         }
     }
 }

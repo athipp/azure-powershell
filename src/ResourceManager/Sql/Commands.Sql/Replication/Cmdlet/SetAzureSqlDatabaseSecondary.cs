@@ -12,6 +12,7 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.Properties;
 using Microsoft.Azure.Commands.Sql.Replication.Model;
 using System.Collections.Generic;
@@ -22,9 +23,7 @@ namespace Microsoft.Azure.Commands.Sql.Replication.Cmdlet
     /// <summary>
     /// Cmdlet to fail over Azure SQL Database Replication Link to the secondary database
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "AzureRmSqlDatabaseSecondary",
-        DefaultParameterSetName = NoOptionsSet,
-        ConfirmImpact = ConfirmImpact.Medium, SupportsShouldProcess = true)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlDatabaseSecondary",DefaultParameterSetName = NoOptionsSet,ConfirmImpact = ConfirmImpact.Medium, SupportsShouldProcess = true), OutputType(typeof(AzureReplicationLinkModel))]
     public class SetAzureSqlDatabaseSecondary : AzureSqlDatabaseSecondaryCmdletBase
     {
         /// <summary>
@@ -44,6 +43,7 @@ namespace Microsoft.Azure.Commands.Sql.Replication.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 2,
             HelpMessage = "The name of the Azure SQL Database to failover.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers/databases", "ResourceGroupName", "ServerName")]
         [ValidateNotNullOrEmpty]
         public string DatabaseName { get; set; }
 
@@ -53,6 +53,7 @@ namespace Microsoft.Azure.Commands.Sql.Replication.Cmdlet
         [Parameter(Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The name of the Azure Resource Group of the partner Azure SQL Database.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string PartnerResourceGroupName { get; set; }
 
@@ -75,6 +76,12 @@ namespace Microsoft.Azure.Commands.Sql.Replication.Cmdlet
             ParameterSetName = ByFailoverParams,
             HelpMessage = "Whether this failover operation will allow data loss.")]
         public SwitchParameter AllowDataLoss { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether or not to run this cmdlet in the background as a job
+        /// </summary>
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         /// <summary>
         /// Get the entities from the service

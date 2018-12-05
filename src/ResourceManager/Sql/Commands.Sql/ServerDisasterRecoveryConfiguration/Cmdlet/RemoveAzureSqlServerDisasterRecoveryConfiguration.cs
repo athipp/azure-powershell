@@ -19,7 +19,7 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Sql.ServerDisasterRecoveryConfiguration.Cmdlet
 {
-    [Cmdlet(VerbsCommon.Remove, "AzureRmSqlServerDisasterRecoveryConfiguration", SupportsShouldProcess = true)]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlServerDisasterRecoveryConfiguration", SupportsShouldProcess = true), OutputType(typeof(AzureSqlServerDisasterRecoveryConfigurationModel))]
     public class RemoveAzureSqlServerDisasterRecoveryConfiguration : AzureSqlServerDisasterRecoveryConfigurationCmdletBase
     {
         /// <summary>

@@ -12,17 +12,20 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using System;
 using Microsoft.Azure.Commands.Sql.ServerUpgrade.Model;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Management.Automation;
+using Microsoft.WindowsAzure.Commands.Common.CustomAttributes;
 
 namespace Microsoft.Azure.Commands.Sql.ServerUpgrade.Cmdlet
 {
     /// <summary>
-    /// Defines the Get-AzureRmSqlDatabaseServer cmdlet
+    /// Defines the Get-AzSqlDatabaseServer cmdlet
     /// </summary>
-    [Cmdlet(VerbsLifecycle.Stop, "AzureRmSqlServerUpgrade", SupportsShouldProcess = true)]
+    [CmdletDeprecation(ChangeDescription = "All Azure SQL DB Servers now have version 12.0 so there is nothing to upgrade.")]
+    [Cmdlet("Stop", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlServerUpgrade", SupportsShouldProcess = true), OutputType(typeof(AzureSqlServerUpgradeModel))]
     public class StopAzureSqlServerUpgrade : AzureSqlServerUpgradeCmdletBase<AzureSqlServerUpgradeModel>
     {
         /// <summary>

@@ -22,13 +22,14 @@ using Microsoft.Azure.Management.Cdn;
 using System;
 using System.Net;
 using Microsoft.Azure.Management.Cdn.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Cdn.Profile
 {
     /// <summary>
-    /// Defines the New-AzureRMCdnProfile cmdlet.
+    /// Defines the New-AzCdnProfile cmdlet.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmCdnProfile"), OutputType(typeof(PSProfile))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CdnProfile"), OutputType(typeof(PSProfile))]
     public class GetAzureRmCdnProfile : AzureCdnCmdletBase
     {
         /// <summary>
@@ -42,6 +43,7 @@ namespace Microsoft.Azure.Commands.Cdn.Profile
         /// The resource group name of the profile.
         /// </summary>
         [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The resource group of the Azure CDN profile.")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -51,7 +53,7 @@ namespace Microsoft.Azure.Commands.Cdn.Profile
             if (ProfileName == null && ResourceGroupName == null)
             {
                 // List by subscription.
-                var profiles = CdnManagementClient.Profiles.ListBySubscriptionId().Select(p => p.ToPsProfile());
+                var profiles = CdnManagementClient.Profiles.List().Select(p => p.ToPsProfile());
                 WriteVerbose(Resources.Success);
                 WriteObject(profiles, true);
             }
@@ -66,9 +68,9 @@ namespace Microsoft.Azure.Commands.Cdn.Profile
             else if (ProfileName != null && ResourceGroupName == null)
             {
                 // Let's return all profiles that match that name, or a single profile if there's just one.
-                var profiles = CdnManagementClient.Profiles.ListBySubscriptionId().Select(p => p.ToPsProfile()).Where(p => p.Name == ProfileName);
+                var profiles = CdnManagementClient.Profiles.List().Select(p => p.ToPsProfile()).Where(p => p.Name == ProfileName);
                 WriteVerbose(Resources.Success);
-                if(profiles != null && profiles.Count() == 1)
+                if(profiles.Count() == 1)
                 {
                     WriteObject(profiles.First());
                 }
@@ -82,7 +84,7 @@ namespace Microsoft.Azure.Commands.Cdn.Profile
                 try
                 {
                     // Get by both Profile Name and Resource Group Name.
-                    var profile = CdnManagementClient.Profiles.Get(ProfileName, ResourceGroupName);
+                    var profile = CdnManagementClient.Profiles.Get(ResourceGroupName, ProfileName);
                     WriteVerbose(Resources.Success);
                     WriteObject(profile.ToPsProfile());
                 }

@@ -88,6 +88,33 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Add Key Vault managed Storage Account.
+        /// </summary>
+        internal static string AddManagedStorageAccount {
+            get {
+                return ResourceManager.GetString("AddManagedStorageAccount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Add vault network rule.
+        /// </summary>
+        internal static string AddNetworkRule {
+            get {
+                return ResourceManager.GetString("AddNetworkRule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Email argument specified, &apos;{1}&apos;, matches multiple objects in the Azure Active Directory tenant &apos;{2}&apos;. Please use -UserPrincipalName to narrow down the filter to a single object. The TenantID displayed by the cmdlet &apos;Get-AzContext&apos; is the current subscription&apos;s Azure Active Directory..
+        /// </summary>
+        internal static string ADObjectAmbiguous {
+            get {
+                return ResourceManager.GetString("ADObjectAmbiguous", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Retrieving object ID from Azure Active Directory failed. {0}
         ///
         ///Please provide object ID for the user or service principle to set a vault access policy.
@@ -100,7 +127,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot find the Active Directory object &apos;{0}&apos; in tenant &apos;{1}&apos;. Please make sure that the user or application service principal you are authorizing is registered in the current subscription&apos;s Azure Active directory. The TenantID displayed by the cmdlet &apos;Get-AzureRmContext&apos; is the current subscription&apos;s Azure Active directory..
+        ///   Looks up a localized string similar to Cannot find the Active Directory object &apos;{0}&apos; in tenant &apos;{1}&apos;. Please make sure that the user or application service principal you are authorizing is registered in the current subscription&apos;s Azure Active directory. The TenantID displayed by the cmdlet &apos;Get-AzContext&apos; is the current subscription&apos;s Azure Active directory..
         /// </summary>
         internal static string ADObjectNotFound {
             get {
@@ -109,11 +136,47 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to No account found in the context. Please login using Login-AzureRMAccount..
+        ///   Looks up a localized string similar to The &apos;all&apos; permission will be removed in May 2018 and does not include the &apos;purge&apos; permission. &apos;Purge&apos; permission must be explicitly set..
+        /// </summary>
+        internal static string AllPermissionExpansionWarning {
+            get {
+                return ResourceManager.GetString("AllPermissionExpansionWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No account found in the context. Please login using Connect-AzAccount..
         /// </summary>
         internal static string ArmAccountNotFound {
             get {
                 return ResourceManager.GetString("ArmAccountNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Backup certificate.
+        /// </summary>
+        internal static string BackupCertificate {
+            get {
+                return ResourceManager.GetString("BackupCertificate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The backup file &apos;{0}&apos; already exists..
+        /// </summary>
+        internal static string BackupFileAlreadyExists {
+            get {
+                return ResourceManager.GetString("BackupFileAlreadyExists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot find backup file &apos;{0}&apos;..
+        /// </summary>
+        internal static string BackupFileNotFound {
+            get {
+                return ResourceManager.GetString("BackupFileNotFound", resourceCulture);
             }
         }
         
@@ -141,6 +204,42 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         internal static string BackupKeyFileNotFound {
             get {
                 return ResourceManager.GetString("BackupKeyFileNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Backup managed storage account.
+        /// </summary>
+        internal static string BackupManagedStorageAccount {
+            get {
+                return ResourceManager.GetString("BackupManagedStorageAccount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Backup secret.
+        /// </summary>
+        internal static string BackupSecret {
+            get {
+                return ResourceManager.GetString("BackupSecret", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The backup secret file &apos;{0}&apos; already exists..
+        /// </summary>
+        internal static string BackupSecretFileAlreadyExists {
+            get {
+                return ResourceManager.GetString("BackupSecretFileAlreadyExists", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot find backup secret file &apos;{0}&apos;.
+        /// </summary>
+        internal static string BackupSecretFileNotFound {
+            get {
+                return ResourceManager.GetString("BackupSecretFileNotFound", resourceCulture);
             }
         }
         
@@ -199,6 +298,33 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot find deleted vault &apos;{0}&apos; in location &apos;{1}&apos;.
+        /// </summary>
+        internal static string DeletedVaultNotFound {
+            get {
+                return ResourceManager.GetString("DeletedVaultNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Overwrite File ?.
+        /// </summary>
+        internal static string FileOverwriteCaption {
+            get {
+                return ResourceManager.GetString("FileOverwriteCaption", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Overwrite existing file at &apos;{0}&apos; ?.
+        /// </summary>
+        internal static string FileOverwriteMessage {
+            get {
+                return ResourceManager.GetString("FileOverwriteMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to BYOK key can not be imported as software key.
         /// </summary>
         internal static string ImportByokAsSoftkeyError {
@@ -235,7 +361,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to No current subscription has been designated. Use Set-AzureRmContext -SubscriptionName &lt;subscriptionName&gt; to set the current subscription..
+        ///   Looks up a localized string similar to No current subscription has been designated. Use Set-AzContext -SubscriptionName &lt;subscriptionName&gt; to set the current subscription..
         /// </summary>
         internal static string InvalidCurrentSubscription {
             get {
@@ -307,11 +433,65 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Invalid managed storage account bundle..
+        /// </summary>
+        internal static string InvalidManagedStorageAccountBundle {
+            get {
+                return ResourceManager.GetString("InvalidManagedStorageAccountBundle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid managed storage account identifier..
+        /// </summary>
+        internal static string InvalidManagedStorageAccountIdentifier {
+            get {
+                return ResourceManager.GetString("InvalidManagedStorageAccountIdentifier", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid key vault managed storage acccount name..
+        /// </summary>
+        internal static string InvalidManagedStorageAccountName {
+            get {
+                return ResourceManager.GetString("InvalidManagedStorageAccountName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid managed storage account or storage SAS definition attributes..
+        /// </summary>
+        internal static string InvalidManagedStorageObjectAttributes {
+            get {
+                return ResourceManager.GetString("InvalidManagedStorageObjectAttributes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Invalid number of certificates..
         /// </summary>
         internal static string InvalidNumberOfCertificates {
             get {
                 return ResourceManager.GetString("InvalidNumberOfCertificates", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot parse ObjectId into Guid..
+        /// </summary>
+        internal static string InvalidObjectIdSyntax {
+            get {
+                return ResourceManager.GetString("InvalidObjectIdSyntax", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid Sas permission &apos;{0}&apos;..
+        /// </summary>
+        internal static string InvalidSasPermission {
+            get {
+                return ResourceManager.GetString("InvalidSasPermission", resourceCulture);
             }
         }
         
@@ -352,7 +532,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to No subscription is currently selected. Use Set-AzureRmContext to activate a subscription..
+        ///   Looks up a localized string similar to No subscription is currently selected. Use Set-AzContext to activate a subscription..
         /// </summary>
         internal static string InvalidSelectedSubscription {
             get {
@@ -361,7 +541,16 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Your Azure credentials have not been set up or have expired, please run Login-AzureRmAccount to set up your Azure credentials..
+        ///   Looks up a localized string similar to Invalid storage SAS definition identifier..
+        /// </summary>
+        internal static string InvalidStorageSasDefinitionIdentifier {
+            get {
+                return ResourceManager.GetString("InvalidStorageSasDefinitionIdentifier", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Your Azure credentials have not been set up or have expired, please run Connect-AzAccount to set up your Azure credentials..
         /// </summary>
         internal static string InvalidSubscriptionState {
             get {
@@ -415,7 +604,7 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to No tenant found in the context.  Please ensure that the credentials you provided are authorized to access an Azure subscription, then run Login-AzureRMAccount to login..
+        ///   Looks up a localized string similar to No tenant found in the context.  Please ensure that the credentials you provided are authorized to access an Azure subscription, then run Connect-AzAccount to login..
         /// </summary>
         internal static string NoTenantInContext {
             get {
@@ -438,6 +627,96 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         internal static string PermissionsNotSpecified {
             get {
                 return ResourceManager.GetString("PermissionsNotSpecified", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to remove vault &apos;{0}&apos; forever..
+        /// </summary>
+        internal static string PurgeVaultWarning {
+            get {
+                return ResourceManager.GetString("PurgeVaultWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Purge vault.
+        /// </summary>
+        internal static string PurgeVaultWhatIfMessage {
+            get {
+                return ResourceManager.GetString("PurgeVaultWhatIfMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Recover certificate.
+        /// </summary>
+        internal static string RecoverCertificate {
+            get {
+                return ResourceManager.GetString("RecoverCertificate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Recover key.
+        /// </summary>
+        internal static string RecoverKey {
+            get {
+                return ResourceManager.GetString("RecoverKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Recover KeyVault-managed storage account.
+        /// </summary>
+        internal static string RecoverManagedStorageAccount {
+            get {
+                return ResourceManager.GetString("RecoverManagedStorageAccount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Recover KeyVault-managed storage account SAS definition..
+        /// </summary>
+        internal static string RecoverManagedStorageSasDefinition {
+            get {
+                return ResourceManager.GetString("RecoverManagedStorageSasDefinition", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Recover secret.
+        /// </summary>
+        internal static string RecoverSecret {
+            get {
+                return ResourceManager.GetString("RecoverSecret", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Recover vault.
+        /// </summary>
+        internal static string RecoverVault {
+            get {
+                return ResourceManager.GetString("RecoverVault", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to regenerate &apos;{0}&apos; of storage account &apos;{1}&apos; and make it an active key of Key Vault managed Storage Account..
+        /// </summary>
+        internal static string RegenerateManagedStorageAccountKeyWarning {
+            get {
+                return ResourceManager.GetString("RegenerateManagedStorageAccountKeyWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Regenerate &apos;{0}&apos;.
+        /// </summary>
+        internal static string RegenerateManagedStorageAccountKeyWhatIfMessage {
+            get {
+                return ResourceManager.GetString("RegenerateManagedStorageAccountKeyWhatIfMessage", resourceCulture);
             }
         }
         
@@ -487,6 +766,78 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to purge certificate &apos;{0}&apos;.
+        /// </summary>
+        internal static string RemoveDeletedCertificateWarning {
+            get {
+                return ResourceManager.GetString("RemoveDeletedCertificateWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Purge certificate.
+        /// </summary>
+        internal static string RemoveDeletedCertificateWhatIfMessage {
+            get {
+                return ResourceManager.GetString("RemoveDeletedCertificateWhatIfMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to purge key &apos;{0}&apos;..
+        /// </summary>
+        internal static string RemoveDeletedKeyWarning {
+            get {
+                return ResourceManager.GetString("RemoveDeletedKeyWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Purge key.
+        /// </summary>
+        internal static string RemoveDeletedKeyWhatIfMessage {
+            get {
+                return ResourceManager.GetString("RemoveDeletedKeyWhatIfMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to purge managed storage account &apos;{0}&apos;.
+        /// </summary>
+        internal static string RemoveDeletedManagedStorageAccountWarning {
+            get {
+                return ResourceManager.GetString("RemoveDeletedManagedStorageAccountWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Purge managed storage account.
+        /// </summary>
+        internal static string RemoveDeletedManagedStorageAccountWhatIfMessage {
+            get {
+                return ResourceManager.GetString("RemoveDeletedManagedStorageAccountWhatIfMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to purge secret &apos;{0}&apos;..
+        /// </summary>
+        internal static string RemoveDeletedSecretWarning {
+            get {
+                return ResourceManager.GetString("RemoveDeletedSecretWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Purge secret.
+        /// </summary>
+        internal static string RemoveDeletedSecretWhatIfMessage {
+            get {
+                return ResourceManager.GetString("RemoveDeletedSecretWhatIfMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Are you sure you want to remove key &apos;{0}&apos;..
         /// </summary>
         internal static string RemoveKeyWarning {
@@ -501,6 +852,51 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         internal static string RemoveKeyWhatIfMessage {
             get {
                 return ResourceManager.GetString("RemoveKeyWhatIfMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to remove managed storage account &apos;{0}&apos;.
+        /// </summary>
+        internal static string RemoveManagedStorageAccountWarning {
+            get {
+                return ResourceManager.GetString("RemoveManagedStorageAccountWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remove managed storage account.
+        /// </summary>
+        internal static string RemoveManagedStorageAccountWhatIfMessage {
+            get {
+                return ResourceManager.GetString("RemoveManagedStorageAccountWhatIfMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to remove managed storage sas definition &apos;{0}&apos;.
+        /// </summary>
+        internal static string RemoveManagedStorageSasDefinitionWarning {
+            get {
+                return ResourceManager.GetString("RemoveManagedStorageSasDefinitionWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remove managed storage sas definition.
+        /// </summary>
+        internal static string RemoveManagedStorageSasDefinitionWhatIfMessage {
+            get {
+                return ResourceManager.GetString("RemoveManagedStorageSasDefinitionWhatIfMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Remove vault network rule.
+        /// </summary>
+        internal static string RemoveNetworkRule {
+            get {
+                return ResourceManager.GetString("RemoveNetworkRule", resourceCulture);
             }
         }
         
@@ -550,11 +946,38 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Restore certificate.
+        /// </summary>
+        internal static string RestoreCertificate {
+            get {
+                return ResourceManager.GetString("RestoreCertificate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Restore key.
         /// </summary>
         internal static string RestoreKey {
             get {
                 return ResourceManager.GetString("RestoreKey", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Restore managed storage account.
+        /// </summary>
+        internal static string RestoreManagedStorageAccount {
+            get {
+                return ResourceManager.GetString("RestoreManagedStorageAccount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Restore secret.
+        /// </summary>
+        internal static string RestoreSecret {
+            get {
+                return ResourceManager.GetString("RestoreSecret", resourceCulture);
             }
         }
         
@@ -591,6 +1014,24 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         internal static string SetKeyAttribute {
             get {
                 return ResourceManager.GetString("SetKeyAttribute", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set Key Vault managed Storage Account attribute.
+        /// </summary>
+        internal static string SetManagedStorageAccountKeysAttribute {
+            get {
+                return ResourceManager.GetString("SetManagedStorageAccountKeysAttribute", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set Key Vault managed Storage SAS definition.
+        /// </summary>
+        internal static string SetManagedStorageSasDefinition {
+            get {
+                return ResourceManager.GetString("SetManagedStorageSasDefinition", resourceCulture);
             }
         }
         
@@ -649,6 +1090,24 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Update vault network rule.
+        /// </summary>
+        internal static string UpdateNetworkRule {
+            get {
+                return ResourceManager.GetString("UpdateNetworkRule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The network rule set has been turned off for this vault..
+        /// </summary>
+        internal static string UpdateNetworkRuleWarning {
+            get {
+                return ResourceManager.GetString("UpdateNetworkRuleWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The specified vault already exists..
         /// </summary>
         internal static string VaultAlreadyExists {
@@ -658,7 +1117,16 @@ namespace Microsoft.Azure.Commands.KeyVault.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Access policy is not set. No user or application have access permission to use this vault. Please use Set-AzureRmKeyVaultAccessPolicy to set access policies..
+        ///   Looks up a localized string similar to Vault &apos;{0}&apos; does not exist in current subscription.  If this vault exists in your tenant, please switch to the correct subscription in order to modifiy the Access Policies of this vault..
+        /// </summary>
+        internal static string VaultDoesNotExist {
+            get {
+                return ResourceManager.GetString("VaultDoesNotExist", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Access policy is not set. No user or application have access permission to use this vault. This can happen if the vault was created by a service principal. Please use Set-AzKeyVaultAccessPolicy to set access policies..
         /// </summary>
         internal static string VaultNoAccessPolicyWarning {
             get {

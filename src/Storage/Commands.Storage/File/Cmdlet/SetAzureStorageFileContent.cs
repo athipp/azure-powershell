@@ -24,7 +24,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
     using System.Threading.Tasks;
     using LocalConstants = Microsoft.WindowsAzure.Commands.Storage.File.Constants;
 
-    [Cmdlet(VerbsCommon.Set, LocalConstants.FileContentCmdletName, SupportsShouldProcess = true, DefaultParameterSetName = LocalConstants.ShareNameParameterSetName)]
+    [Cmdlet("Set", Azure.Commands.ResourceManager.Common.AzureRMConstants.AzurePrefix + "StorageFileContent", SupportsShouldProcess = true, DefaultParameterSetName = LocalConstants.ShareNameParameterSetName), OutputType(typeof(CloudFile))]
     public class SetAzureStorageFileContent : StorageFileDataManagementCmdletBase
     {
         [Parameter(
@@ -80,6 +80,12 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
                 throw new FileNotFoundException(string.Format(CultureInfo.CurrentCulture, Resources.SourceFileNotFound, this.Source));
             }
 
+            // if FIPS policy is enabled, must use native MD5
+            if (fipsEnabled)
+            {
+                CloudStorageAccount.UseV1MD5 = false;
+            }
+
             bool isDirectory;
             string[] path = NamingUtil.ValidatePath(this.Path, out isDirectory);
             var cloudFileToBeUploaded =
@@ -104,7 +110,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
                             this.GetTransferContext(progressRecord, localFile.Length),
                             this.CmdletCancellationToken),
                         progressRecord,
-                        this.OutputStream);
+                        this.OutputStream).ConfigureAwait(false);
 
 
                     if (this.PassThru)
@@ -153,18 +159,29 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
 
             try
             {
-                directoryExists = await this.Channel.DirectoryExistsAsync(directory, this.RequestOptions, this.OperationContext, this.CmdletCancellationToken);
+                directoryExists = await this.Channel.DirectoryExistsAsync(directory, this.RequestOptions, this.OperationContext, this.CmdletCancellationToken).ConfigureAwait(false);
             }
             catch (StorageException e)
             {
                 if (e.RequestInformation != null &&
-                    e.RequestInformation.HttpStatusCode == (int)HttpStatusCode.BadRequest &&
-                    e.RequestInformation.ExtendedErrorInformation == null)
+                    e.RequestInformation.HttpStatusCode == (int)HttpStatusCode.Forbidden)
                 {
-                    throw new AzureStorageFileException(ErrorCategory.InvalidArgument, ErrorIdConstants.InvalidResource, Resources.InvalidResource, this);
+                    //Forbidden to check directory existance, might caused by a write only SAS
+                    //Don't report error here since should not block upload with write only SAS
+                    //If the directory not exist, Error will be reported when upload with DMlib later
+                    directoryExists = true;
                 }
+                else
+                {
+                    if (e.RequestInformation != null &&
+                        e.RequestInformation.HttpStatusCode == (int)HttpStatusCode.BadRequest &&
+                        e.RequestInformation.ExtendedErrorInformation == null)
+                    {
+                        throw new AzureStorageFileException(ErrorCategory.InvalidArgument, ErrorIdConstants.InvalidResource, Resources.InvalidResource, this);
+                    }
 
-                throw;
+                    throw;
+                }
             }
 
             if (directoryExists)

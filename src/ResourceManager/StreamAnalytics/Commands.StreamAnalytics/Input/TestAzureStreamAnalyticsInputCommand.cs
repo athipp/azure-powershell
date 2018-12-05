@@ -22,7 +22,7 @@ using System.Security.Permissions;
 
 namespace Microsoft.Azure.Commands.StreamAnalytics
 {
-    [Cmdlet(VerbsDiagnostic.Test, Constants.StreamAnalyticsInput)]
+    [Cmdlet("Test", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "StreamAnalyticsInput"), OutputType(typeof(bool))]
     public class TestAzureStreamAnalyticsInputCommand : StreamAnalyticsResourceProviderBaseCmdlet
     {
         [Parameter(Position = 1, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The azure stream analytics job name.")]
@@ -53,31 +53,22 @@ namespace Microsoft.Azure.Commands.StreamAnalytics
 
             try
             {
-                ResourceTestConnectionResponse response = StreamAnalyticsClient.TestPSInput(ResourceGroupName, JobName, Name);
-                if (response.StatusCode == HttpStatusCode.OK && response.ResourceTestStatus == ResourceTestStatus.TestSucceeded)
+                ResourceTestStatus response = StreamAnalyticsClient.TestPSInput(ResourceGroupName, JobName, Name);
+                if (response.Status.Equals("TestSucceeded") && response.Error == null)
                 {
                     WriteObject(true);
-                }
-                else if (response.StatusCode == HttpStatusCode.NoContent)
-                {
-                    WriteWarning(string.Format(CultureInfo.InvariantCulture, Resources.InputNotFound, Name, JobName, ResourceGroupName));
                 }
                 else
                 {
                     string errorId = null;
                     string errorMessage = null;
-                    string innerErrorMessage = null;
                     if (response.Error != null)
                     {
                         errorId = response.Error.Code;
                         errorMessage = response.Error.Message;
-                        if (response.Error.Details != null)
-                        {
-                            innerErrorMessage = response.Error.Details.Message;
-                        }
                     }
 
-                    Exception ex = new Exception(errorMessage, new Exception(innerErrorMessage));
+                    Exception ex = new Exception(errorMessage);
                     WriteError(new ErrorRecord(ex, errorId, ErrorCategory.ConnectionError, null));
                 }
             }

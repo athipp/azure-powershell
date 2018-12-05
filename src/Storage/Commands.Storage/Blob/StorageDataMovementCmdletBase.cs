@@ -21,6 +21,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Blob
     using System;
     using System.Globalization;
     using System.Management.Automation;
+    using System.Threading.Tasks;
 
     public class StorageDataMovementCmdletBase : StorageCloudBlobCmdletBase, IDisposable
     {
@@ -47,10 +48,21 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Blob
         /// </summary>
         /// <param name="msg">Confirmation message</param>
         /// <returns>True if the opeation is confirmed, otherwise return false</returns>
-        protected bool ConfirmOverwrite(string sourcePath, string destinationPath)
+        protected bool ConfirmOverwrite(object source, object destination)
         {
-            string overwriteMessage = string.Format(CultureInfo.CurrentCulture, Resources.OverwriteConfirmation, destinationPath);
+            string overwriteMessage = string.Format(CultureInfo.CurrentCulture, Resources.OverwriteConfirmation, Util.ConvertToString(destination));
             return overwrite || OutputStream.ConfirmAsync(overwriteMessage).Result;
+        }
+
+        /// <summary>
+        /// Confirm the overwrite operation
+        /// </summary>
+        /// <param name="msg">Confirmation message</param>
+        /// <returns>True if the opeation is confirmed, otherwise return false</returns>
+        protected async Task<bool> ConfirmOverwriteAsync(object source, object destination)
+        {
+            string overwriteMessage = string.Format(CultureInfo.CurrentCulture, Resources.OverwriteConfirmation, Util.ConvertToString(destination));
+            return overwrite || await OutputStream.ConfirmAsync(overwriteMessage);
         }
 
         /// <summary>
@@ -72,11 +84,18 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Blob
             this.TransferManager = TransferManagerFactory.CreateTransferManager(this.GetCmdletConcurrency());
         }
 
-        protected TransferContext GetTransferContext(DataMovementUserData userData)
+        protected SingleTransferContext GetTransferContext(DataMovementUserData userData)
         {
-            TransferContext transferContext = new TransferContext();
+            SingleTransferContext transferContext = new SingleTransferContext();
             transferContext.ClientRequestId = CmdletOperationContext.ClientRequestId;
-            transferContext.OverwriteCallback = ConfirmOverwrite;
+            if (overwrite)
+            {
+                transferContext.ShouldOverwriteCallbackAsync = TransferContext.ForceOverwrite;
+            }
+            else
+            {
+                transferContext.ShouldOverwriteCallbackAsync = ConfirmOverwriteAsync;
+            }
 
             transferContext.ProgressHandler = new TransferProgressHandler((transferProgress) =>
                 {

@@ -14,20 +14,22 @@
 
 using Hyak.Common;
 using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.Azure.Commands.ResourceManager.Cmdlets.Components;
 using Microsoft.Azure.Commands.ResourceManager.Cmdlets.Utilities;
 using Microsoft.Azure.Commands.Resources.Models.Authorization;
 using Microsoft.Azure.Management.Authorization;
 using Microsoft.Azure.Management.Authorization.Models;
-using Microsoft.Azure.Management.Resources;
-using Microsoft.Azure.Management.Resources.Models;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using Microsoft.Azure.Management.ResourceManager;
+using Microsoft.Azure.Management.ResourceManager.Models;
+using Microsoft.Rest.Azure;
 
 namespace Microsoft.Azure.Commands.Resources.Models
 {
@@ -52,8 +54,6 @@ namespace Microsoft.Azure.Commands.Resources.Models
 
         public IAuthorizationManagementClient AuthorizationManagementClient { get; set; }
 
-        public GalleryTemplatesClient GalleryTemplatesClient { get; set; }
-
         public Action<string> VerboseLogger { get; set; }
 
         public Action<string> ErrorLogger { get; set; }
@@ -64,11 +64,10 @@ namespace Microsoft.Azure.Commands.Resources.Models
         /// Creates new ResourceManagementClient
         /// </summary>
         /// <param name="context">Profile containing resources to manipulate</param>
-        public ResourcesClient(AzureContext context)
+        public ResourcesClient(IAzureContext context)
             : this(
-                AzureSession.ClientFactory.CreateClient<ResourceManagementClient>(context, AzureEnvironment.Endpoint.ResourceManager),
-                new GalleryTemplatesClient(context),
-                AzureSession.ClientFactory.CreateClient<AuthorizationManagementClient>(context, AzureEnvironment.Endpoint.ResourceManager))
+                AzureSession.Instance.ClientFactory.CreateArmClient<ResourceManagementClient>(context, AzureEnvironment.Endpoint.ResourceManager),
+                AzureSession.Instance.ClientFactory.CreateArmClient<AuthorizationManagementClient>(context, AzureEnvironment.Endpoint.ResourceManager))
         {
 
         }
@@ -77,14 +76,11 @@ namespace Microsoft.Azure.Commands.Resources.Models
         /// Creates new ResourcesClient instance
         /// </summary>
         /// <param name="resourceManagementClient">The IResourceManagementClient instance</param>
-        /// <param name="galleryTemplatesClient">The IGalleryClient instance</param>
         /// <param name="authorizationManagementClient">The management client instance</param>
         public ResourcesClient(
             IResourceManagementClient resourceManagementClient,
-            GalleryTemplatesClient galleryTemplatesClient,
             IAuthorizationManagementClient authorizationManagementClient)
         {
-            GalleryTemplatesClient = galleryTemplatesClient;
             AuthorizationManagementClient = authorizationManagementClient;
             this.ResourceManagementClient = resourceManagementClient;
         }
@@ -137,13 +133,17 @@ namespace Microsoft.Azure.Commands.Resources.Models
 
         internal List<PSPermission> GetResourcePermissions(ResourceIdentifier identity)
         {
-            PermissionGetResult permissionsResult = AuthorizationManagementClient.Permissions.ListForResource(
+            var resourceIdentity = identity.ToResourceIdentity();
+            var permissionsResult = AuthorizationManagementClient.Permissions.ListForResource(
                     identity.ResourceGroupName,
-                    identity.ToResourceIdentity());
+                    resourceIdentity.ResourceProviderNamespace,
+                    resourceIdentity.ParentResourcePath ?? "",
+                    resourceIdentity.ResourceType,
+                    resourceIdentity.ResourceName);
 
             if (permissionsResult != null)
             {
-                return permissionsResult.Permissions.Select(p => p.ToPSPermission()).ToList();
+                return permissionsResult.Select(p => p.ToPSPermission()).ToList();
             }
 
             return null;
@@ -154,16 +154,15 @@ namespace Microsoft.Azure.Commands.Resources.Models
             const string normalStatusFormat = "Resource {0} '{1}' provisioning status is {2}";
             const string failureStatusFormat = "Resource {0} '{1}' failed with message '{2}'";
             List<DeploymentOperation> newOperations;
-            DeploymentOperationsListResult result;
 
-            result = ResourceManagementClient.DeploymentOperations.List(resourceGroup, deploymentName, null);
-            newOperations = GetNewOperations(operations, result.Operations);
+            var result = ResourceManagementClient.DeploymentOperations.List(resourceGroup, deploymentName, null);
+            newOperations = GetNewOperations(operations, result.Operations());
             operations.AddRange(newOperations);
 
-            while (!string.IsNullOrEmpty(result.NextLink))
+            while (!string.IsNullOrEmpty(result.NextLink()))
             {
-                result = ResourceManagementClient.DeploymentOperations.ListNext(result.NextLink);
-                newOperations = GetNewOperations(operations, result.Operations);
+                result = ResourceManagementClient.DeploymentOperations.ListNext(result.NextLink());
+                newOperations = GetNewOperations(operations, result.Operations());
                 operations.AddRange(newOperations);
             }
 
@@ -185,7 +184,7 @@ namespace Microsoft.Azure.Commands.Resources.Models
                 }
                 else
                 {
-                    string errorMessage = ParseErrorMessage(operation.Properties.StatusMessage);
+                    string errorMessage = ParseErrorMessage(operation.Properties.StatusMessage.ToString());
 
                     if (operation.Properties.TargetResource != null)
                     {
@@ -201,7 +200,7 @@ namespace Microsoft.Azure.Commands.Resources.Models
                         WriteError(errorMessage);
                     }
 
-                    List<string> detailedMessage = ParseDetailErrorMessage(operation.Properties.StatusMessage);
+                    List<string> detailedMessage = ParseDetailErrorMessage(operation.Properties.StatusMessage.ToString());
 
                     if (detailedMessage != null)
                     {
@@ -213,7 +212,7 @@ namespace Microsoft.Azure.Commands.Resources.Models
 
         public static string ParseErrorMessage(string statusMessage)
         {
-            CloudError error = CloudException.ParseXmlOrJsonError(statusMessage);
+            Hyak.Common.CloudError error = Hyak.Common.CloudException.ParseXmlOrJsonError(statusMessage);
             if (error.Message == null)
             {
                 return error.OriginalMessage;
@@ -262,7 +261,7 @@ namespace Microsoft.Azure.Commands.Resources.Models
                     job(resourceGroup, deploymentName, basicDeployment);
                 }
 
-                deployment = ResourceManagementClient.Deployments.Get(resourceGroup, deploymentName).Deployment;
+                deployment = ResourceManagementClient.Deployments.Get(resourceGroup, deploymentName).Deployment();
                 counter = counter + 5000 > 60000 ? 60000 : counter + 5000;
 
             } while (!status.Any(s => s.Equals(deployment.Properties.ProvisioningState, StringComparison.OrdinalIgnoreCase)));
@@ -270,7 +269,7 @@ namespace Microsoft.Azure.Commands.Resources.Models
             return deployment;
         }
 
-        private List<DeploymentOperation> GetNewOperations(List<DeploymentOperation> old, IList<DeploymentOperation> current)
+        private List<DeploymentOperation> GetNewOperations(List<DeploymentOperation> old, IEnumerable<DeploymentOperation> current)
         {
             List<DeploymentOperation> newOperations = new List<DeploymentOperation>();
             foreach (DeploymentOperation operation in current)
@@ -286,21 +285,20 @@ namespace Microsoft.Azure.Commands.Resources.Models
                     operation.Properties.TargetResource.ResourceType.Equals(Constants.MicrosoftResourcesDeploymentType, StringComparison.OrdinalIgnoreCase) &&
                     ResourceManagementClient.Deployments.CheckExistence(
                         resourceGroupName: ResourceIdUtility.GetResourceGroupName(operation.Properties.TargetResource.Id),
-                        deploymentName: operation.Properties.TargetResource.ResourceName).Exists)
+                        deploymentName: operation.Properties.TargetResource.ResourceName).Exists())
                 {
                     HttpStatusCode statusCode;
                     Enum.TryParse<HttpStatusCode>(operation.Properties.StatusCode, out statusCode);
                     if (!statusCode.IsClientFailureRequest())
                     {
                         List<DeploymentOperation> newNestedOperations = new List<DeploymentOperation>();
-                        DeploymentOperationsListResult result;
 
-                        result = ResourceManagementClient.DeploymentOperations.List(
+                        var result = ResourceManagementClient.DeploymentOperations.List(
                             resourceGroupName: ResourceIdUtility.GetResourceGroupName(operation.Properties.TargetResource.Id),
                             deploymentName: operation.Properties.TargetResource.ResourceName,
                             parameters: null);
 
-                        newNestedOperations = GetNewOperations(operations, result.Operations);
+                        newNestedOperations = GetNewOperations(operations, result.Operations());
 
                         foreach (DeploymentOperation op in newNestedOperations)
                         {
@@ -318,50 +316,10 @@ namespace Microsoft.Azure.Commands.Resources.Models
             return newOperations;
         }
 
-        /// <summary>
-        /// Filters a given resource group resources.
-        /// </summary>
-        /// <param name="options">The filtering options</param>
-        /// <returns>The filtered set of resources matching the filter criteria</returns>
-        public virtual List<GenericResourceExtended> FilterResources(FilterResourcesOptions options)
-        {
-            List<GenericResourceExtended> resources = new List<GenericResourceExtended>();
+        public ProviderOperationsMetadata GetProviderOperationsMetadata(string providerNamespace) =>
+            this.AuthorizationManagementClient.ProviderOperationsMetadata.Get(providerNamespace);
 
-            if (!string.IsNullOrEmpty(options.ResourceGroup) && !string.IsNullOrEmpty(options.Name))
-            {
-                resources.Add(ResourceManagementClient.Resources.Get(options.ResourceGroup,
-                    new ResourceIdentity { ResourceName = options.Name }).Resource);
-            }
-            else
-            {
-                ResourceListResult result = ResourceManagementClient.Resources.List(new ResourceListParameters
-                {
-                    ResourceGroupName = options.ResourceGroup,
-                    ResourceType = options.ResourceType
-                });
-
-                resources.AddRange(result.Resources);
-
-                while (!string.IsNullOrEmpty(result.NextLink))
-                {
-                    result = ResourceManagementClient.Resources.ListNext(result.NextLink);
-                    resources.AddRange(result.Resources);
-                }
-            }
-
-            return resources;
-        }
-
-        public ProviderOperationsMetadata GetProviderOperationsMetadata(string providerNamespace)
-        {
-            ProviderOperationsMetadataGetResult result = this.ResourceManagementClient.ProviderOperationsMetadata.Get(providerNamespace);
-            return result.Provider;
-        }
-
-        public IList<ProviderOperationsMetadata> ListProviderOperationsMetadata()
-        {
-            ProviderOperationsMetadataListResult result = this.ResourceManagementClient.ProviderOperationsMetadata.List();
-            return result.Providers;
-        }
+        public IPage<ProviderOperationsMetadata> ListProviderOperationsMetadata() =>
+            this.AuthorizationManagementClient.ProviderOperationsMetadata.List();
     }
 }

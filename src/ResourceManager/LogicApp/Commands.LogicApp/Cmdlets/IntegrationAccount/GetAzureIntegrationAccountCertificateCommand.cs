@@ -16,11 +16,15 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 {
     using System.Management.Automation;
     using Microsoft.Azure.Commands.LogicApp.Utilities;
+    using Microsoft.Azure.Management.Logic.Models;
+    using Microsoft.Rest.Azure;
+    using ResourceManager.Common.ArgumentCompleters;
 
     /// <summary>
     /// Gets the integration account certificate by name.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmIntegrationAccountCertificate"), OutputType(typeof (object))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "IntegrationAccountCertificate")]
+    [OutputType(typeof(IntegrationAccountCertificate))]
     public class GetAzureIntegrationAccountCertificateCommand : LogicAppBaseCmdlet
     {
 
@@ -28,12 +32,13 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 
         [Parameter(Mandatory = false, HelpMessage = "The integration account resource group name.",
             ValueFromPipelineByPropertyName = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
         [Parameter(Mandatory = false, HelpMessage = "The integration account name.")]
-        [Alias("ResourceName")]
         [ValidateNotNullOrEmpty]
+        [Alias("IntegrationAccountName", "ResourceName")]
         public string Name { get; set; }
 
         [Parameter(Mandatory = false, HelpMessage = "The integration account certificate name.")]
@@ -50,7 +55,7 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
             base.ExecuteCmdlet();
             if (string.IsNullOrEmpty(this.CertificateName))
             {
-                this.WriteObject(IntegrationAccountClient.ListIntegrationAccountCertificates(this.ResourceGroupName,this.Name), true);
+                this.WriteObject(IntegrationAccountClient.ListIntegrationAccountCertificates(this.ResourceGroupName, this.Name), true);
             }
             else
             {

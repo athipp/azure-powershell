@@ -12,6 +12,7 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Cdn.Test.ScenarioTests.ScenarioTest;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 
@@ -36,6 +37,13 @@ namespace Microsoft.Azure.Commands.Cdn.Test.ScenarioTests.ScenarioTest
 
         [Fact]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestSkuCreate()
+        {
+            TestController.NewInstance.RunPowerShellTest(_logger, "Test-SkuCreate");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void TestProfileCrudWithPiping()
         {
             TestController.NewInstance.RunPowerShellTest(_logger, "Test-ProfileDeleteAndSsoWithPiping");
@@ -53,6 +61,20 @@ namespace Microsoft.Azure.Commands.Cdn.Test.ScenarioTests.ScenarioTest
         public void TestProfileDeleteWithEndpoints()
         {
             TestController.NewInstance.RunPowerShellTest(_logger, "Test-ProfileDeleteWithEndpoints");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestProfileGetResourceUsage()
+        {
+            TestController.NewInstance.RunPowerShellTest(_logger, "Test-ProfileGetResourceUsages");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void ProfileGetSupportedOptimizationType()
+        {
+            TestController.NewInstance.RunPowerShellTest(_logger, "Test-ProfileGetSupportedOptimizationType");
         }
     }
 }

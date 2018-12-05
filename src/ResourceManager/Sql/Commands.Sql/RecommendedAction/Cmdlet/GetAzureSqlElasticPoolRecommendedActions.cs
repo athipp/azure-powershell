@@ -20,9 +20,10 @@ using Microsoft.PowerShell.Commands;
 namespace Microsoft.Azure.Commands.Sql.RecommendedAction.Cmdlet
 {
     /// <summary>
-    /// Defines the Get-AzureRmSqlElasticPoolRecommendedActions cmdlet
+    /// Defines the Get-AzSqlElasticPoolRecommendedActions cmdlet
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmSqlElasticPoolRecommendedAction")]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlElasticPoolRecommendedAction")]
+    [OutputType(typeof(AzureSqlElasticPoolRecommendedActionModel))]
     public class GetAzureSqlElasticPoolRecommendedAction : AzureSqlElasticPoolRecommendedActionCmdletBase
     {
         /// <summary>

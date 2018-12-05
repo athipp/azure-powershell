@@ -13,6 +13,7 @@
 // ----------------------------------------------------------------------------------
 
 
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.WebApps.Models;
 using Microsoft.Azure.Commands.WebApps.Utilities;
 using Microsoft.Azure.Management.WebSites.Models;
@@ -28,7 +29,7 @@ namespace Microsoft.Azure.Commands.WebApps.Cmdlets.WebApps
     /// <summary>
     /// this commandlet will let you create a new Azure Web app using ARM APIs
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmWebAppSSLBinding")]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "WebAppSSLBinding"), OutputType(typeof(HostNameSslState))]
     public class NewAzureWebAppSSLBinding : WebAppBaseClientCmdLet
     {
         const string CertNamePostFixSeparator = "_";
@@ -43,23 +44,26 @@ namespace Microsoft.Azure.Commands.WebApps.Cmdlets.WebApps
 
         [Parameter(ParameterSetName = ParameterSet1Name, Position = 0, Mandatory = true, HelpMessage = "The name of the resource group.")]
         [Parameter(ParameterSetName = ParameterSet2Name, Position = 0, Mandatory = true, HelpMessage = "The name of the resource group.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
         [Parameter(ParameterSetName = ParameterSet1Name, Position = 1, Mandatory = true, HelpMessage = "The name of the web app.")]
         [Parameter(ParameterSetName = ParameterSet2Name, Position = 1, Mandatory = true, HelpMessage = "The name of the web app.")]
+        [ResourceNameCompleter("Microsoft.Web/sites", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string WebAppName { get; set; }
 
         [Parameter(ParameterSetName = ParameterSet1Name, Position = 2, Mandatory = false, HelpMessage = "The name of the web app slot.")]
         [Parameter(ParameterSetName = ParameterSet2Name, Position = 2, Mandatory = false, HelpMessage = "The name of the web app slot.")]
+        [ResourceNameCompleter("Microsoft.Web/sites/slots", "ResourceGroupName", "WebAppName")]
         [ValidateNotNullOrEmpty]
         public string Slot { get; set; }
 
         [Parameter(ParameterSetName = ParameterSet3Name, Position = 0, Mandatory = true, HelpMessage = "The web app object.", ValueFromPipeline = true)]
         [Parameter(ParameterSetName = ParameterSet4Name, Position = 0, Mandatory = true, HelpMessage = "The web app object.", ValueFromPipeline = true)]
         [ValidateNotNullOrEmpty]
-        public Site WebApp { get; set; }
+        public PSSite WebApp { get; set; }
 
         [Parameter(Position = 3, Mandatory = true, HelpMessage = "The name of the host name.")]
         [ValidateNotNullOrEmpty]
@@ -107,7 +111,7 @@ namespace Microsoft.Azure.Commands.WebApps.Cmdlets.WebApps
             }
 
             string thumbPrint = null;
-            var webapp = WebsitesClient.GetWebApp(resourceGroupName, webAppName, slot);
+            var webapp = new PSSite(WebsitesClient.GetWebApp(resourceGroupName, webAppName, slot));
 
             switch (ParameterSetName)
             {
@@ -117,17 +121,13 @@ namespace Microsoft.Azure.Commands.WebApps.Cmdlets.WebApps
                     var certificateDetails = new X509Certificate2(certificateBytes, CertificatePassword);
 
                     var certificateName = GenerateCertName(certificateDetails.Thumbprint, webapp.HostingEnvironmentProfile != null ? webapp.HostingEnvironmentProfile.Name : null, webapp.Location, resourceGroupName);
-                    var certificate = new Certificate
-                    {
-                        PfxBlob = Convert.ToBase64String(certificateBytes),
-                        Password = CertificatePassword,
-                        Location = webapp.Location
-                    };
-
-                    if (webapp.HostingEnvironmentProfile != null)
-                    {
-                        certificate.HostingEnvironmentProfile = webapp.HostingEnvironmentProfile;
-                    }
+                    var certificate = new Certificate(
+                        webapp.Location,
+                        pfxBlob: certificateBytes,
+                        password: CertificatePassword,
+                        hostingEnvironmentProfile: (webapp.HostingEnvironmentProfile != null) ?
+                                                        webapp.HostingEnvironmentProfile :
+                                                        null);
 
                     var certificateResourceGroup = CmdletHelpers.GetResourceGroupFromResourceId(webapp.ServerFarmId);
                     try

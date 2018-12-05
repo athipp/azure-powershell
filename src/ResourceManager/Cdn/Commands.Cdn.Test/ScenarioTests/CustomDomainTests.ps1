@@ -19,17 +19,17 @@ Gets and removes custom domain with running endpoint.
 function Test-CustomDomainGetRemoveWithRunningEndpoint
 {
     # Hard-coding host and endpoint names due to requirement for DNS CNAME
-    $endpointName = "sdktest-3d96e37e-79bd-440d-a84b-d71a8bb3bed6"
-    $hostName = "sdktest-aef2f35e-01ca-4230-add5-5075b1506915.azureedge-test.net"
+    $endpointName = "testAkamaiEP"
+    $hostName = "testAkamai.dustydog.us"
 
     $customDomainName = getAssetName
 
     $profileName = getAssetName
     $resourceGroup = TestSetup-CreateResourceGroup
     $resourceLocation = "EastUS"
-    $profileSku = "StandardVerizon"
+    $profileSku = "Standard_Akamai"
     $tags = @{"tag1" = "value1"; "tag2" = "value2"}
-    $createdProfile = New-AzureRmCdnProfile -ProfileName $profileName -ResourceGroupName $resourceGroup.ResourceGroupName -Location $resourceLocation -Sku $profileSku -Tags $tags
+    $createdProfile = New-AzureRmCdnProfile -ProfileName $profileName -ResourceGroupName $resourceGroup.ResourceGroupName -Location $resourceLocation -Sku $profileSku -Tag $tags
 
     $originName = getAssetName
     $originHostName = "www.microsoft.com"
@@ -41,12 +41,12 @@ function Test-CustomDomainGetRemoveWithRunningEndpoint
     $validateResultbyPiping = Test-AzureRmCdnCustomDomain -CdnEndpoint $endpoint -CustomDomainHostName $hostName
     Assert-True{$validateResultbyPiping.CustomDomainValidated}
 
-    $createdCustomDomain = $endpoint | New-AzureRmCdnCustomDomain -HostName $hostName -CustomDomainName $customDomainName 
+    $createdCustomDomain = $endpoint | New-AzureRmCdnCustomDomain -HostName $hostName -CustomDomainName $customDomainName
     Assert-AreEqual $customDomainName $createdCustomDomain.Name
     Assert-AreEqual $hostName $createdCustomDomain.HostName
     Assert-ThrowsContains { New-AzureRmCdnCustomDomain -HostName $hostName -CustomDomainName $customDomainName -EndpointName $endpointName -ProfileName $profileName -ResourceGroupName $resourceGroup.ResourceGroupName } "existing"
 
-    $customDomain = $endpoint | Get-AzureRmCdnCustomDomain -CustomDomainName $customDomainName 
+    $customDomain = $endpoint | Get-AzureRmCdnCustomDomain -CustomDomainName $customDomainName
     Assert-AreEqual $customDomainName $customDomain.Name
     Assert-AreEqual $hostName $customDomain.HostName
 
@@ -61,22 +61,69 @@ function Test-CustomDomainGetRemoveWithRunningEndpoint
 
 <#
 .SYNOPSIS
+Enables custom domain with running endpoint.
+#>
+function Test-CustomDomainEnableDisableWithRunningEndpoint
+{
+    # Hard-coding host and endpoint names due to requirement for DNS CNAME
+	$endpointName = "testVerizonEP"
+    $hostName = "testVerizon.dustydog.us"
+	
+    $customDomainName = getAssetName
+
+    $profileName = getAssetName
+    $resourceGroup = TestSetup-CreateResourceGroup
+    $resourceLocation = "EastUS"
+    $profileSku = "Standard_Verizon"
+    $tags = @{"tag1" = "value1"; "tag2" = "value2"}
+    $createdProfile = New-AzureRmCdnProfile -ProfileName $profileName -ResourceGroupName $resourceGroup.ResourceGroupName -Location $resourceLocation -Sku $profileSku -Tag $tags
+
+    $originName = getAssetName
+    $originHostName = "www.microsoft.com"
+    $createdEndpoint = New-AzureRmCdnEndpoint -EndpointName $endpointName -ProfileName $profileName -ResourceGroupName $resourceGroup.ResourceGroupName -Location $resourceLocation -OriginName $originName -OriginHostName $originHostName
+
+    $endpoint = Get-AzureRmCdnEndpoint -EndpointName $endpointName -ProfileName $profileName -ResourceGroupName $resourceGroup.ResourceGroupName
+    $validateResult = Test-AzureRmCdnCustomDomain -EndpointName $endpointName -ProfileName $profileName -ResourceGroupName $resourceGroup.ResourceGroupName -CustomDomainHostName $hostName
+    Assert-True{$validateResult.CustomDomainValidated}
+    $validateResultbyPiping = Test-AzureRmCdnCustomDomain -CdnEndpoint $endpoint -CustomDomainHostName $hostName
+    Assert-True{$validateResultbyPiping.CustomDomainValidated}
+
+    $createdCustomDomain = $endpoint | New-AzureRmCdnCustomDomain -HostName $hostName -CustomDomainName $customDomainName 
+    Assert-AreEqual $customDomainName $createdCustomDomain.Name
+    Assert-AreEqual $hostName $createdCustomDomain.HostName
+    
+	$customDomain = $endpoint | Get-AzureRmCdnCustomDomain -CustomDomainName $customDomainName 
+    Assert-AreEqual $customDomainName $customDomain.Name
+    Assert-AreEqual $hostName $customDomain.HostName
+
+    $enabled = $customDomain | Enable-AzureRmCdnCustomDomain -PassThru
+    Assert-True{$enabled}
+    Assert-ThrowsContains { Enable-AzureRmCdnCustomDomain -CustomDomainName $customDomainName -EndpointName $endpointName -ProfileName $profileName -ResourceGroupName $resourceGroup.ResourceGroupName } "BadRequest"
+
+    Assert-ThrowsContains { Disable-AzureRmCdnCustomDomain -CustomDomainName $customDomainName -EndpointName $endpointName -ProfileName $profileName -ResourceGroupName $resourceGroup.ResourceGroupName } "BadRequest"
+
+    Remove-AzureRmResourceGroup -Name $resourceGroup.ResourceGroupName -Force
+}
+
+
+<#
+.SYNOPSIS
 Gets and removes custom domain with stopped endpoint
 #>
 function Test-CustomDomainGetRemoveWithStoppedEndpoint
 {
-    # Hard-coding host and endpoint names due to requirement for DNS CNAME
-    $endpointName = "sdktest-b0939e74-75ba-4558-afe6-edc5c19ea713" 
-    $hostName = "sdktest-d8163a47-2912-4b95-8453-1588ca2d014f.azureedge-test.net"  
+  # Hard-coding host and endpoint names due to requirement for DNS CNAME
+	$endpointName = "testAkamaiEP"
+  $hostName = "testAkamai.dustydog.us"
 
 	$customDomainName = getAssetName
 
     $profileName = getAssetName
     $resourceGroup = TestSetup-CreateResourceGroup
     $resourceLocation = "EastUS"
-    $profileSku = "StandardVerizon"
+    $profileSku = "Standard_Akamai"
     $tags = @{"tag1" = "value1"; "tag2" = "value2"}
-    $createdProfile = New-AzureRmCdnProfile -ProfileName $profileName -ResourceGroupName $resourceGroup.ResourceGroupName -Location $resourceLocation -Sku $profileSku -Tags $tags
+    $createdProfile = New-AzureRmCdnProfile -ProfileName $profileName -ResourceGroupName $resourceGroup.ResourceGroupName -Location $resourceLocation -Sku $profileSku -Tag $tags
 
     $originName = getAssetName
     $originHostName = "www.microsoft.com"

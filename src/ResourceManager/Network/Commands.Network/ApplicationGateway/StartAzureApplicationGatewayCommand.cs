@@ -22,7 +22,7 @@ using MNM = Microsoft.Azure.Management.Network.Models;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsLifecycle.Start, "AzureRmApplicationGateway"), OutputType(typeof(PSApplicationGateway))]
+    [Cmdlet("Start", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApplicationGateway"), OutputType(typeof(PSApplicationGateway))]
     public class StartAzureApplicationGatewayCommand : ApplicationGatewayBaseCmdlet
     {
         [Parameter(
@@ -41,7 +41,7 @@ namespace Microsoft.Azure.Commands.Network
             }
 
             // Map to the sdk object
-            var appGwModel = Mapper.Map<MNM.ApplicationGateway>(this.ApplicationGateway);
+            var appGwModel = NetworkResourceManagerProfile.Mapper.Map<MNM.ApplicationGateway>(this.ApplicationGateway);
             appGwModel.Tags = TagsConversionHelper.CreateTagDictionary(this.ApplicationGateway.Tag, validate: true);
 
             this.ApplicationGatewayClient.Start(this.ApplicationGateway.ResourceGroupName, this.ApplicationGateway.Name);

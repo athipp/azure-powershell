@@ -26,7 +26,7 @@ $Common = @{
 $RM = @{
 	"ResourceManager\ApiManagement\Commands.ApiManagement.ServiceManagement\Microsoft.Azure.Commands.ApiManagement.ServiceManagement.dll-help.xml" = @("api", "apimanagement", "apimgmt", "apism")
 	"ResourceManager\ApiManagement\Commands.ApiManagement\Microsoft.Azure.Commands.ApiManagement.dll-help.xml" = @("api", "apimanagement", "apimgmt", "apirm")
-	"ResourceManager\Automation\Commands.Automation\Microsoft.Azure.Commands.ResourceManager.Automation.dll-help.xml" = @("automation", "devops")
+	"ResourceManager\Automation\Commands.Automation\Microsoft.Azure.Commands.Automation.dll-help.xml" = @("automation", "devops")
 	"ResourceManager\AzureBackup\Commands.AzureBackup\Microsoft.Azure.Commands.AzureBackup.dll-help.xml" = @("backup")
 	"ResourceManager\AzureBatch\Commands.Batch\Microsoft.Azure.Commands.Batch.dll-Help.xml" = @("batch")
 	"ResourceManager\Compute\Commands.Compute\Microsoft.Azure.Commands.Compute.dll-Help.xml" = @("compute", "vm", "iaas")
@@ -53,13 +53,12 @@ $RM = @{
 
 # specialized Service Management keywords by module
 $SM = @{
-	"ServiceManagement\Automation\Commands.Automation\Microsoft.Azure.Commands.Automation.dll-help.xml" = @("automation", "devops")
+	"ServiceManagement\Automation\Commands.Automation\Microsoft.WindowsAzure.Commands.Automation.dll-help.xml" = @("automation", "devops")
 	"ServiceManagement\Compute\Commands.ServiceManagement.PlatformImageRepository\Microsoft.WindowsAzure.Commands.ServiceManagement.PlatformImageRepository.dll-help.xml" = @("image", "vm", "platform")
 	"ServiceManagement\Compute\Commands.ServiceManagement.Preview\Microsoft.WindowsAzure.Commands.ServiceManagement.Preview.dll-Help.xml" = @("preview")
 	"ServiceManagement\Compute\Commands.ServiceManagement\Microsoft.WindowsAzure.Commands.ServiceManagement.dll-Help.xml" = @("svc", "mgmt", "service")
 	"ServiceManagement\ExpressRoute\Commands.ExpressRoute\Microsoft.WindowsAzure.Commands.ExpressRoute.dll-help.xml" = @("express", "route", "network")
 	"ServiceManagement\HDInsight\Commands.HDInsight\Microsoft.WindowsAzure.Commands.HDInsight.dll-Help.xml" = @("hadoop", "hdinsight", "hd", "insight")
-	"ServiceManagement\ManagedCache\Commands.ManagedCache\Microsoft.Azure.Commands.ManagedCache.dll-help.xml" = @("managed", "cache")
 	"ServiceManagement\Network\Commands.Network\Microsoft.WindowsAzure.Commands.ServiceManagement.Network.dll-help.xml" = @("network", "networking")
 	"ServiceManagement\Profile\Commands.Profile\Microsoft.WindowsAzure.Commands.Profile.dll-Help.xml" = @("profile", "common", "login", "account")
 	"ServiceManagement\RecoveryServices\Commands.RecoveryServices\Microsoft.Azure.Commands.RecoveryServices.dll-help.xml" = @("site", "recovery")

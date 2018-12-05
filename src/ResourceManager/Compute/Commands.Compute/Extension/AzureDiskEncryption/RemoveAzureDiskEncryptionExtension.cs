@@ -15,16 +15,14 @@
 using AutoMapper;
 using Microsoft.Azure.Commands.Compute.Common;
 using Microsoft.Azure.Commands.Compute.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.Compute;
 using Microsoft.Azure.Management.Compute.Models;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
 {
-    [Cmdlet(
-        VerbsCommon.Remove,
-        ProfileNouns.AzureDiskEncryptionExtension,
-        SupportsShouldProcess = true)]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VMDiskEncryptionExtension",SupportsShouldProcess = true)]
     [OutputType(typeof(PSAzureOperationResponse))]
     public class RemoveAzureDiskEncryptionExtensionCommand : VirtualMachineExtensionBaseCmdlet
     {
@@ -33,6 +31,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
            Position = 0,
            ValueFromPipelineByPropertyName = true,
            HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -42,6 +41,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
             Position = 1,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The virtual machine name.")]
+        [ResourceNameCompleter("Microsoft.Compute/virtualMachines", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string VMName { get; set; }
 
@@ -51,6 +51,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
             Position = 2,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The extension name. If this parameter is not specified, default values used are AzureDiskEncryption for windows VMs and AzureDiskEncryptionForLinux for Linux VMs")]
+        [ResourceNameCompleter("Microsoft.Compute/virtualMachines/extensions", "ResourceGroupName", "VMName")]
         [ValidateNotNullOrEmpty]
         public string Name { get; set; }
 
@@ -84,7 +85,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
                         this.ResourceGroupName,
                         this.VMName,
                         this.Name).GetAwaiter().GetResult();
-                    var result = Mapper.Map<PSAzureOperationResponse>(op);
+                    var result = ComputeAutoMapperProfile.Mapper.Map<PSAzureOperationResponse>(op);
                     WriteObject(result);
                 }
             });

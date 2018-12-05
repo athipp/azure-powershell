@@ -12,6 +12,8 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
+using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.Azure.Commands.Profile.Models;
 using Microsoft.Azure.Commands.ResourceManager.Common;
 using Microsoft.WindowsAzure.Commands.Common;
@@ -23,7 +25,7 @@ namespace Microsoft.Azure.Commands.Profile
     /// <summary>
     /// Cmdlet to get current Azure Environment from Profile.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmEnvironment")]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "Environment")]
     [OutputType(typeof(PSAzureEnvironment))]
     public class GetAzureRMEnvironmentCommand : AzureRMCmdlet
     {
@@ -38,8 +40,8 @@ namespace Microsoft.Azure.Commands.Profile
 
         public override void ExecuteCmdlet()
         {
-            var profileClient = new RMProfileClient(AzureRmProfileProvider.Instance.Profile);
-            var result = profileClient.ListEnvironments(Name).Select(s => (PSAzureEnvironment)s).ToList();
+            var profileClient = new RMProfileClient(AzureRmProfileProvider.Instance.GetProfile<AzureRmProfile>());
+            var result = profileClient.ListEnvironments(Name).Select(s => new PSAzureEnvironment(s)).ToList();
             WriteObject(result, enumerateCollection: true);
         }
     }

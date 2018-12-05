@@ -12,39 +12,37 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Management.Insights.Models;
+using System.Text;
 using System.Xml;
+using Microsoft.Azure.Management.Monitor.Models;
 
 namespace Microsoft.Azure.Commands.Insights.OutputClasses
 {
     /// <summary>
     /// Wrapps around the MetricSettings
     /// </summary>
-    public class PSMetricSettings
+    public class PSMetricSettings : Management.Monitor.Management.Models.MetricSettings
     {
-        /// <summary>
-        /// The storageAccount Id
-        /// </summary>
-        public bool Enabled { get; set; }
-
-        /// <summary>
-        /// The timegrain
-        /// </summary>
-        public string Timegrain { get; set; }
-
-        /// <summary>
-        /// The retention policy
-        /// </summary>
-        public PSRetentionPolicy RetentionPolicy { get; set; }
-
         /// <summary>
         /// Initializes a new instance of the PSMetricSettings class.
         /// </summary>
-        public PSMetricSettings(MetricSettings metricSettings)
+        public PSMetricSettings(MetricSettings metricSettings) : base(metricSettings)
         {
-            this.Enabled = metricSettings.Enabled;
-            this.Timegrain = XmlConvert.ToString(metricSettings.TimeGrain);
-            this.RetentionPolicy = new PSRetentionPolicy(metricSettings.RetentionPolicy);
+        }
+
+        /// <summary>
+        /// A string representation of the PSMetricSettings
+        /// </summary>
+        /// <returns>A string representation of the PSMetricSettings</returns>
+        public override string ToString()
+        {
+            StringBuilder output = new StringBuilder();
+            output.AppendLine();
+            output.AppendLine("Category        : " + Category);
+            output.AppendLine("Enabled         : " + Enabled);
+            output.AppendLine("TimeGrain       : " + XmlConvert.ToString(TimeGrain));
+            output.Append("RetentionPolicy : " + RetentionPolicy.ToString(1));
+            return output.ToString();
         }
     }
 }

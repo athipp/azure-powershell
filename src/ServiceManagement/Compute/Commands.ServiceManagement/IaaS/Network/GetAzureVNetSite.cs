@@ -27,7 +27,7 @@ using Hyak.Common;
 
 namespace Microsoft.WindowsAzure.Commands.ServiceManagement.IaaS
 {
-    [Cmdlet(VerbsCommon.Get, "AzureVNetSite"), OutputType(typeof(IEnumerable<VirtualNetworkSiteContext>))]
+    [Cmdlet(VerbsCommon.Get, "AzureVNetSite"), OutputType(typeof(VirtualNetworkSiteContext))]
     public class GetAzureVNetSiteCommand : ServiceManagementBaseCmdlet
     {
         [Parameter(Position = 0, Mandatory = false, HelpMessage = "The virtual network name.")]
@@ -62,7 +62,9 @@ namespace Microsoft.WindowsAzure.Commands.ServiceManagement.IaaS
 
                     var operation = GetOperation(response.RequestId);
                     WriteVerboseWithTimestamp(string.Format(Resources.AzureVNetSiteCompletedOperation, CommandRuntime.ToString()));
-                    result = sites.Select(site => ContextFactory<NetworkListResponse.VirtualNetworkSite, VirtualNetworkSiteContext>(site, operation));
+                    result = sites.Select(site => ContextFactory(site, operation,
+                                                    ServiceManagementProfile.Mapper.Map<NetworkListResponse.VirtualNetworkSite, VirtualNetworkSiteContext>,
+                                                    ServiceManagementProfile.Mapper.Map));
                 }
                 catch (CloudException ex)
                 {

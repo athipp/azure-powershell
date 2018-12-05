@@ -23,10 +23,7 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.DevTestLabs
 {
-    [Cmdlet(VerbsCommon.Set, "AzureRmDtlAutoShutdownPolicy",
-        HelpUri = Constants.DevTestLabsHelpUri,
-        DefaultParameterSetName = ParameterSetEnable,
-        SupportsShouldProcess = true)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "DtlAutoShutdownPolicy",HelpUri = Constants.DevTestLabsHelpUri,DefaultParameterSetName = ParameterSetEnable,SupportsShouldProcess = true)]
     [OutputType(typeof(PSSchedule))]
     public class SetAzureRmDtlAutoShutdownPolicy : DtlPolicyCmdletBase
     {
@@ -56,8 +53,7 @@ namespace Microsoft.Azure.Commands.DevTestLabs
 
             try
             {
-                inputSchedule = DataServiceClient.Schedule.GetResource(
-                                ResourceGroupName,
+                inputSchedule = DataServiceClient.Schedules.Get(
                                 LabName,
                                 PolicyName);
             }
@@ -79,7 +75,7 @@ namespace Microsoft.Azure.Commands.DevTestLabs
                 inputSchedule = new Schedule
                 {
                     TimeZoneId = TimeZoneInfo.Local.Id,
-                    TaskType = TaskType.LabVmsShutdownTask,
+                    TaskType = "LabVmsShutdownTask",
                     DailyRecurrence = new DayDetails
                     {
                         Time = Time.Value.ToString("HHmm")
@@ -124,8 +120,7 @@ namespace Microsoft.Azure.Commands.DevTestLabs
                 return;
             }
 
-            var outputSchedule = DataServiceClient.Schedule.CreateOrUpdateResource(
-                ResourceGroupName,
+            var outputSchedule = DataServiceClient.Schedules.CreateOrUpdate(
                 LabName,
                 PolicyName,
                 inputSchedule);

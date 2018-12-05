@@ -18,12 +18,13 @@ using Microsoft.Azure.Commands.ResourceManager.Common.Tags;
 using Microsoft.Azure.Management.Network;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Management.Automation;
 using MNM = Microsoft.Azure.Management.Network.Models;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Set, "AzureRmLocalNetworkGateway"), OutputType(typeof(PSLocalNetworkGateway))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "LocalNetworkGateway"), OutputType(typeof(PSLocalNetworkGateway))]
     public class SetAzureLocalNetworkGatewayCommand : LocalNetworkGatewayBaseCmdlet
     {
         [Parameter(
@@ -37,7 +38,7 @@ namespace Microsoft.Azure.Commands.Network
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The address prefixes of the local network to be changed.")]
         [ValidateNotNullOrEmpty]
-        public List<string> AddressPrefix { get; set; }
+        public string[] AddressPrefix { get; set; }
 
         [Parameter(
             Mandatory = false,
@@ -57,6 +58,9 @@ namespace Microsoft.Azure.Commands.Network
             HelpMessage = "Weight added to BGP routes learned from this local network gateway")]
         public int PeerWeight { get; set; }
 
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
+
         public override void Execute()
         {
 
@@ -66,9 +70,9 @@ namespace Microsoft.Azure.Commands.Network
                 throw new ArgumentException(Microsoft.Azure.Commands.Network.Properties.Resources.ResourceNotFound);
             }
 
-            if (this.AddressPrefix != null && this.AddressPrefix.Count > 0)
+            if (this.AddressPrefix != null && this.AddressPrefix.Length > 0)
             {
-                this.LocalNetworkGateway.LocalNetworkAddressSpace.AddressPrefixes = this.AddressPrefix;
+                this.LocalNetworkGateway.LocalNetworkAddressSpace.AddressPrefixes = this.AddressPrefix?.ToList();
             }
 
             if ((this.Asn > 0 || !string.IsNullOrEmpty(this.BgpPeeringAddress) || this.PeerWeight > 0) && this.LocalNetworkGateway.BgpSettings == null)
@@ -96,7 +100,7 @@ namespace Microsoft.Azure.Commands.Network
             }
 
             // Map to the sdk object
-            var localnetGatewayModel = Mapper.Map<MNM.LocalNetworkGateway>(this.LocalNetworkGateway);
+            var localnetGatewayModel = NetworkResourceManagerProfile.Mapper.Map<MNM.LocalNetworkGateway>(this.LocalNetworkGateway);
             localnetGatewayModel.Tags = TagsConversionHelper.CreateTagDictionary(this.LocalNetworkGateway.Tag, validate: true);
 
             this.LocalNetworkGatewayClient.CreateOrUpdate(this.LocalNetworkGateway.ResourceGroupName, this.LocalNetworkGateway.Name, localnetGatewayModel);

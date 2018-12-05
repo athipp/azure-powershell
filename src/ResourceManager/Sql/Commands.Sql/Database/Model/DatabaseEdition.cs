@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,6 +53,21 @@ namespace Microsoft.Azure.Commands.Sql.Database.Model
         /// Free database edition.  Reserved for special use cases/scenarios.
         /// </summary>
         Free = 8,
+
+        /// <summary>
+        /// PremiumRS database edition
+        /// </summary>
+        PremiumRS = 9,
+
+        /// <summary>
+        /// General Purpose edition for SqlAzure database
+        /// </summary>
+        GeneralPurpose = 10,
+
+        /// <summary>
+        /// Business Critical edition for SqlAzure database
+        /// </summary>
+        BusinessCritical = 11,
     }
 }
 

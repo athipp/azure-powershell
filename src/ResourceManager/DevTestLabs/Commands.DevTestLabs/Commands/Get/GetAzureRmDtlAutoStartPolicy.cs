@@ -14,21 +14,17 @@
 
 using Microsoft.Azure.Commands.DevTestLabs.Models;
 using Microsoft.Azure.Management.DevTestLabs;
-using System;
-using System.Linq;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.DevTestLabs
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmDtlAutoStartPolicy",
-        HelpUri = Constants.DevTestLabsHelpUri)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "DtlAutoStartPolicy",HelpUri = Constants.DevTestLabsHelpUri)]
     [OutputType(typeof(PSSchedule))]
     public class GetAzureRmDtlAutoStartPolicy : DevTestLabsCmdletBase
     {
         public override void ExecuteCmdlet()
         {
-            var schedule = DataServiceClient.Schedule.GetResource(
-                ResourceGroupName,
+            var schedule = DataServiceClient.Schedules.Get(
                 LabName,
                 WellKnownPolicyNames.LabVmsAutoStart);
 

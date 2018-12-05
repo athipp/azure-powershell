@@ -12,33 +12,106 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using AutoMapper;
 using Microsoft.Azure.Commands.Compute.Common;
 using Microsoft.Azure.Commands.Compute.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.Compute.Models;
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Compute
 {
-    [Cmdlet(VerbsData.Update,
-        ProfileNouns.VirtualMachine,
-        SupportsShouldProcess = true,
-        DefaultParameterSetName = ResourceGroupNameParameterSet)]
+    [Cmdlet("Update", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VM",SupportsShouldProcess = true,DefaultParameterSetName = ResourceGroupNameParameterSet)]
     [OutputType(typeof(PSAzureOperationResponse))]
-    public class UpdateAzureVMCommand : VirtualMachineActionBaseCmdlet
+    public class UpdateAzureVMCommand : VirtualMachineBaseCmdlet
     {
+        private const string ResourceGroupNameParameterSet = "ResourceGroupNameParameterSetName";
+        private const string IdParameterSet = "IdParameterSetName";
+        private const string AssignIdentityParameterSet = "AssignIdentityParameterSet";
+        private const string ExplicitIdentityParameterSet = "ExplicitIdentityParameterSet";
+
+        [Parameter(
+           Mandatory = true,
+           Position = 0,
+           ParameterSetName = ResourceGroupNameParameterSet,
+           ValueFromPipelineByPropertyName = true,
+           HelpMessage = "The resource group name.")]
+        [Parameter(
+           Mandatory = true,
+           Position = 0,
+           ParameterSetName = AssignIdentityParameterSet,
+           ValueFromPipelineByPropertyName = true,
+           HelpMessage = "The resource group name.")]
+        [Parameter(
+           Mandatory = true,
+           Position = 0,
+           ParameterSetName = ExplicitIdentityParameterSet,
+           ValueFromPipelineByPropertyName = true,
+           HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
+        [ValidateNotNullOrEmpty]
+        public string ResourceGroupName { get; set; }
+
+        [Parameter(
+           Mandatory = true,
+           Position = 0,
+           ParameterSetName = IdParameterSet,
+           ValueFromPipelineByPropertyName = true,
+           HelpMessage = "The resource group name.")]
+        [ResourceIdCompleter("Microsoft.Compute/virtualMachines")]
+        public string Id { get; set; }
+
         [Alias("VMProfile")]
         [Parameter(Mandatory = true, ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
         [ValidateNotNullOrEmpty]
         public PSVirtualMachine VM { get; set; }
 
         [Parameter(ValueFromPipelineByPropertyName = false)]
-        public Hashtable Tags { get; set; }
+        public Hashtable Tag { get; set; }
+
+        [Parameter(
+            Mandatory = true,
+            ParameterSetName = ExplicitIdentityParameterSet,
+            ValueFromPipelineByPropertyName = false)]
+        [ValidateNotNullOrEmpty]
+        public ResourceIdentityType? IdentityType { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            ParameterSetName = ExplicitIdentityParameterSet,
+            ValueFromPipelineByPropertyName = false)]
+        public string[] IdentityId { get; set; }
+
+        [Parameter(
+            Mandatory = true,
+            ParameterSetName = AssignIdentityParameterSet,
+            ValueFromPipelineByPropertyName = false)]
+        [ValidateNotNullOrEmpty]
+        public SwitchParameter AssignIdentity { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            ValueFromPipelineByPropertyName = false)]
+        public bool OsDiskWriteAccelerator { get; set; }
+
+        [Parameter(
+           Mandatory = false,
+           ValueFromPipelineByPropertyName = true)]
+        public bool UltraSSDEnabled { get; set; }
+
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         public override void ExecuteCmdlet()
         {
             base.ExecuteCmdlet();
+
+            if (this.ParameterSetName.Equals(IdParameterSet))
+            {
+                this.ResourceGroupName = GetResourceGroupNameFromId(this.Id);
+            }
 
             if (ShouldProcess(this.VM.Name, VerbsData.Update))
             {
@@ -55,14 +128,61 @@ namespace Microsoft.Azure.Commands.Compute
                         AvailabilitySet = this.VM.AvailabilitySetReference,
                         Location = this.VM.Location,
                         LicenseType = this.VM.LicenseType,
-                        Tags = this.Tags != null ? this.Tags.ToDictionary() : this.VM.Tags
+                        Tags = this.Tag != null ? this.Tag.ToDictionary() : this.VM.Tags,
+                        Identity = this.AssignIdentity.IsPresent 
+                                   ? new VirtualMachineIdentity(null, null, ResourceIdentityType.SystemAssigned, null)
+                                   : ComputeAutoMapperProfile.Mapper.Map<VirtualMachineIdentity>(this.VM.Identity),
+                        Zones = (this.VM.Zones != null && this.VM.Zones.Count > 0) ? this.VM.Zones : null
                     };
+
+                    if (this.MyInvocation.BoundParameters.ContainsKey("IdentityType"))
+                    {
+                        parameters.Identity = new VirtualMachineIdentity(null, null, this.IdentityType, null);
+                    }
+
+                    if (this.MyInvocation.BoundParameters.ContainsKey("IdentityId"))
+                    {
+                        if (parameters.Identity == null)
+                        {
+                            parameters.Identity = new VirtualMachineIdentity();
+
+                        }
+
+                        parameters.Identity.UserAssignedIdentities = new Dictionary<string, VirtualMachineIdentityUserAssignedIdentitiesValue>();
+
+                        foreach (var id in this.IdentityId)
+                        {
+                            parameters.Identity.UserAssignedIdentities.Add(id, new VirtualMachineIdentityUserAssignedIdentitiesValue());
+                        }
+                    }
+
+                    if (this.MyInvocation.BoundParameters.ContainsKey("OsDiskWriteAccelerator"))
+                    {
+                        if (parameters.StorageProfile == null)
+                        {
+                            parameters.StorageProfile = new StorageProfile();
+                        }
+                        if (parameters.StorageProfile.OsDisk == null)
+                        {
+                            parameters.StorageProfile.OsDisk = new OSDisk();
+                        }
+                        parameters.StorageProfile.OsDisk.WriteAcceleratorEnabled = this.OsDiskWriteAccelerator;
+                    }
+
+                    if (this.MyInvocation.BoundParameters.ContainsKey("UltraSSDEnabled"))
+                    {
+                        if (parameters.AdditionalCapabilities == null)
+                        {
+                            parameters.AdditionalCapabilities = new AdditionalCapabilities();
+                        }
+                        parameters.AdditionalCapabilities.UltraSSDEnabled = this.UltraSSDEnabled;
+                    }
 
                     var op = this.VirtualMachineClient.CreateOrUpdateWithHttpMessagesAsync(
                         this.ResourceGroupName,
                         this.VM.Name,
                         parameters).GetAwaiter().GetResult();
-                    var result = Mapper.Map<PSAzureOperationResponse>(op);
+                    var result = ComputeAutoMapperProfile.Mapper.Map<PSAzureOperationResponse>(op);
                     WriteObject(result);
                 });
             }

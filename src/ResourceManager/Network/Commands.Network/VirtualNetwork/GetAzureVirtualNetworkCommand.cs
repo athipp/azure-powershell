@@ -16,10 +16,15 @@ using Microsoft.Azure.Commands.Network.Models;
 using Microsoft.Azure.Management.Network;
 using System.Collections.Generic;
 using System.Management.Automation;
+using Microsoft.Azure.Management.Network.Models;
+using Microsoft.Rest.Azure;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
+using Microsoft.WindowsAzure.Commands.Common.CustomAttributes;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmVirtualNetwork"), OutputType(typeof(PSVirtualNetwork))]
+    [CmdletOutputBreakingChange(typeof(PSVirtualNetwork), DeprecatedOutputProperties = new string[] { "EnableVmProtection" })]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VirtualNetwork"), OutputType(typeof(PSVirtualNetwork))]
     public class GetAzureVirtualNetworkCommand : VirtualNetworkBaseCmdlet
     {
         [Alias("ResourceName")]
@@ -33,6 +38,7 @@ namespace Microsoft.Azure.Commands.Network
            ValueFromPipelineByPropertyName = true,
            HelpMessage = "The resource name.",
            ParameterSetName = "Expand")]
+        [ResourceNameCompleter("Microsoft.Network/virtualNetworks", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public virtual string Name { get; set; }
 
@@ -46,6 +52,7 @@ namespace Microsoft.Azure.Commands.Network
            ValueFromPipelineByPropertyName = true,
            HelpMessage = "The resource group name.",
            ParameterSetName = "Expand")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public virtual string ResourceGroupName { get; set; }
 
@@ -67,23 +74,20 @@ namespace Microsoft.Azure.Commands.Network
 
                 WriteObject(vnet);
             }
-            else if (!string.IsNullOrEmpty(this.ResourceGroupName))
-            {
-                var vnetList = this.VirtualNetworkClient.List(this.ResourceGroupName);
-
-                var psVnets = new List<PSVirtualNetwork>();
-                foreach (var virtualNetwork in vnetList)
-                {
-                    var psVnet = this.ToPsVirtualNetwork(virtualNetwork);
-                    psVnet.ResourceGroupName = this.ResourceGroupName;
-                    psVnets.Add(psVnet);
-                }
-
-                WriteObject(psVnets, true);
-            }
             else
             {
-                var vnetList = this.VirtualNetworkClient.ListAll();
+                IPage<Microsoft.Azure.Management.Network.Models.VirtualNetwork> vnetPage;
+                if (!string.IsNullOrEmpty(this.ResourceGroupName))
+                {
+                    vnetPage = this.VirtualNetworkClient.List(this.ResourceGroupName);
+                }
+                else
+                {
+                    vnetPage = this.VirtualNetworkClient.ListAll();
+                }
+
+                // Get all resources by polling on next page link
+                var vnetList = ListNextLink<Microsoft.Azure.Management.Network.Models.VirtualNetwork>.GetAllResourcesByPollingNextLink(vnetPage, this.VirtualNetworkClient.ListNext);
 
                 var psVnets = new List<PSVirtualNetwork>();
                 foreach (var virtualNetwork in vnetList)

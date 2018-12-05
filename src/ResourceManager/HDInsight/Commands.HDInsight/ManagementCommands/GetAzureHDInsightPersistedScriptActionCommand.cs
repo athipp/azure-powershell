@@ -14,6 +14,7 @@
 
 using Microsoft.Azure.Commands.HDInsight.Commands;
 using Microsoft.Azure.Commands.HDInsight.Models.Management;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,9 +22,7 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.HDInsight
 {
-    [Cmdlet(VerbsCommon.Get,
-        Constants.CommandNames.AzureHDInsightPersistedScriptAction),
-    OutputType(typeof(IList<AzureHDInsightRuntimeScriptAction>))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "HDInsightPersistedScriptAction"),OutputType(typeof(AzureHDInsightRuntimeScriptAction))]
     public class GetAzureHDInsightPersistedScriptAction : HDInsightCmdletBase
     {
         #region Input Parameter Definitions
@@ -39,6 +38,7 @@ namespace Microsoft.Azure.Commands.HDInsight
         public string Name { get; set; }
 
         [Parameter(HelpMessage = "Gets or sets the name of the resource group.")]
+        [ResourceGroupCompleter]
         public string ResourceGroupName { get; set; }
 
         #endregion

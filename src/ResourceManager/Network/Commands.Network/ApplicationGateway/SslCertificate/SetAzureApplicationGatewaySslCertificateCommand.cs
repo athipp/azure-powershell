@@ -20,7 +20,7 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Set, "AzureRmApplicationGatewaySslCertificate"), OutputType(typeof(PSApplicationGateway))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApplicationGatewaySslCertificate"), OutputType(typeof(PSApplicationGateway))]
     public class SetAzureApplicationGatewaySslCertificateCommand : AzureApplicationGatewaySslCertificateBase
     {
         [Parameter(
@@ -39,8 +39,8 @@ namespace Microsoft.Azure.Commands.Network
             {
                 throw new ArgumentException("Ssl certificate with the specified name does not exist");
             }
-
-            X509Certificate2 cert = new X509Certificate2(CertificateFile, Password, X509KeyStorageFlags.Exportable);
+            
+            X509Certificate2 cert = new X509Certificate2(this.CertificateFile, this.Password, X509KeyStorageFlags.Exportable);
 
             var newSslCertificate = base.NewObject();
 

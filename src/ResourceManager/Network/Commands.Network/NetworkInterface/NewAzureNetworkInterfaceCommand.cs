@@ -1,4 +1,4 @@
-
+﻿
 
 // ----------------------------------------------------------------------------------
 //
@@ -16,17 +16,18 @@
 
 using AutoMapper;
 using Microsoft.Azure.Commands.Network.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.ResourceManager.Common.Tags;
 using Microsoft.Azure.Management.Network;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Management.Automation;
 using MNM = Microsoft.Azure.Management.Network.Models;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.New, "AzureRmNetworkInterface", SupportsShouldProcess = true,
-        DefaultParameterSetName = "SetByIpConfigurationResource"), OutputType(typeof(PSNetworkInterface))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "NetworkInterface", SupportsShouldProcess = true,DefaultParameterSetName = "SetByIpConfigurationResource"), OutputType(typeof(PSNetworkInterface))]
     public class NewAzureNetworkInterfaceCommand : NetworkInterfaceBaseCmdlet
     {
         [Alias("ResourceName")]
@@ -41,6 +42,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public virtual string ResourceGroupName { get; set; }
 
@@ -48,6 +50,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The public IP address location.")]
+        [LocationCompleter("Microsoft.Network/networkInterfaces")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
@@ -62,7 +65,7 @@ namespace Microsoft.Azure.Commands.Network
             ParameterSetName = "SetByIpConfigurationResource",
             HelpMessage = "List of IpConfigurations")]
         [ValidateNotNullOrEmpty]
-        public List<PSNetworkInterfaceIPConfiguration> IpConfiguration { get; set; }
+        public PSNetworkInterfaceIPConfiguration[] IpConfiguration { get; set; }
 
         [Parameter(
             Mandatory = true,
@@ -122,42 +125,56 @@ namespace Microsoft.Azure.Commands.Network
             ValueFromPipelineByPropertyName = true,
             ParameterSetName = "SetByResourceId",
             HelpMessage = "LoadBalancerBackendAddressPoolId")]
-        public List<string> LoadBalancerBackendAddressPoolId { get; set; }
+        public string[] LoadBalancerBackendAddressPoolId { get; set; }
 
         [Parameter(
             Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             ParameterSetName = "SetByResource",
             HelpMessage = "LoadBalancerBackendAddressPools")]
-        public List<PSBackendAddressPool> LoadBalancerBackendAddressPool { get; set; }
+        public PSBackendAddressPool[] LoadBalancerBackendAddressPool { get; set; }
 
         [Parameter(
             Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             ParameterSetName = "SetByResourceId",
             HelpMessage = "LoadBalancerInboundNatRuleId")]
-        public List<string> LoadBalancerInboundNatRuleId { get; set; }
+        public string[] LoadBalancerInboundNatRuleId { get; set; }
 
         [Parameter(
             Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             ParameterSetName = "SetByResource",
             HelpMessage = "LoadBalancerInboundNatRule")]
-        public List<PSInboundNatRule> LoadBalancerInboundNatRule { get; set; }
+        public PSInboundNatRule[] LoadBalancerInboundNatRule { get; set; }
 
         [Parameter(
             Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             ParameterSetName = "SetByResourceId",
             HelpMessage = "ApplicationGatewayBackendAddressPoolId")]
-        public List<string> ApplicationGatewayBackendAddressPoolId { get; set; }
+        public string[] ApplicationGatewayBackendAddressPoolId { get; set; }
 
         [Parameter(
             Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             ParameterSetName = "SetByResource",
             HelpMessage = "ApplicationGatewayBackendAddressPools")]
-        public List<PSApplicationGatewayBackendAddressPool> ApplicationGatewayBackendAddressPool { get; set; }
+        public PSApplicationGatewayBackendAddressPool[] ApplicationGatewayBackendAddressPool { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            ValueFromPipelineByPropertyName = true,
+            ParameterSetName = "SetByResourceId",
+            HelpMessage = "ApplicationSecurityGroupId")]
+        public string[] ApplicationSecurityGroupId { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            ValueFromPipelineByPropertyName = true,
+            ParameterSetName = "SetByResource",
+            HelpMessage = "ApplicationSecurityGroup")]
+        public PSApplicationSecurityGroup[] ApplicationSecurityGroup { get; set; }
 
         [Parameter(
             Mandatory = false,
@@ -192,7 +209,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The list of Dns Servers")]
-        public List<string> DnsServer { get; set; }
+        public string[] DnsServer { get; set; }
 
         [Parameter(
             Mandatory = false,
@@ -221,11 +238,13 @@ namespace Microsoft.Azure.Commands.Network
             HelpMessage = "Do not ask for confirmation if you want to overrite a resource")]
         public SwitchParameter Force { get; set; }
 
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
+
 
         public override void Execute()
         {           
           base.Execute();
-            WriteWarning("The output object type of this cmdlet will be modified in a future release.");
             var present = this.IsNetworkInterfacePresent(this.ResourceGroupName, this.Name);
             ConfirmAction(
                 Force.IsPresent,
@@ -258,7 +277,7 @@ namespace Microsoft.Azure.Commands.Network
             // Get the subnetId and publicIpAddressId from the object if specified
             if (ParameterSetName.Contains(Microsoft.Azure.Commands.Network.Properties.Resources.SetByIpConfiguration))
             {
-                networkInterface.IpConfigurations = this.IpConfiguration;
+                networkInterface.IpConfigurations = this.IpConfiguration?.ToList();
 
                 if (string.Equals(ParameterSetName, Microsoft.Azure.Commands.Network.Properties.Resources.SetByIpConfigurationResourceId))
                 {
@@ -286,29 +305,44 @@ namespace Microsoft.Azure.Commands.Network
 
                     if (this.LoadBalancerBackendAddressPool != null)
                     {
-                        this.LoadBalancerBackendAddressPoolId = new List<string>();
+                        var poolIds = new List<string>();
                         foreach (var bepool in this.LoadBalancerBackendAddressPool)
                         {
-                            this.LoadBalancerBackendAddressPoolId.Add(bepool.Id);
+                            poolIds.Add(bepool.Id);
                         }
+                        this.LoadBalancerBackendAddressPoolId = poolIds.ToArray();
                     }
 
                     if (this.LoadBalancerInboundNatRule != null)
                     {
-                        this.LoadBalancerInboundNatRuleId = new List<string>();
+
+                        var lbNatIds = new List<string>();
                         foreach (var natRule in this.LoadBalancerInboundNatRule)
                         {
-                            this.LoadBalancerInboundNatRuleId.Add(natRule.Id);
+                            lbNatIds.Add(natRule.Id);
                         }
+                        LoadBalancerInboundNatRuleId = lbNatIds.ToArray();
                     }
 
                     if (this.ApplicationGatewayBackendAddressPool != null)
                     {
-                        this.ApplicationGatewayBackendAddressPoolId = new List<string>();
+
+                        var appGwPoolIds = new List<string>();
                         foreach (var appgwBepool in this.ApplicationGatewayBackendAddressPool)
                         {
-                            this.ApplicationGatewayBackendAddressPoolId.Add(appgwBepool.Id);
+                            appGwPoolIds.Add(appgwBepool.Id);
                         }
+                        ApplicationGatewayBackendAddressPoolId = appGwPoolIds.ToArray();
+                    }
+
+                    if (this.ApplicationSecurityGroup != null)
+                    {
+                        var groupIds= new List<string>();
+                        foreach (var asg in this.ApplicationSecurityGroup)
+                        {
+                            groupIds.Add(asg.Id);
+                        }
+                        ApplicationSecurityGroupId = groupIds.ToArray();
                     }
                 }
 
@@ -361,6 +395,15 @@ namespace Microsoft.Azure.Commands.Network
                     }
                 }
 
+                if (this.ApplicationSecurityGroupId != null)
+                {
+                    nicIpConfiguration.ApplicationSecurityGroups = new List<PSApplicationSecurityGroup>();
+                    foreach (var id in this.ApplicationSecurityGroupId)
+                    {
+                        nicIpConfiguration.ApplicationSecurityGroups.Add(new PSApplicationSecurityGroup { Id = id });
+                    }
+                }
+
                 networkInterface.IpConfigurations = new List<PSNetworkInterfaceIPConfiguration>();
                 networkInterface.IpConfigurations.Add(nicIpConfiguration);
             }
@@ -370,7 +413,7 @@ namespace Microsoft.Azure.Commands.Network
                 networkInterface.DnsSettings = new PSNetworkInterfaceDnsSettings();
                 if (this.DnsServer != null)
                 {
-                    networkInterface.DnsSettings.DnsServers = this.DnsServer;
+                    networkInterface.DnsSettings.DnsServers = this.DnsServer?.ToList();
                 }
                 if (this.InternalDnsNameLabel != null)
                 {
@@ -385,9 +428,11 @@ namespace Microsoft.Azure.Commands.Network
                 networkInterface.NetworkSecurityGroup.Id = this.NetworkSecurityGroupId;
             }
 
-            var networkInterfaceModel = Mapper.Map<MNM.NetworkInterface>(networkInterface);
+            var networkInterfaceModel = NetworkResourceManagerProfile.Mapper.Map<MNM.NetworkInterface>(networkInterface);
 
-            networkInterfaceModel.Tags = TagsConversionHelper.CreateTagDictionary(this.Tag, validate: true);
+			this.NullifyApplicationSecurityGroupIfAbsent(networkInterfaceModel);
+
+			networkInterfaceModel.Tags = TagsConversionHelper.CreateTagDictionary(this.Tag, validate: true);
 
             this.NetworkInterfaceClient.CreateOrUpdate(this.ResourceGroupName, this.Name, networkInterfaceModel);
              
@@ -397,4 +442,3 @@ namespace Microsoft.Azure.Commands.Network
         }
     }
 }
-

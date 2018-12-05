@@ -16,136 +16,26 @@ using System;
 using Microsoft.Azure.Test;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Xunit;
+using Microsoft.WindowsAzure.Commands.ScenarioTest;
+using Microsoft.Azure.ServiceManagemenet.Common.Models;
 
 namespace Microsoft.Azure.Commands.Batch.Test.ScenarioTests
 {
     public class BatchApplicationTests : WindowsAzure.Commands.Test.Utilities.Common.RMTestBase
     {
-        private readonly string filePath = "Resources\\TestApplicationPackage.zip".AsAbsoluteLocation();
-        private const string version = "foo";
+        public XunitTracingInterceptor _logger;
 
-        [Fact]
-        public void TestUploadApplication()
+        public BatchApplicationTests(Xunit.Abstractions.ITestOutputHelper output)
         {
-            BatchController.NewInstance.RunPsTest(string.Format("Test-AddApplication"));
+            _logger = new XunitTracingInterceptor(output);
+            XunitTracingInterceptor.AddToContext(_logger);
         }
 
         [Fact]
-        public void TestUploadApplicationPackage()
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestAddApplication()
         {
-            string id = "newApplicationPackage";
-
-            BatchController controller = BatchController.NewInstance;
-            BatchAccountContext context = null;
-            controller.RunPsTestWorkflow(
-                () =>
-                {
-                    return new string[]
-                    {
-                        string.Format(string.Format("Test-UploadApplicationPackage '{0}' '{1}' '{2}'", id, version, filePath))
-                    };
-                },
-                () =>
-                {
-                    context = new ScenarioTestContext();
-                    ScenarioTestHelpers.CreateApplicationPackage(controller, context, id, version, filePath);
-                },
-                () =>
-                {
-                    ScenarioTestHelpers.DeleteApplicationPackage(controller, context, id, version);
-                    ScenarioTestHelpers.DeleteApplication(controller, context, id);
-                },
-                TestUtilities.GetCallingClass(),
-                TestUtilities.GetCurrentMethodName());
-        }
-
-        [Fact]
-        public void TestUpdateApplicationPackage()
-        {
-            string id = "updateApplicationPackage";
-
-            BatchController controller = BatchController.NewInstance;
-            BatchAccountContext context = null;
-            controller.RunPsTestWorkflow(
-                () =>
-                {
-                    return new string[]
-                    {
-                        string.Format(string.Format("Test-UpdateApplicationPackage '{0}' '{1}' '{2}'", id, version, filePath))
-                    };
-                },
-                () =>
-                {
-                    context = new ScenarioTestContext();
-                    ScenarioTestHelpers.CreateApplicationPackage(controller, context, id, version, filePath);
-                },
-                () =>
-                {
-                    ScenarioTestHelpers.DeleteApplicationPackage(controller, context, id, version);
-                    ScenarioTestHelpers.DeleteApplication(controller, context, id);
-                },
-                TestUtilities.GetCallingClass(),
-                TestUtilities.GetCurrentMethodName());
-        }
-
-        [Fact]
-        public void TestCreatePoolWithApplicationPackage()
-        {
-            string id = "createPoolWithApplicationPackage";
-            string poolId = "testCreatePoolWithAppPackages";
-
-            BatchController controller = BatchController.NewInstance;
-            BatchAccountContext context = null;
-            controller.RunPsTestWorkflow(
-                () =>
-                {
-                    return new string[]
-                    {
-                        string.Format(string.Format("Test-CreatePoolWithApplicationPackage '{0}' '{1}' '{2}'", id, version, poolId))
-                    };
-                },
-                () =>
-                {
-                    context = new ScenarioTestContext();
-                    ScenarioTestHelpers.CreateApplicationPackage(controller, context, id, version, filePath);
-                },
-                () =>
-                {
-                },
-                TestUtilities.GetCallingClass(),
-                TestUtilities.GetCurrentMethodName());
-        }
-
-        [Fact]
-        public void TestUpdatePoolWithApplicationPackage()
-        {
-            string id = "updatePoolWithApplicationPackage";
-            string poolId = "testUpdatePoolWithAppPackages";
-
-            BatchController controller = BatchController.NewInstance;
-            BatchAccountContext context = null;
-            controller.RunPsTestWorkflow(
-                () =>
-                {
-                    return new string[]
-                    {
-                        string.Format("Test-UpdatePoolWithApplicationPackage '{0}' '{1}' '{2}'", id, version, poolId)
-                    };
-                },
-                () =>
-                {
-                    context = new ScenarioTestContext();
-                    ScenarioTestHelpers.CreateApplicationPackage(controller, context, id, version, filePath);
-                    ScenarioTestHelpers.CreateTestPool(controller, context, poolId, 1);
-                },
-                () =>
-                {
-                    ScenarioTestHelpers.DeleteApplicationPackage(controller, context, id, version);
-                    ScenarioTestHelpers.DeleteApplication(controller, context, id);
-                    ScenarioTestHelpers.DeletePool(controller, context, poolId);
-                },
-                TestUtilities.GetCallingClass(),
-                TestUtilities.GetCurrentMethodName());
+            BatchController.NewInstance.RunPsTest(_logger, string.Format("Test-AddApplication"));
         }
     }
 }

@@ -22,7 +22,7 @@ using MNM = Microsoft.Azure.Management.Network.Models;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Set, "AzureRmApplicationGateway"), OutputType(typeof(PSApplicationGateway))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApplicationGateway"), OutputType(typeof(PSApplicationGateway))]
     public class SetAzureApplicationGatewayCommand : ApplicationGatewayBaseCmdlet
     {
         [Parameter(
@@ -30,6 +30,9 @@ namespace Microsoft.Azure.Commands.Network
              ValueFromPipeline = true,
              HelpMessage = "The applicationGateway")]
         public PSApplicationGateway ApplicationGateway { get; set; }
+
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         public override void ExecuteCmdlet()
         {
@@ -44,7 +47,7 @@ namespace Microsoft.Azure.Commands.Network
             ApplicationGatewayChildResourceHelper.NormalizeChildResourcesId(this.ApplicationGateway);
 
             // Map to the sdk object
-            var appGwModel = Mapper.Map<MNM.ApplicationGateway>(this.ApplicationGateway);
+            var appGwModel = NetworkResourceManagerProfile.Mapper.Map<MNM.ApplicationGateway>(this.ApplicationGateway);
             appGwModel.Tags = TagsConversionHelper.CreateTagDictionary(this.ApplicationGateway.Tag, validate: true);
 
             // Execute the Create VirtualNetwork call

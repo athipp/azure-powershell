@@ -17,10 +17,11 @@ using Microsoft.Azure.Commands.Cdn.Common;
 using Microsoft.Azure.Commands.Cdn.Models.Profile;
 using Microsoft.Azure.Commands.Cdn.Properties;
 using Microsoft.Azure.Management.Cdn;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Cdn.Profile
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmCdnProfileSsoUrl", DefaultParameterSetName = FieldsParameterSet), OutputType(typeof(PSSsoUri))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CdnProfileSsoUrl", DefaultParameterSetName = FieldsParameterSet), OutputType(typeof(PSSsoUri))]
     public class GetAzureRmCdnProfileSsoUrl : AzureCdnCmdletBase
     {
         [Parameter(Mandatory = true, ParameterSetName = FieldsParameterSet, HelpMessage = "The name of the profile.")]
@@ -28,6 +29,7 @@ namespace Microsoft.Azure.Commands.Cdn.Profile
         public string ProfileName { get; set; }
 
         [Parameter(Mandatory = true, ParameterSetName = FieldsParameterSet, HelpMessage = "The resource group to which the profile belongs.")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -44,7 +46,7 @@ namespace Microsoft.Azure.Commands.Cdn.Profile
                 ProfileName = CdnProfile.Name;
             }
 
-            var sso = CdnManagementClient.Profiles.GenerateSsoUri(ProfileName, ResourceGroupName);
+            var sso = CdnManagementClient.Profiles.GenerateSsoUri(ResourceGroupName, ProfileName);
             
             WriteVerbose(Resources.Success);
             WriteObject(new PSSsoUri {SsoUriValue = sso.SsoUriValue });

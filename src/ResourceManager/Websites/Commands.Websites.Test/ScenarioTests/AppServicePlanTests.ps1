@@ -31,8 +31,10 @@ function Test-CreateNewAppServicePlan
 		New-AzureRmResourceGroup -Name $rgname -Location $location
 
 		# Test
-		$createResult = New-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Location  $location -Tier "Standard" -WorkerSize Medium -NumberOfWorkers $capacity
-		
+		$job = New-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Location  $location -Tier "Standard" -WorkerSize Medium -NumberOfWorkers $capacity -AsJob
+		$job | Wait-Job
+		$createResult = $job | Receive-Job
+
 		# Assert
 		Assert-AreEqual $whpName $createResult.Name
 		Assert-AreEqual "Standard" $createResult.Sku.Tier
@@ -47,13 +49,63 @@ function Test-CreateNewAppServicePlan
 		Assert-AreEqual $skuName $getResult.Sku.Name
 		Assert-AreEqual $capacity $getResult.Sku.Capacity
 	}
-    finally
-    {
+	finally
+	{
 		# Cleanup
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Force
 		Remove-AzureRmResourceGroup -Name $rgname -Force
-    }
+	}
 }
+
+<#
+.SYNOPSIS
+Tests creating a new Web Hosting Plan with HyperV container.
+#>
+function Test-CreateNewAppServicePlanHyperV
+{
+	# Setup
+	$rgname = Get-ResourceGroupName
+	$whpName = Get-WebHostPlanName
+	$location = Get-Location
+    $capacity = 1
+	$skuName = "PC2"
+    $tier = "PremiumContainer"
+
+	try
+	{
+		#Setup
+		New-AzureRmResourceGroup -Name $rgname -Location $location
+
+		# Test
+		$job = New-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Location  $location -Tier $tier -WorkerSize Small -HyperV  -AsJob
+		$job | Wait-Job
+		$createResult = $job | Receive-Job
+
+		# Assert
+		Assert-AreEqual $whpName $createResult.Name
+		Assert-AreEqual $tier $createResult.Sku.Tier
+		Assert-AreEqual $skuName $createResult.Sku.Name
+		Assert-AreEqual $capacity $createResult.Sku.Capacity
+
+		# Assert
+
+		$getResult = Get-AzureRmAppServicePlan -ResourceGroupName $rgname -Name $whpName
+		Assert-AreEqual $whpName $getResult.Name
+		Assert-AreEqual PremiumContainer $getResult.Sku.Tier
+		Assert-AreEqual $skuName $getResult.Sku.Name
+		Assert-AreEqual $capacity $getResult.Sku.Capacity
+        Assert-AreEqual $true $getResult.IsXenon
+        Assert-AreEqual "xenon" $getResult.Kind
+
+	}
+	finally
+	{
+		# Cleanup
+		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Force
+		Remove-AzureRmResourceGroup -Name $rgname -Force
+	}
+}
+
 
 <#
 .SYNOPSIS
@@ -68,39 +120,46 @@ function Test-SetAppServicePlan
 	$tier = "Shared"
 	$skuName ="D1"
 	$capacity = 0
+	$perSiteScaling = $false;
 
-	$newTier ="Standard"
-	$newSkuName = "S2"
+	$newTier ="PremiumV2"
+	$newSkuName = "P2v2"
 	$newWorkerSize = "Medium"
 	$newCapacity = 2
+	$newPerSiteScaling = $true;
+
 
 	try
 	{
 		#Setup
 		New-AzureRmResourceGroup -Name $rgname -Location $location
 		# Test
-		$actual = New-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Location  $location -Tier $tier
+		$actual = New-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Location  $location -Tier $tier -PerSiteScaling $perSiteScaling
 		$result = Get-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName
 		# Assert
 		Assert-AreEqual $whpName $result.Name
 		Assert-AreEqual $capacity $result.Sku.Capacity
 		Assert-AreEqual $tier $result.Sku.Tier
 		Assert-AreEqual $skuName $result.Sku.Name
+		Assert-AreEqual $perSiteScaling $result.PerSiteScaling
 
 		# Set the created service plan
-		$newresult = Set-AzureRmAppServicePlan  -ResourceGroupName $rgname -Name  $whpName -Tier $newTier -NumberofWorkers $newCapacity -WorkerSize $newWorkerSize
+		$job = Set-AzureRmAppServicePlan  -ResourceGroupName $rgname -Name  $whpName -Tier $newTier -NumberofWorkers $newCapacity -WorkerSize $newWorkerSize -PerSiteScaling $newPerSiteScaling -AsJob
+		$job | Wait-Job
+		$newresult = $job | Receive-Job
 
 		# Assert
 		Assert-AreEqual $whpName $newresult.Name
 		Assert-AreEqual $newCapacity $newresult.Sku.Capacity
 		Assert-AreEqual $newTier $newresult.Sku.Tier
 		Assert-AreEqual $newSkuName $newresult.Sku.Name
+		Assert-AreEqual $newPerSiteScaling $newresult.PerSiteScaling
 
 		# Set service plan via pipeline
 		$newresult.Sku.Capacity = $capacity
 		$newresult.Sku.Tier = $tier
 		$newresult.Sku.Name = $skuName
-
+		$newresult.PerSiteScaling = $perSiteScaling
 
 		$newresult | Set-AzureRmAppServicePlan
 
@@ -112,13 +171,15 @@ function Test-SetAppServicePlan
 		Assert-AreEqual $capacity $newresult.Sku.Capacity
 		Assert-AreEqual $tier $newresult.Sku.Tier
 		Assert-AreEqual $skuName $newresult.Sku.Name
+		Assert-AreEqual $perSiteScaling $newresult.PerSiteScaling
+
 	}
-    finally
-    {
+	finally
+	{
 		# Cleanup
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Force
 		Remove-AzureRmResourceGroup -Name $rgname -Force
-    }
+	}
 }
 
 <#
@@ -208,13 +269,13 @@ function Test-GetAppServicePlan
 		Assert-True { $result -contains $serverFarmName2 }
 
 	}
-    finally
+	finally
 	{
 		# Cleanup
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $serverFarmName1 -Force
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $serverFarmName2 -Force
 		Remove-AzureRmResourceGroup -Name $rgname -Force
-    }
+	}
 }
 
 <#
@@ -245,17 +306,17 @@ function Test-RemoveAppServicePlan
 		Assert-AreEqual $capacity $serverFarm.Sku.Capacity
 
 		# Remove App service plan
-		$serverFarm | Remove-AzureRmAppServicePlan -Force
+		$serverFarm |Remove-AzureRmAppServicePlan -Force -AsJob | Wait-Job
 		
 		$result = Get-AzureRmAppServicePlan -ResourceGroupName $rgname
 
 		Assert-AreEqual 0 $result.Count 
 	}
-    finally
-    {
+	finally
+	{
 		# Cleanup
 		Remove-AzureRmResourceGroup -Name $rgname -Force
-    }
+	}
 }
 
 <#
@@ -303,12 +364,12 @@ function Test-GetAppServicePlanMetrics
 			Assert-True { $actualMetricsNames -contains $i}
 		}
 	}
-    finally
+	finally
 	{
 		# Cleanup
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $appServicePlanName -Force
 		Remove-AzureRmResourceGroup -Name $rgname -Force
-    }
+	}
 }
 
 <#
@@ -322,9 +383,10 @@ function Test-CreateNewAppServicePlanInAse
 	$whpName = Get-WebHostPlanName
 	$location = "West US"
 	$capacity = 1
-	$skuName = "S2"
-	$aseName = "asedemo"
-	$aseResourceGroupName = "appdemorg"
+	$skuName = "I1"
+	$skuTier = "Isolated"
+	$aseName = "asedemops"
+	$aseResourceGroupName = "asedemorg"
 
 	try
 	{
@@ -332,26 +394,23 @@ function Test-CreateNewAppServicePlanInAse
 		New-AzureRmResourceGroup -Name $rgname -Location $location
 
 		# Test
-		$createResult = New-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Location  $location -Tier "Standard" -WorkerSize Medium -NumberOfWorkers $capacity -AseName $aseName -AseResourceGroupName $aseResourceGroupName
+		$createResult = New-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Location  $location -Tier $skuTier -WorkerSize Medium -NumberOfWorkers $capacity -AseName $aseName -AseResourceGroupName $aseResourceGroupName
 		
 		# Assert
 		Assert-AreEqual $whpName $createResult.Name
-		Assert-AreEqual "Standard" $createResult.Sku.Tier
+		Assert-AreEqual "Isolated" $createResult.Sku.Tier
 		Assert-AreEqual $skuName $createResult.Sku.Name
-		Assert-AreEqual $capacity $createResult.Sku.Capacity
 
 		# Assert
-
 		$getResult = Get-AzureRmAppServicePlan -ResourceGroupName $rgname -Name $whpName
 		Assert-AreEqual $whpName $getResult.Name
-		Assert-AreEqual "Standard" $getResult.Sku.Tier
+		Assert-AreEqual "Isolated" $getResult.Sku.Tier
 		Assert-AreEqual $skuName $getResult.Sku.Name
-		Assert-AreEqual $capacity $getResult.Sku.Capacity
 	}
-    finally
-    {
+	finally
+	{
 		# Cleanup
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Force
 		Remove-AzureRmResourceGroup -Name $rgname -Force
-    }
+	}
 }

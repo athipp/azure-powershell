@@ -13,12 +13,15 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Batch.Models;
+using System;
 using System.Management.Automation;
+using System.Security;
+using Microsoft.WindowsAzure.Commands.Common;
 using Constants = Microsoft.Azure.Commands.Batch.Utils.Constants;
 
 namespace Microsoft.Azure.Commands.Batch
 {
-    [Cmdlet(VerbsCommon.New, Constants.AzureBatchCertificate, DefaultParameterSetName = FileParameterSet)]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzurePrefix + "BatchCertificate", DefaultParameterSetName = FileParameterSet), OutputType(typeof(void))]
     public class NewBatchCertificateCommand : BatchObjectModelCmdletBase
     {
         internal const string FileParameterSet = "File";
@@ -36,14 +39,14 @@ namespace Microsoft.Azure.Commands.Batch
 
         [Parameter]
         [ValidateNotNullOrEmpty]
-        public string Password { get; set; }
+        public SecureString Password { get; set; }
 
         public override void ExecuteCmdlet()
         {
             NewCertificateParameters parameters = new NewCertificateParameters(this.BatchContext, this.FilePath, this.RawData,
                 this.AdditionalBehaviors)
             {
-                Password = this.Password
+                Password = this.Password?.ConvertToString()
             };
 
             BatchClient.AddCertificate(parameters);

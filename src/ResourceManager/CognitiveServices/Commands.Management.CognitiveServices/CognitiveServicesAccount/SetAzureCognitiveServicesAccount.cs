@@ -13,6 +13,7 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Management.CognitiveServices.Properties;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.CognitiveServices;
 using Microsoft.Azure.Management.CognitiveServices.Models;
 using System;
@@ -27,7 +28,7 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
     /// <summary>
     /// Update a Cognitive Services Account (change SKU, Tags)
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, CognitiveServicesAccountNounStr, SupportsShouldProcess = true), OutputType(typeof(CognitiveServicesModels.PSCognitiveServicesAccount))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CognitiveServicesAccount", SupportsShouldProcess = true), OutputType(typeof(CognitiveServicesModels.PSCognitiveServicesAccount))]
     public class SetAzureCognitiveServicesAccountCommand : CognitiveServicesAccountBaseCmdlet
     {
         [Parameter(
@@ -35,6 +36,7 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Resource Group Name.")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -52,14 +54,6 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Cognitive Services Account Sku Name.")]
         [AllowNull]
-        [ValidateSet(
-            AccountSkuString.F0, 
-            AccountSkuString.S0, 
-            AccountSkuString.S1, 
-            AccountSkuString.S2, 
-            AccountSkuString.S3, 
-            AccountSkuString.S4, 
-            IgnoreCase = true)]
         public string SkuName { get; set; }
 
         [Parameter(
@@ -81,7 +75,7 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
             Sku sku = null;
             if (!string.IsNullOrWhiteSpace(this.SkuName))
             {
-                sku = new Sku(ParseSkuName(this.SkuName));
+                sku = new Sku(this.SkuName);
             }
             
             Dictionary<string, string> tags = null;
@@ -107,7 +101,7 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
             else
             {
                 // Not updating anything (this is allowed) - just return the account, no need for approval.
-                var cognitiveServicesAccount = this.CognitiveServicesClient.CognitiveServicesAccounts.GetProperties(this.ResourceGroupName, this.Name);
+                var cognitiveServicesAccount = this.CognitiveServicesClient.Accounts.GetProperties(this.ResourceGroupName, this.Name);
                 WriteCognitiveServicesAccount(cognitiveServicesAccount);
                 return;
             }
@@ -119,7 +113,7 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
             {
                 RunCmdLet(() =>
                 {
-                    var updatedAccount = this.CognitiveServicesClient.CognitiveServicesAccounts.Update(
+                    var updatedAccount = this.CognitiveServicesClient.Accounts.Update(
                         this.ResourceGroupName,
                         this.Name,
                         sku,

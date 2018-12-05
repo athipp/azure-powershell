@@ -14,20 +14,17 @@
 
 using Microsoft.Azure.Commands.DevTestLabs.Models;
 using Microsoft.Azure.Management.DevTestLabs;
-using System;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.DevTestLabs
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmDtlAutoShutdownPolicy",
-        HelpUri = Constants.DevTestLabsHelpUri)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "DtlAutoShutdownPolicy",HelpUri = Constants.DevTestLabsHelpUri)]
     [OutputType(typeof(PSSchedule))]
     public class GetAzureRmDtlAutoShutdownPolicy : DevTestLabsCmdletBase
     {
         public override void ExecuteCmdlet()
         {
-            var schedule = DataServiceClient.Schedule.GetResource(
-                ResourceGroupName,
+            var schedule = DataServiceClient.Schedules.Get(
                 LabName,
                 WellKnownPolicyNames.LabVmsShutdown);
 

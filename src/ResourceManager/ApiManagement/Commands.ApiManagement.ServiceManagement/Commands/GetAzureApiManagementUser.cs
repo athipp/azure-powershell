@@ -19,14 +19,13 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
     using System.Collections.Generic;
     using System.Management.Automation;
 
-    [Cmdlet(VerbsCommon.Get, Constants.ApiManagementUser, DefaultParameterSetName = GetAll)]
-    [OutputType(typeof(IList<PsApiManagementUser>), ParameterSetName = new[] { GetAll, FindBy })]
-    [OutputType(typeof(PsApiManagementUser), ParameterSetName = new[] { GetById })]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApiManagementUser", DefaultParameterSetName = GetAll)]
+    [OutputType(typeof(PsApiManagementUser))]
     public class GetAzureApiManagementUser : AzureApiManagementCmdletBase
     {
-        private const string GetAll = "Get all users";
-        private const string GetById = "Get user by ID";
-        private const string FindBy = "Find users";
+        private const string GetAll = "GeAllUsers";
+        private const string GetById = "GetByUserId";
+        private const string FindBy = "GetByUser";
 
         [Parameter(
             ValueFromPipelineByPropertyName = true,
@@ -89,9 +88,10 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
                 var user = Client.UserById(Context, UserId);
                 WriteObject(user);
             }
-            else
+            else 
             {
-                throw new InvalidOperationException(string.Format("Parameter set name '{0}' is not supported.", ParameterSetName));
+                var user = Client.UsersList(Context, FirstName, LastName, Email, State, GroupId);
+                WriteObject(user, true);
             }
         }
     }

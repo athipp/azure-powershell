@@ -20,10 +20,7 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Compute
 {
-    [Cmdlet(
-        VerbsCommon.Set,
-        ProfileNouns.VirtualMachineBgInfoExtension,
-        SupportsShouldProcess = true)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VMBginfoExtension",SupportsShouldProcess = true)]
     [OutputType(typeof(PSAzureOperationResponse))]
     public class SetAzureVMBGInfoExtensionCommand : SetAzureVMExtensionBaseCmdlet
     {
@@ -56,7 +53,7 @@ namespace Microsoft.Azure.Commands.Compute
                         this.Name ?? VirtualMachineBGInfoExtensionContext.ExtensionDefaultName,
                         parameters).GetAwaiter().GetResult();
 
-                    var result = Mapper.Map<PSAzureOperationResponse>(op);
+                    var result = ComputeAutoMapperProfile.Mapper.Map<PSAzureOperationResponse>(op);
                     WriteObject(result);
                 });
             }

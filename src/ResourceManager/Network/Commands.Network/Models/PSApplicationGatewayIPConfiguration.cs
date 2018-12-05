@@ -13,6 +13,7 @@
 // limitations under the License.
 //
 
+using Microsoft.WindowsAzure.Commands.Common.Attributes;
 using Newtonsoft.Json;
 
 namespace Microsoft.Azure.Commands.Network.Models
@@ -20,7 +21,9 @@ namespace Microsoft.Azure.Commands.Network.Models
     public class PSApplicationGatewayIPConfiguration : PSChildResource
     {
         public PSResourceId Subnet { get; set; }
+        [Ps1Xml(Target = ViewControl.Table)]
         public string ProvisioningState { get; set; }
+        public string Type { get; set; }
 
         [JsonIgnore]
         public string SubnetText

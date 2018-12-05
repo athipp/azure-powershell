@@ -25,8 +25,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Blob.Cmdlet
     using System.Threading;
     using System.Threading.Tasks;
 
-    [Cmdlet(VerbsCommon.Get, StorageNouns.CopyBlobStatus, DefaultParameterSetName = NameParameterSet),
-       OutputType(typeof(AzureStorageBlob))]
+    [Cmdlet("Get", Azure.Commands.ResourceManager.Common.AzureRMConstants.AzurePrefix + "StorageBlobCopyState", DefaultParameterSetName = NameParameterSet),OutputType(typeof(AzureStorageBlob))]
     public class GetAzureStorageBlobCopyState : StorageCloudBlobCmdletBase
     {
         /// <summary>
@@ -273,7 +272,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Blob.Cmdlet
                     long internalTaskId = monitorRequest.Item1;
                     CloudBlob blob = monitorRequest.Item2;
                     //Just use the last blob management channel since the following operation is context insensitive
-                    await Channel.FetchBlobAttributesAsync(blob, accessCondition, requestOptions, context, CmdletCancellationToken);
+                    await Channel.FetchBlobAttributesAsync(blob, accessCondition, requestOptions, context, CmdletCancellationToken).ConfigureAwait(false);
                     bool taskDone = false;
 
                     if (blob.CopyState == null)

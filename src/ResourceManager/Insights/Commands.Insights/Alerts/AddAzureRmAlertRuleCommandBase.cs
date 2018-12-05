@@ -12,10 +12,12 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Management.Insights;
-using Microsoft.Azure.Management.Insights.Models;
+using System.Net;
+using Microsoft.Azure.Commands.Insights.OutputClasses;
+using Microsoft.Azure.Management.Monitor.Models;
 using System.Collections.Generic;
 using System.Management.Automation;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Insights.Alerts
 {
@@ -30,6 +32,7 @@ namespace Microsoft.Azure.Commands.Insights.Alerts
         /// Gets or sets the Location parameter of the cmdlet
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The Location name")]
+        [LocationCompleter("microsoft.insights/alertrules")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
@@ -51,8 +54,10 @@ namespace Microsoft.Azure.Commands.Insights.Alerts
         /// Gets or sets the ResourceGroupName parameter of the cmdlet
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The resource group name")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
-        public string ResourceGroup { get; set; }
+        [Alias("ResourceGroup")]
+        public string ResourceGroupName { get; set; }
 
         /// <summary>
         /// Gets or sets the rule name parameter of the cmdlet
@@ -66,7 +71,7 @@ namespace Microsoft.Azure.Commands.Insights.Alerts
         /// </summary>
         [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The list of rule actions")]
         [ValidateNotNullOrEmpty]
-        public List<RuleAction> Actions { get; set; }
+        public List<Management.Monitor.Management.Models.RuleAction> Action { get; set; }
 
         #endregion
 
@@ -75,16 +80,30 @@ namespace Microsoft.Azure.Commands.Insights.Alerts
         /// </summary>
         protected override void ProcessRecordInternal()
         {
-            RuleCreateOrUpdateParameters parameters = this.CreateSdkCallParameters();
+            if (ShouldProcess(
+                    target: string.Format("Create/update an alert rule: {0} from resource group: {1}", this.Name, this.ResourceGroupName),
+                    action: "Create/update an alert rule"))
+            {
+                AlertRuleResource parameters = this.CreateSdkCallParameters();
 
-            var result = this.InsightsManagementClient.AlertOperations.CreateOrUpdateRuleAsync(resourceGroupName: this.ResourceGroup, parameters: parameters).Result;
-            WriteObject(result);
+                // Part of the result of this operation is operation (result.Body ==> a AutoscaleSettingResource) is being discarded for backwards compatibility
+                var result = this.MonitorManagementClient.AlertRules.CreateOrUpdateWithHttpMessagesAsync(resourceGroupName: this.ResourceGroupName, parameters: parameters, ruleName: parameters.AlertRuleResourceName).Result;
+
+                var response = new PSAddAlertRuleOperationResponse
+                {
+                    RequestId = result.RequestId,
+                    StatusCode = result.Response != null ? result.Response.StatusCode : HttpStatusCode.OK,
+                    AlertRule = new Management.Monitor.Management.Models.AlertRuleResource(result.Body)
+                };
+
+                WriteObject(response);
+            }
         }
 
         /// <summary>
         /// When overriden by a descendant class this method creates the set of parameters for the call to the sdk
         /// </summary>
         /// <returns>The set of parameters for the call to the sdk</returns>
-        protected abstract RuleCreateOrUpdateParameters CreateSdkCallParameters();
+        protected abstract AlertRuleResource CreateSdkCallParameters();
     }
 }

@@ -13,20 +13,47 @@
 // limitations under the License.
 //
 
-using System.Collections.Generic;
-
 namespace Microsoft.Azure.Commands.Network.Models
 {
+    using System;
+    using System.Collections.Generic;
     using Newtonsoft.Json;
+    using WindowsAzure.Commands.Common.Attributes;
+
     public class PSApplicationGatewayBackendHttpSettings : PSChildResource
     {
+        [Ps1Xml(Target = ViewControl.Table)]
         public int Port { get; set; }
+        [Ps1Xml(Target = ViewControl.Table)]
         public string Protocol { get; set; }
+        [Ps1Xml(Target = ViewControl.Table)]
         public string CookieBasedAffinity { get; set; }
-        public uint RequestTimeout { get; set; }
+        [Ps1Xml(Target = ViewControl.Table)]
+        public int RequestTimeout { get; set; }
+        public PSApplicationGatewayConnectionDraining ConnectionDraining { get; set; }
         public PSResourceId Probe { get; set; }
         public List<PSResourceId> AuthenticationCertificates { get; set; }
+        public List<PSResourceId> TrustedRootCertificates { get; set; }
+        [Ps1Xml(Target = ViewControl.Table)]
+        public string HostName { get; set; }
+        [Ps1Xml(Target = ViewControl.Table)]
+        public bool? PickHostNameFromBackendAddress { get; set; }
+        [Ps1Xml(Target = ViewControl.Table)]
+        public string AffinityCookieName { get; set; }
+        [Obsolete("Property 'ProbeEnabled' is ignored and will be removed from the 'PSApplicationGatewayBackendHttpSettings' type in a future release.")]
+        [Ps1Xml(Target = ViewControl.Table)]
+        public bool ProbeEnabled { get; set; }
+        [Ps1Xml(Target = ViewControl.Table)]
+        public string Path { get; set; }
+        [Ps1Xml(Target = ViewControl.Table)]
         public string ProvisioningState { get; set; }
+        public string Type { get; set; }
+
+        [JsonIgnore]
+        public string ConnectionDrainingText
+        {
+            get { return JsonConvert.SerializeObject(ConnectionDraining, Formatting.Indented, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore }); }
+        }
 
         [JsonIgnore]
         public string ProbeText
@@ -38,6 +65,21 @@ namespace Microsoft.Azure.Commands.Network.Models
         public string AuthenticationCertificatesText
         {
             get { return JsonConvert.SerializeObject(AuthenticationCertificates, Formatting.Indented, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore }); }
+        }
+
+        public bool ShouldSerializePort()
+        {
+            return !string.IsNullOrEmpty(this.Name);
+        }
+
+        public bool ShouldSerializeRequestTimeout()
+        {
+            return !string.IsNullOrEmpty(this.Name);
+        }
+
+        public bool ShouldSerializeAuthenticationCertificates()
+        {
+            return !string.IsNullOrEmpty(this.Name);
         }
     }
 }

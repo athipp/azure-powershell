@@ -14,12 +14,15 @@
 
 using Microsoft.Azure.Commands.Network.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
+using Microsoft.WindowsAzure.Commands.Common.CustomAttributes;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Set, "AzureRmVirtualNetworkSubnetConfig", DefaultParameterSetName = "SetByResource"), OutputType(typeof(PSVirtualNetwork))]
+    [CmdletOutputBreakingChange(typeof(PSVirtualNetwork), DeprecatedOutputProperties = new string[] { "EnableVmProtection" })]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VirtualNetworkSubnetConfig", DefaultParameterSetName = "SetByResource"), OutputType(typeof(PSVirtualNetwork))]
     public class SetAzureVirtualNetworkSubnetConfigCommand : AzureVirtualNetworkSubnetConfigBase
     {
         [Parameter(
@@ -28,6 +31,7 @@ namespace Microsoft.Azure.Commands.Network
         [ValidateNotNullOrEmpty]
         public override string Name { get; set; }
 
+        [CmdletParameterBreakingChange("VirtualNetwork", ChangeDescription = "The EnableVMProtection property for the parameter Virtualnetwork is no longer supported. Setting this property has no impact. This property will be removed in a future release. Please remove it from your scripts")]
         [Parameter(
             Mandatory = true,
             ValueFromPipeline = true,
@@ -59,7 +63,7 @@ namespace Microsoft.Azure.Commands.Network
                 }
             }
 
-            subnet.AddressPrefix = this.AddressPrefix;
+            subnet.AddressPrefix = this.AddressPrefix?.ToList();
 
             if (!string.IsNullOrEmpty(this.NetworkSecurityGroupId))
             {
@@ -71,6 +75,39 @@ namespace Microsoft.Azure.Commands.Network
             {
                 subnet.RouteTable = new PSRouteTable();
                 subnet.RouteTable.Id = this.RouteTableId;
+            }
+
+            if (this.ServiceEndpoint != null)
+            {
+                subnet.ServiceEndpoints = new List<PSServiceEndpoint>();
+                foreach (var item in this.ServiceEndpoint)
+                {
+                    var service = new PSServiceEndpoint();
+                    service.Service = item;
+                    subnet.ServiceEndpoints.Add(service);
+                }
+            }
+            else
+            {
+                subnet.ServiceEndpoints = null;
+            }
+
+            if (this.ServiceEndpointPolicy != null)
+            {
+                subnet.ServiceEndpointPolicies = this.ServiceEndpointPolicy?.ToList();
+            }
+            else
+            {
+                subnet.ServiceEndpointPolicies = null;
+            }
+
+            if (this.Delegation != null)
+            {
+                subnet.Delegations = this.Delegation?.ToList();
+            }
+            else
+            {
+                subnet.Delegations = null;
             }
 
             WriteObject(this.VirtualNetwork);

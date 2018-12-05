@@ -12,9 +12,10 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Resources.Models;
-using Microsoft.Azure.Commands.Resources.Models.ActiveDirectory;
 using Microsoft.Azure.Commands.Resources.Models.Authorization;
+using Microsoft.Azure.Graph.RBAC.Version1_6.ActiveDirectory;
 using Microsoft.WindowsAzure.Commands.Common;
 using System;
 using System.Management.Automation;
@@ -24,7 +25,7 @@ namespace Microsoft.Azure.Commands.Resources
     /// <summary>
     /// Creates new role assignment.
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmRoleAssignment", DefaultParameterSetName = ParameterSet.Empty), OutputType(typeof(PSRoleAssignment))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "RoleAssignment", DefaultParameterSetName = ParameterSet.Empty), OutputType(typeof(PSRoleAssignment))]
     public class NewAzureRoleAssignmentCommand : ResourcesBaseCmdlet
     {
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = ParameterSet.ResourceGroupWithObjectId,
@@ -58,8 +59,8 @@ namespace Microsoft.Azure.Commands.Resources
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = ParameterSet.ScopeWithSPN,
             HelpMessage = "The app SPN.")]
         [ValidateNotNullOrEmpty]
-        [Alias("SPN")]
-        public string ServicePrincipalName { get; set; }
+        [Alias("SPN","ServicePrincipalName")]
+        public string ApplicationId { get; set; }
 
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = ParameterSet.ResourceGroupWithObjectId,
             HelpMessage = "Resource group to assign the role to.")]
@@ -73,6 +74,7 @@ namespace Microsoft.Azure.Commands.Resources
             HelpMessage = "Resource group to assign the role to.")]
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = ParameterSet.ResourceWithSPN,
             HelpMessage = "Resource group to assign the role to.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -144,6 +146,12 @@ namespace Microsoft.Azure.Commands.Resources
         [ValidateGuidNotEmpty]
         public Guid RoleDefinitionId { get; set; }
 
+        [Parameter(Mandatory = false, HelpMessage = "Delegation flag.")]
+        [ValidateNotNullOrEmpty]
+        public SwitchParameter AllowDelegation { get; set; }
+
+        public Guid RoleAssignmentId { get; set; } = default(Guid);
+
         public override void ExecuteCmdlet()
         {
             FilterRoleAssignmentsOptions parameters = new FilterRoleAssignmentsOptions()
@@ -154,7 +162,7 @@ namespace Microsoft.Azure.Commands.Resources
                 ADObjectFilter = new ADObjectFilterOptions
                 {
                     UPN = SignInName,
-                    SPN = ServicePrincipalName,
+                    SPN = ApplicationId,
                     Id = ObjectId == Guid.Empty ? null : ObjectId.ToString(),
                 },
                 ResourceIdentifier = new ResourceIdentifier()
@@ -163,11 +171,14 @@ namespace Microsoft.Azure.Commands.Resources
                     ResourceGroupName = ResourceGroupName,
                     ResourceName = ResourceName,
                     ResourceType = ResourceType,
-                    Subscription = DefaultProfile.Context.Subscription.Id.ToString(),
-                }
+                    Subscription = DefaultProfile.DefaultContext.Subscription.Id.ToString(),
+                },
+                CanDelegate = AllowDelegation.IsPresent ? true : false,
             };
 
-            WriteObject(PoliciesClient.CreateRoleAssignment(parameters));
+            AuthorizationClient.ValidateScope(parameters.Scope, false);
+
+            WriteObject(PoliciesClient.CreateRoleAssignment(parameters, RoleAssignmentId));
         }
     }
 }

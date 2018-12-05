@@ -22,10 +22,11 @@ using Microsoft.Azure.Management.Cdn;
 using Microsoft.Azure.Management.Cdn.Models;
 using System.Linq;
 using Microsoft.Azure.Commands.Cdn.Helpers;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Cdn.Profile
 {
-    [Cmdlet(VerbsCommon.Remove, "AzureRmCdnProfile", SupportsShouldProcess = true), OutputType(typeof(bool))]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CdnProfile", SupportsShouldProcess = true), OutputType(typeof(bool))]
     public class RemoveAzureRmCdnProfile : AzureCdnCmdletBase
     {
         [Parameter(Mandatory = true, ParameterSetName = FieldsParameterSet, HelpMessage = "The name of the Azure CDN profile.")]
@@ -33,6 +34,7 @@ namespace Microsoft.Azure.Commands.Cdn.Profile
         public string ProfileName { get; set; }
 
         [Parameter(Mandatory = true, ParameterSetName = FieldsParameterSet, HelpMessage = "The resource group to which the Azure CDN profile belongs.")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -54,10 +56,10 @@ namespace Microsoft.Azure.Commands.Cdn.Profile
                 ProfileName = CdnProfile.Name;
             }
 
-            var existingProfile = CdnManagementClient.Profiles.ListBySubscriptionId().Select(p => p.ToPsProfile())
+            var existingProfile = CdnManagementClient.Profiles.List()
+                .Select(p => p.ToPsProfile())
                 .Where(p => p.Name.ToLower() == ProfileName.ToLower())
-                .Where(p => p.ResourceGroupName.ToLower() == ResourceGroupName.ToLower())
-                .FirstOrDefault();
+                .FirstOrDefault(p => p.ResourceGroupName.ToLower() == ResourceGroupName.ToLower());
 
             if (existingProfile == null)
             {
@@ -72,7 +74,7 @@ namespace Microsoft.Azure.Commands.Cdn.Profile
                 string.Format(Resources.Confirm_RemoveProfile, ProfileName),
                 this.MyInvocation.InvocationName,
                 ProfileName,
-                () => CdnManagementClient.Profiles.DeleteIfExists(ProfileName, ResourceGroupName),
+                () => CdnManagementClient.Profiles.Delete(ResourceGroupName, ProfileName),
                 () => ContainsEndpoints());
 
             if (PassThru)
@@ -84,7 +86,7 @@ namespace Microsoft.Azure.Commands.Cdn.Profile
 
         private bool ContainsEndpoints()
         {
-            var existingEndpoints = CdnManagementClient.Endpoints.ListByProfile(ProfileName, ResourceGroupName);
+            var existingEndpoints = CdnManagementClient.Endpoints.ListByProfile(ResourceGroupName, ProfileName);
             if(existingEndpoints.Count() > 0)
             {
                 return true;

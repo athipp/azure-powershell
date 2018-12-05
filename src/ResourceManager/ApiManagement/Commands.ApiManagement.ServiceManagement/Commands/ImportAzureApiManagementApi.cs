@@ -14,16 +14,20 @@
 
 namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
 {
-    using Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models;
     using System;
+    using System.Globalization;
+    using System.IO;
     using System.Management.Automation;
+    using Management.ApiManagement.Models;
+    using Models;
+    using Properties;
 
-    [Cmdlet(VerbsData.Import, Constants.ApiManagementApi, DefaultParameterSetName = FromLocalFile)]
+    [Cmdlet("Import", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApiManagementApi", DefaultParameterSetName = FromLocalFile)]
     [OutputType(typeof(PsApiManagementApi))]
     public class ImportAzureApiManagementApi : AzureApiManagementCmdletBase
     {
-        private const string FromLocalFile = "From Local File";
-        private const string FromUrl = "From URL";
+        private const string FromLocalFile = "ImportFromLocalFile";
+        private const string FromUrl = "ImportFromUrl";
 
         [Parameter(
             ValueFromPipelineByPropertyName = true,
@@ -40,8 +44,15 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
 
         [Parameter(
             ValueFromPipelineByPropertyName = true,
+            Mandatory = false,
+            HelpMessage = "Identifier of API Revision. This parameter is optional. If not specified, the import will be " +
+            "done onto the currently active revision or a new api.")]
+        public String ApiRevision { get; set; }
+
+        [Parameter(
+            ValueFromPipelineByPropertyName = true,
             Mandatory = true,
-            HelpMessage = "Specification format (Wadl, Swagger). This parameter is required.")]
+            HelpMessage = "Specification format (Wadl, Swagger, Wsdl). This parameter is required.")]
         [ValidateNotNullOrEmpty]
         public PsApiManagementApiFormat SpecificationFormat { get; set; }
 
@@ -67,22 +78,78 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
             HelpMessage = "Web API Path. Last part of the API's public URL. This URL will be used by API consumers for sending requests to the web service. Must be 1 to 400 characters long. This parameter is optional. Default value is $null.")]
         public String Path { get; set; }
 
+        [Parameter(
+            ValueFromPipelineByPropertyName = true,
+            Mandatory = false,
+            HelpMessage = "Local name of WSDL Service to be imported. Must be 1 to 400 characters long." +
+                          " This parameter is optional and only required for importing Wsdl . Default value is $null.")]
+        public String WsdlServiceName { get; set; }
+
+        [Parameter(
+            ValueFromPipelineByPropertyName = true,
+            Mandatory = false, 
+            HelpMessage = "Local name of WSDL Endpoint (port) to be imported." +
+            " Must be 1 to 400 characters long. This parameter is optional and only required for importing Wsdl. Default value is $null.")]
+        public String WsdlEndpointName { get; set; }
+
+        [Parameter(
+            ValueFromPipelineByPropertyName = true,
+            Mandatory = false,
+            HelpMessage = "This parameter is optional with a default value of Http. " +
+                          "The Soap option is only applicable when importing WSDL and will create a SOAP Passthrough API.")]
+        public PsApiManagementApiType? ApiType { get; set; }
+
         public override void ExecuteApiManagementCmdlet()
         {
+            string apiId = ApiId;
+            if (!string.IsNullOrEmpty(ApiId))
+            {
+                if (!string.IsNullOrEmpty(ApiRevision))
+                {
+                    apiId = ApiId.ApiRevisionIdentifier(ApiRevision);
+                }
+            }
+            else
+            {
+                apiId = Guid.NewGuid().ToString("N");
+            }            
+
             if (ParameterSetName.Equals(FromLocalFile))
             {
-                Client.ApiImportFromFile(Context, ApiId, SpecificationFormat, SpecificationPath, Path);
+                FileInfo localFile = new FileInfo(this.GetUnresolvedProviderPathFromPSPath(this.SpecificationPath));
+                if (!localFile.Exists)
+                {
+                    throw new FileNotFoundException(string.Format(CultureInfo.CurrentCulture, Resources.SourceFileNotFound, this.SpecificationPath));
+                }
+
+                Client.ApiImportFromFile(
+                    Context,
+                    apiId,
+                    SpecificationFormat,
+                    localFile.FullName,
+                    Path,
+                    WsdlServiceName, 
+                    WsdlEndpointName,
+                    ApiType);
             }
             else if (ParameterSetName.Equals(FromUrl))
             {
-                Client.ApiImportFromUrl(Context, ApiId, SpecificationFormat, SpecificationUrl, Path);
+                Client.ApiImportFromUrl(
+                    Context,
+                    apiId,
+                    SpecificationFormat, 
+                    SpecificationUrl,
+                    Path,
+                    WsdlServiceName,
+                    WsdlEndpointName,
+                    ApiType);
             }
             else
             {
                 throw new InvalidOperationException(string.Format("ParameterSetName '{0}' not supported", ParameterSetName));
             }
 
-            var api = Client.ApiById(Context, ApiId);
+            var api = Client.ApiById(Context.ResourceGroupName, Context.ServiceName, apiId);
             WriteObject(api);
         }
     }

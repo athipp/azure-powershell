@@ -23,7 +23,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
     /// <summary>
     /// Sets a Module for automation.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "AzureRmAutomationModule", DefaultParameterSetName = AutomationCmdletParameterSets.ByName)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "AutomationModule", DefaultParameterSetName = AutomationCmdletParameterSets.ByName)]
     [OutputType(typeof(Module))]
     public class SetAzureAutomationModule : AzureAutomationBaseCmdlet
     {
@@ -40,6 +40,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
         /// </summary>
         [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true,
             HelpMessage = "The url to module zip file package.")]
+        [Alias("ContentLink")]
         public Uri ContentLinkUri { get; set; }
 
         /// <summary>

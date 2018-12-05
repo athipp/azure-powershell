@@ -13,21 +13,23 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Insights.OutputClasses;
-using Microsoft.Azure.Management.Insights;
-using Microsoft.Azure.Management.Insights.Models;
+using Microsoft.Azure.Management.Monitor;
+using Microsoft.Azure.Management.Monitor.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
+using Microsoft.Rest.Azure;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Insights.Autoscale
 {
     /// <summary>
     /// Get an Alert rule
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmAutoscaleSetting"), OutputType(typeof(List<AutoscaleSettingResource>))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "AutoscaleSetting"), OutputType(typeof(PSAutoscaleSetting))]
     public class GetAzureRmAutoscaleSettingCommand : ManagementCmdletBase
     {
-        internal const string GetAzureRmAutoscaleSettingParamGroup = "Parameters for Get-AzureRmAustoscaleSetting cmdlet";
+        internal const string GetAzureRmAutoscaleSettingParamGroup = "GetAutoscaleSetting";
 
         #region Cmdlet parameters
 
@@ -35,8 +37,10 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
         /// Gets or sets the ResourceGroupName parameter of the cmdlet
         /// </summary>
         [Parameter(ParameterSetName = GetAzureRmAutoscaleSettingParamGroup, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The resource group name")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
-        public string ResourceGroup { get; set; }
+        [Alias("ResourceGroup")]
+        public string ResourceGroupName { get; set; }
 
         /// <summary>
         /// Gets or sets the rule name parameter of the cmdlet
@@ -58,20 +62,24 @@ namespace Microsoft.Azure.Commands.Insights.Autoscale
         /// </summary>
         protected override void ProcessRecordInternal()
         {
+            this.WriteIdentifiedWarning(
+                cmdletName: "Get-AzAutoscaleSetting",
+                topic: "Parameter deprecation", 
+                message: "The DetailedOutput parameter will be deprecated in a future breaking change release.");
             if (string.IsNullOrWhiteSpace(this.Name))
             {
                 // Retrieve all the Autoscale settings for a resource group
-                AutoscaleSettingListResponse result = this.InsightsManagementClient.AutoscaleOperations.ListSettingsAsync(resourceGroupName: this.ResourceGroup, targetResourceUri: null).Result;
+                IPage<AutoscaleSettingResource> result = this.MonitorManagementClient.AutoscaleSettings.ListByResourceGroupAsync(resourceGroupName: this.ResourceGroupName).Result;
 
-                var records = result.AutoscaleSettingResourceCollection.Value.Select(e => this.DetailedOutput.IsPresent ? new PSAutoscaleSetting(e) : e);
+                var records = result.Select(e => this.DetailedOutput.IsPresent ? new PSAutoscaleSetting(e) : new PSAutoscaleSettingNoDetails(e));
                 WriteObject(sendToPipeline: records, enumerateCollection: true);
             }
             else
             {
                 // Retrieve a single Autoscale setting determined by the resource group and the rule name
-                AutoscaleSettingGetResponse result = this.InsightsManagementClient.AutoscaleOperations.GetSettingAsync(resourceGroupName: this.ResourceGroup, autoscaleSettingName: this.Name).Result;
+                AutoscaleSettingResource result = this.MonitorManagementClient.AutoscaleSettings.GetAsync(resourceGroupName: this.ResourceGroupName, autoscaleSettingName: this.Name).Result;
 
-                WriteObject(sendToPipeline: this.DetailedOutput.IsPresent ? new PSAutoscaleSetting(result) : result.ToAutoscaleSettingGetResponse());
+                WriteObject(sendToPipeline: this.DetailedOutput.IsPresent ? new PSAutoscaleSetting(result) : new PSAutoscaleSettingNoDetails(result));
             }
         }
     }

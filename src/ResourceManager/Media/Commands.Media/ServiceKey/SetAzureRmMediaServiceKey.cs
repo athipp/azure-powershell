@@ -19,13 +19,14 @@ using Microsoft.Azure.Commands.Media.Common;
 using Microsoft.Azure.Commands.Media.Models;
 using Microsoft.Azure.Management.Media;
 using Microsoft.Azure.Management.Media.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Media.ServiceKey
 {
     /// <summary>
     /// Regenerate the key of media service.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, MediaServiceKeyNounStr, SupportsShouldProcess = true), OutputType(typeof(PSServiceKey))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "MediaServiceKey", SupportsShouldProcess = true), OutputType(typeof(PSServiceKey))]
     public class SetAzureRmMediaServiceKey : AzureMediaServiceCmdletBase
     {
         private const string SetMediaServiceKeyWhatIfMessage = "Set MediaService key";
@@ -35,6 +36,7 @@ namespace Microsoft.Azure.Commands.Media.ServiceKey
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

@@ -14,6 +14,7 @@
 
 using Microsoft.Azure.Commands.ResourceManager.Cmdlets.Components;
 using Microsoft.Azure.Commands.ResourceManager.Cmdlets.SdkModels;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System.Collections.Generic;
 using System.Management.Automation;
 
@@ -22,21 +23,22 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
     /// <summary>
     /// Filters resource group deployments.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmResourceGroupDeployment", DefaultParameterSetName = GetAzureResourceGroupDeploymentCmdlet.DeploymentNameParameterSet), OutputType(typeof(List<PSResourceGroupDeployment>))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ResourceGroupDeployment", DefaultParameterSetName = GetAzureResourceGroupDeploymentCmdlet.DeploymentNameParameterSet), OutputType(typeof(PSResourceGroupDeployment))]
     public class GetAzureResourceGroupDeploymentCmdlet : ResourceManagerCmdletBase
     {
         /// <summary>
         /// The deployment Id parameter set.
         /// </summary>
-        internal const string DeploymentIdParameterSet = "The deployment Id parameter set.";
+        internal const string DeploymentIdParameterSet = "GetByResourceGroupDeploymentId";
 
         /// <summary>
         /// The deployment name parameter set.
         /// </summary>
-        internal const string DeploymentNameParameterSet = "The deployment name parameter set.";
+        internal const string DeploymentNameParameterSet = "GetByResourceGroupDeploymentName";
 
         [Parameter(Position = 0, ParameterSetName = GetAzureResourceGroupDeploymentCmdlet.DeploymentNameParameterSet, Mandatory = true, 
             ValueFromPipelineByPropertyName = true, HelpMessage = "The name of the resource group.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -54,7 +56,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
 
         public override void ExecuteCmdlet()
         {
-            FilterResourceGroupDeploymentOptions options = new FilterResourceGroupDeploymentOptions()
+            FilterDeploymentOptions options = new FilterDeploymentOptions()
             {
                 ResourceGroupName = ResourceGroupName ?? ResourceIdUtility.GetResourceGroupName(Id),
                 DeploymentName = Name ?? (string.IsNullOrEmpty(Id) ? null : ResourceIdUtility.GetResourceName(Id))

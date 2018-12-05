@@ -1,21 +1,21 @@
 ﻿using AutoMapper;
 using Microsoft.Azure.Commands.Compute.Common;
 using Microsoft.Azure.Commands.Compute.Models;
+using MC = Microsoft.Azure.Management.Compute.Models;
+using Microsoft.Rest.Azure;
 using Microsoft.WindowsAzure.Commands.Common.Extensions.DSC;
 using Newtonsoft.Json;
 using System;
 using System.Globalization;
 using System.Management.Automation;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Compute.Extension.DSC
 {
     /// <summary>
     /// This cmdlet removes DSC extension handler from a VM in a resource group
     /// </summary>
-    [Cmdlet(
-        VerbsCommon.Remove,
-        ProfileNouns.VirtualMachineDscExtension,
-        SupportsShouldProcess = true)]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VMDscExtension",SupportsShouldProcess = true)]
     [OutputType(typeof(PSAzureOperationResponse))]
     public class RemoveAzureVMDscExtensionCommand : VirtualMachineExtensionBaseCmdlet
     {
@@ -24,6 +24,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
            Position = 0,
            ValueFromPipelineByPropertyName = true,
            HelpMessage = "The name of the resource group.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -32,15 +33,17 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
             Position = 1,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The name of the virtual machine.")]
+        [ResourceNameCompleter("Microsoft.Compute/virtualMachines", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string VMName { get; set; }
 
         [Parameter(
             Position = 2,
             ValueFromPipelineByPropertyName = true,
-            HelpMessage = "Name of the ARM resource that represents the extension. The Set-AzureRmVMDscExtension cmdlet sets this name to  " +
-            "'Microsoft.Powershell.DSC', which is the same value used by Get-AzureRmVMDscExtension. Specify this parameter only if you changed " +
+            HelpMessage = "Name of the ARM resource that represents the extension. The Set-AzVMDscExtension cmdlet sets this name to  " +
+            "'Microsoft.Powershell.DSC', which is the same value used by Get-AzVMDscExtension. Specify this parameter only if you changed " +
             "the default name in the Set cmdlet or used a different resource name in an ARM template.")]
+        [ResourceNameCompleter("Microsoft.Compute/virtualMachines/extensions", "ResourceGroupName", "VMName")]
         [ValidateNotNullOrEmpty]
         public string Name { get; set; }
 
@@ -86,7 +89,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.DSC
                     }
                 }
 
-                var result = Mapper.Map<PSAzureOperationResponse>(op);
+                var result = ComputeAutoMapperProfile.Mapper.Map<PSAzureOperationResponse>(op);
                 WriteObject(result);
             }
         }

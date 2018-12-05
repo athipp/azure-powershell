@@ -12,6 +12,7 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.Database.Model;
 using Microsoft.Azure.Commands.Sql.ImportExport.Model;
 using System;
@@ -22,7 +23,7 @@ namespace Microsoft.Azure.Commands.Sql.ImportExport.Cmdlet
     /// <summary>
     /// Defines the AzureRmSqlDatabaseImport cmdlet
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmSqlDatabaseImport", SupportsShouldProcess = true)]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlDatabaseImport", SupportsShouldProcess = true), OutputType(typeof(AzureSqlDatabaseImportExportBaseModel))]
     public class NewAzureSqlDatabaseImport : ImportExportCmdletBase
     {
         /// <summary>
@@ -30,6 +31,7 @@ namespace Microsoft.Azure.Commands.Sql.ImportExport.Cmdlet
         /// </summary>
         [Parameter(Mandatory = true,
             HelpMessage = "SQL Database name.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers/databases", "ResourceGroupName", "ServerName")]
         [ValidateNotNullOrEmpty]
         public string DatabaseName { get; set; }
 
@@ -57,7 +59,7 @@ namespace Microsoft.Azure.Commands.Sql.ImportExport.Cmdlet
         /// Gets or sets the maximum size for the newly imported database
         /// </summary>
         [Parameter(Mandatory = true, HelpMessage = "The maximum size in bytes for the newly imported database")]
-        public int DatabaseMaxSizeBytes
+        public long DatabaseMaxSizeBytes
         {
             get; set;
         }

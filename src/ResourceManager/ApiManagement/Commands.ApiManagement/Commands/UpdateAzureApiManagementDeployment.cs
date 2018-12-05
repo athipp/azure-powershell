@@ -16,15 +16,19 @@
 namespace Microsoft.Azure.Commands.ApiManagement.Commands
 {
     using Microsoft.Azure.Commands.ApiManagement.Models;
+    using ResourceManager.Common.ArgumentCompleters;
     using System;
     using System.Collections.Generic;
     using System.Management.Automation;
 
-    [Cmdlet(VerbsData.Update, "AzureRmApiManagementDeployment", DefaultParameterSetName = DefaultParameterSetName), OutputType(typeof(PsApiManagement))]
+    [Cmdlet("Update", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApiManagementDeployment", DefaultParameterSetName = DefaultParameterSetName), OutputType(typeof(PsApiManagement))]
+    [Obsolete("This cmdlet has been marked for deprecation in an upcoming release. Please use the " +
+        "Set-AzApiManagement cmdlet from the AzureRM.ApiManagement module instead.",
+        false)]
     public class UpdateAzureApiManagementDeployment : AzureApiManagementCmdletBase
     {
-        internal const string FromPsApiManagementInstanceSetName = "Update from PsApiManagement instance";
-        internal const string DefaultParameterSetName = "Specific API Management service";
+        internal const string FromPsApiManagementInstanceSetName = "UpdateFromPsApiManagementInstance";
+        internal const string DefaultParameterSetName = "UpdateSpecificService";
 
         [Parameter(
             ParameterSetName = FromPsApiManagementInstanceSetName,
@@ -39,6 +43,7 @@ namespace Microsoft.Azure.Commands.ApiManagement.Commands
             ValueFromPipelineByPropertyName = true,
             Mandatory = true,
             HelpMessage = "Name of resource group under which API Management exists.")]
+        [ResourceGroupCompleter()]
         public string ResourceGroupName { get; set; }
 
         [Parameter(
@@ -53,6 +58,7 @@ namespace Microsoft.Azure.Commands.ApiManagement.Commands
             ValueFromPipelineByPropertyName = true,
             Mandatory = true,
             HelpMessage = "Location of master API Management deployment region.")]
+        [LocationCompleter("Microsoft.ApiManagement/service")]
         public string Location { get; set; }
 
         [Parameter(
@@ -80,9 +86,16 @@ namespace Microsoft.Azure.Commands.ApiManagement.Commands
             ParameterSetName = DefaultParameterSetName,
             ValueFromPipelineByPropertyName = true,
             Mandatory = false,
+            HelpMessage = "Vpn Type of service Azure API Management. Valid values are None, External and Internal. Default value is None.")]
+        public PsApiManagementVpnType VpnType { get; set; }
+
+        [Parameter(
+            ParameterSetName = DefaultParameterSetName,
+            ValueFromPipelineByPropertyName = true,
+            Mandatory = false,
             HelpMessage = "Additional deployment regions of Azure API Management.")]
         public IList<PsApiManagementRegion> AdditionalRegions { get; set; }
-
+        
         [Parameter(
             Mandatory = false,
             HelpMessage = "Sends updated PsApiManagement to pipeline if operation succeeds.")]
@@ -90,47 +103,21 @@ namespace Microsoft.Azure.Commands.ApiManagement.Commands
 
         public override void ExecuteCmdlet()
         {
-            string resourceGroupName, name, location;
-            PsApiManagementSku sku;
-            int capacity;
-            PsApiManagementVirtualNetwork virtualNetwork;
-            IList<PsApiManagementRegion> additionalRegions;
+            var apiManagementResource = this.Client.UpdateDeployment(
+                    ResourceGroupName,
+                    Name,
+                    Location,
+                    Sku,
+                    Capacity,
+                    VirtualNetwork,
+                    VpnType,
+                    AdditionalRegions,
+                    ApiManagement);
 
-            if (ParameterSetName.Equals(DefaultParameterSetName, StringComparison.OrdinalIgnoreCase))
+            if (PassThru.IsPresent)
             {
-                resourceGroupName = ResourceGroupName;
-                name = Name;
-                location = Location;
-                sku = Sku;
-                capacity = Capacity;
-                virtualNetwork = VirtualNetwork;
-                additionalRegions = AdditionalRegions;
+                this.WriteObject(apiManagementResource);
             }
-            else if (ParameterSetName.Equals(FromPsApiManagementInstanceSetName, StringComparison.OrdinalIgnoreCase))
-            {
-                resourceGroupName = ApiManagement.ResourceGroupName;
-                name = ApiManagement.Name;
-                location = ApiManagement.Location;
-                sku = ApiManagement.Sku;
-                capacity = ApiManagement.Capacity;
-                virtualNetwork = ApiManagement.VirtualNetwork;
-                additionalRegions = ApiManagement.AdditionalRegions;
-            }
-            else
-            {
-                throw new Exception(string.Format("Unrecongnized parameter set: {0}", ParameterSetName));
-            }
-
-            ExecuteLongRunningCmdletWrap(
-                () => Client.BeginUpdateDeployments(
-                    resourceGroupName,
-                    name,
-                    location,
-                    sku,
-                    capacity,
-                    virtualNetwork,
-                    additionalRegions),
-                PassThru.IsPresent);
         }
     }
 }

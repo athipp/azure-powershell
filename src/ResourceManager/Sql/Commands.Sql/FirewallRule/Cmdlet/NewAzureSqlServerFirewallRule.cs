@@ -20,9 +20,9 @@ using System.Management.Automation;
 namespace Microsoft.Azure.Commands.Sql.FirewallRule.Cmdlet
 {
     /// <summary>
-    /// Defines the Get-AzureRmSqlServerFirewallRule cmdlet
+    /// Defines the Get-AzSqlServerFirewallRule cmdlet
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmSqlServerFirewallRule", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Low)]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlServerFirewallRule", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Low), OutputType(typeof(Model.AzureSqlServerFirewallRuleModel))]
     public class NewAzureSqlServerFirewallRule : AzureSqlServerFirewallRuleCmdletBase
     {
         #region Private 
@@ -47,6 +47,7 @@ namespace Microsoft.Azure.Commands.Sql.FirewallRule.Cmdlet
         [Parameter(Mandatory = true,
             HelpMessage = "Azure Sql Database Server Firewall Rule Name.",
             ParameterSetName = UserSpecifiedRuleSet)]
+        [Alias("Name")]
         [ValidateNotNullOrEmpty]
         public string FirewallRuleName { get; set; }
 

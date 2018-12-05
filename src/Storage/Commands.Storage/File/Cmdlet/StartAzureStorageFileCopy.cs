@@ -12,6 +12,7 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.WindowsAzure.Commands.Common.Storage;
 using Microsoft.WindowsAzure.Commands.Storage.Common;
 using Microsoft.WindowsAzure.Commands.Storage.Model.Contract;
@@ -25,7 +26,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
 {
-    [Cmdlet(VerbsLifecycle.Start, Constants.FileCopyCmdletName, SupportsShouldProcess = true)]
+    [Cmdlet("Start", Azure.Commands.ResourceManager.Common.AzureRMConstants.AzurePrefix + "StorageFileCopy", SupportsShouldProcess = true), OutputType(typeof(void))]
     public class StartAzureStorageFileCopyCommand : StorageFileDataManagementCmdletBase
     {
         private const string ContainerNameParameterSet = "ContainerName";
@@ -120,7 +121,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
             Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             ParameterSetName = ShareNameParameterSet)]
-        public override AzureStorageContext Context { get; set; }
+        public override IStorageContext Context { get; set; }
 
         [Parameter(HelpMessage = "Destination Storage context object", ParameterSetName = ContainerNameParameterSet)]
         [Parameter(HelpMessage = "Destination Storage context object", ParameterSetName = ContainerParameterSet)]
@@ -129,7 +130,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
         [Parameter(HelpMessage = "Destination Storage context object", ParameterSetName = ShareParameterSet)]
         [Parameter(HelpMessage = "Destination Storage context object", ParameterSetName = FileFilePathParameterSet)]
         [Parameter(HelpMessage = "Destination Storage context object", ParameterSetName = UriFilePathParameterSet)]
-        public AzureStorageContext DestContext { get; set; }
+        public IStorageContext DestContext { get; set; }
 
         private IStorageBlobManagement blobChannel = null;
 
@@ -187,8 +188,6 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
 
             if (destChannel == null)
             {
-                AzureStorageContext context = null;
-
                 if (ContainerNameParameterSet == this.ParameterSetName ||
                     ContainerParameterSet == this.ParameterSetName ||
                     BlobFilePathParameterSet == this.ParameterSetName ||
@@ -197,14 +196,26 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
                     FileFilePathParameterSet == this.ParameterSetName ||
                     UriFilePathParameterSet == this.ParameterSetName)
                 {
-                    context = this.GetCmdletStorageContext(DestContext);
+                    if (DestContext == null)
+                    {
+                        if (Channel != null)
+                        {
+                            destChannel = Channel;
+                        }
+                        else
+                        {
+                            destChannel = base.CreateChannel();
+                        }
+                    }
+                    else
+                    {
+                        destChannel = new StorageFileManagement(this.GetCmdletStorageContext(DestContext));
+                    }
                 }
                 else
                 {
-                    context = AzureStorageContext.EmptyContextInstance;
+                    destChannel = base.CreateChannel();
                 }
-
-                destChannel = new StorageFileManagement(context);
             }
 
             return destChannel;
@@ -280,8 +291,8 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
             Func<long, Task> taskGenerator = (taskId) => StartAsyncCopy(
                 taskId,
                 destFile,
-                () => this.ConfirmOverwrite(blob.SnapshotQualifiedUri.ToString(), destFile.Uri.ToString()),
-                () => destFile.StartCopyAsync(blob.GenerateCopySourceBlob(), null, null, this.RequestOptions, this.OperationContext, CmdletCancellationToken));
+                () => this.ConfirmOverwrite(blob.SnapshotQualifiedUri.ToString(), destFile.SnapshotQualifiedUri.ToString()),
+                () => destFile.StartCopyAsync(blob.GenerateCopySourceBlob(), null, null, this.RequestOptions, this.OperationContext));
 
             this.RunTask(taskGenerator);
         }
@@ -320,8 +331,8 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
             Func<long, Task> taskGenerator = (taskId) => StartAsyncCopy(
                 taskId,
                 destFile,
-                () => this.ConfirmOverwrite(sourceFile.Uri.ToString(), destFile.Uri.ToString()),
-                () => destFile.StartCopyAsync(sourceFile.GenerateCopySourceFile(), null, null, this.RequestOptions, this.OperationContext, this.CmdletCancellationToken));
+                () => this.ConfirmOverwrite(sourceFile.SnapshotQualifiedUri.ToString(), destFile.SnapshotQualifiedUri.ToString()),
+                () => destFile.StartCopyAsync(sourceFile.GenerateCopySourceFile()));
 
             this.RunTask(taskGenerator);
         }
@@ -333,7 +344,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
             Func<long, Task> taskGenerator = (taskId) => StartAsyncCopy(
                 taskId,
                 destFile,
-                () => this.ConfirmOverwrite(this.AbsoluteUri, destFile.Uri.ToString()),
+                () => this.ConfirmOverwrite(this.AbsoluteUri, destFile.SnapshotQualifiedUri.ToString()),
                 () => destFile.StartCopyAsync(new Uri(this.AbsoluteUri), null, null, this.RequestOptions, this.OperationContext));
 
             this.RunTask(taskGenerator);
@@ -364,7 +375,10 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
             bool destExist = true;
             try
             {
-                await destFile.FetchAttributesAsync(null, this.RequestOptions, this.OperationContext, this.CmdletCancellationToken);
+                await destFile.FetchAttributesAsync(null, this.RequestOptions, this.OperationContext, this.CmdletCancellationToken).ConfigureAwait(false);
+
+                //Clean the Metadata of the destination file object, or the source metadata won't overwirte the dest file metadata. See https://docs.microsoft.com/en-us/rest/api/storageservices/copy-file
+                destFile.Metadata.Clear();
             }
             catch (StorageException ex)
             {
@@ -378,7 +392,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
 
             if (!destExist || checkOverwrite())
             {
-                string copyId = await startCopy();
+                string copyId = await startCopy().ConfigureAwait(false);
 
                 this.OutputStream.WriteVerbose(taskId, String.Format(Resources.CopyDestinationBlobPending, destFile.GetFullPath(), destFile.Share.Name, copyId));
                 this.OutputStream.WriteObject(taskId, destFile);

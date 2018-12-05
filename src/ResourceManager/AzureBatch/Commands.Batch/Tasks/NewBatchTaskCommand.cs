@@ -12,16 +12,18 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using System;
 using Microsoft.Azure.Batch;
 using Microsoft.Azure.Commands.Batch.Models;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
 using Constants = Microsoft.Azure.Commands.Batch.Utils.Constants;
 
 namespace Microsoft.Azure.Commands.Batch
 {
-    [Cmdlet(VerbsCommon.New, Constants.AzureBatchTask, DefaultParameterSetName = JobIdAndSingleAddParameterSet)]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzurePrefix + "BatchTask", DefaultParameterSetName = JobIdAndSingleAddParameterSet), OutputType(typeof(void))]
     public class NewBatchTaskCommand : BatchObjectModelCmdletBase
     {
         internal const string JobIdAndBulkAddParameterSet = "JobId_Bulk";
@@ -59,16 +61,22 @@ namespace Microsoft.Azure.Commands.Batch
         [Parameter(ParameterSetName = JobIdAndSingleAddParameterSet)]
         [Parameter(ParameterSetName = JobObjectAndSingleAddParameterSet)]
         [ValidateNotNullOrEmpty]
+        [Alias("ResourceFile")]
         public IDictionary ResourceFiles { get; set; }
 
         [Parameter(ParameterSetName = JobIdAndSingleAddParameterSet)]
         [Parameter(ParameterSetName = JobObjectAndSingleAddParameterSet)]
         [ValidateNotNullOrEmpty]
+        [Alias("EnvironmentSetting")]
         public IDictionary EnvironmentSettings { get; set; }
 
         [Parameter(ParameterSetName = JobIdAndSingleAddParameterSet)]
         [Parameter(ParameterSetName = JobObjectAndSingleAddParameterSet)]
-        public SwitchParameter RunElevated { get; set; }
+        public PSAuthenticationTokenSettings AuthenticationTokenSettings { get; set; }
+
+        [Parameter(ParameterSetName = JobIdAndSingleAddParameterSet)]
+        [Parameter(ParameterSetName = JobObjectAndSingleAddParameterSet)]
+        public PSUserIdentity UserIdentity { get; set; }
 
         [Parameter(ParameterSetName = JobIdAndSingleAddParameterSet)]
         [Parameter(ParameterSetName = JobObjectAndSingleAddParameterSet)]
@@ -90,12 +98,33 @@ namespace Microsoft.Azure.Commands.Batch
         [ValidateNotNullOrEmpty]
         public TaskDependencies DependsOn { get; set; }
 
+        [Parameter(ParameterSetName = JobIdAndSingleAddParameterSet)]
+        [Parameter(ParameterSetName = JobObjectAndSingleAddParameterSet)]
+        [ValidateNotNullOrEmpty]
+        [Alias("ApplicationPackageReference")]
+        public PSApplicationPackageReference[] ApplicationPackageReferences { get; set; }
+
+        [Parameter(ParameterSetName = JobIdAndSingleAddParameterSet)]
+        [Parameter(ParameterSetName = JobObjectAndSingleAddParameterSet)]
+        [ValidateNotNullOrEmpty]
+        public PSOutputFile[] OutputFile { get; set; }
+
         [Parameter(ParameterSetName = JobObjectAndBulkAddParameterSet,
             HelpMessage = "The collection of tasks to add to a job.")]
         [Parameter(ParameterSetName = JobIdAndBulkAddParameterSet,
             HelpMessage = "The collection of tasks to add to a job.")]
         [ValidateNotNullOrEmpty]
         public PSCloudTask[] Tasks { get; set; }
+
+        [Parameter(ParameterSetName = JobIdAndSingleAddParameterSet)]
+        [Parameter(ParameterSetName = JobObjectAndSingleAddParameterSet)]
+        [ValidateNotNullOrEmpty]
+        public PSExitConditions ExitConditions { get; set; }
+
+        [Parameter(ParameterSetName = JobIdAndSingleAddParameterSet)]
+        [Parameter(ParameterSetName = JobObjectAndSingleAddParameterSet)]
+        [ValidateNotNullOrEmpty]
+        public PSTaskContainerSettings ContainerSettings { get; set; }
 
         public override void ExecuteCmdlet()
         {
@@ -113,11 +142,16 @@ namespace Microsoft.Azure.Commands.Batch
                     CommandLine = this.CommandLine,
                     ResourceFiles = this.ResourceFiles,
                     EnvironmentSettings = this.EnvironmentSettings,
-                    RunElevated = this.RunElevated.IsPresent,
+                    AuthenticationTokenSettings = this.AuthenticationTokenSettings,
+                    UserIdentity = this.UserIdentity,
                     AffinityInformation = this.AffinityInformation,
                     Constraints = this.Constraints,
                     MultiInstanceSettings = this.MultiInstanceSettings,
                     DependsOn = this.DependsOn,
+                    ApplicationPackageReferences = this.ApplicationPackageReferences,
+                    ExitConditions = this.ExitConditions,
+                    OutputFiles = this.OutputFile,
+                    ContainerSettings = this.ContainerSettings
                 };
 
                 BatchClient.CreateTask(parameters);

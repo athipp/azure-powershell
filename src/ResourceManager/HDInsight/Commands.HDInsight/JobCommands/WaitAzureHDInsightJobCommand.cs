@@ -20,12 +20,11 @@ using Microsoft.Azure.Commands.HDInsight.Commands;
 using Microsoft.Azure.Commands.HDInsight.Models;
 using Microsoft.Azure.Management.HDInsight.Job.Models;
 using Microsoft.WindowsAzure.Commands.Common;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.HDInsight
 {
-    [Cmdlet(VerbsLifecycle.Wait,
-        Constants.CommandNames.AzureHDInsightJob),
-    OutputType(typeof(AzureHDInsightJob))]
+    [Cmdlet("Wait", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "HDInsightJob"),OutputType(typeof(AzureHDInsightJob))]
     public class WaitAzureHDInsightJobCommand : HDInsightCmdletBase
     {
         #region Input Parameter Definitions
@@ -66,6 +65,7 @@ namespace Microsoft.Azure.Commands.HDInsight
         }
 
         [Parameter(HelpMessage = "The name of the resource group.")]
+        [ResourceGroupCompleter]
         public string ResourceGroupName { get; set; }
 
         [Parameter(HelpMessage = "The total time to wait for job completion, in seconds.")]

@@ -24,7 +24,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
     /// <summary>
     /// Gets azure automation dsc node report.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmAutomationDscNodeReport", DefaultParameterSetName = AutomationCmdletParameterSets.ByAll)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "AutomationDscNodeReport", DefaultParameterSetName = AutomationCmdletParameterSets.ByAll)]
     [OutputType(typeof(DscNode))]
     public class GetAzureAutomationDscNodeReport : AzureAutomationBaseCmdlet
     {
@@ -78,6 +78,8 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
                 {
                    this.AutomationClient.GetLatestDscNodeReport(this.ResourceGroupName, this.AutomationAccountName, this.NodeId)
                 };
+
+                this.GenerateCmdletOutput(ret);
             }
             else if (this.ParameterSetName == AutomationCmdletParameterSets.ById)
             {
@@ -85,18 +87,23 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
                 {
                     this.AutomationClient.GetDscNodeReportByReportId(this.ResourceGroupName, this.AutomationAccountName, this.NodeId, this.Id)
                 };
+
+                this.GenerateCmdletOutput(ret);
             }
             else
             {
-                ret = this.AutomationClient.ListDscNodeReports(
-                    this.ResourceGroupName,
-                    this.AutomationAccountName,
-                    this.NodeId,
-                    this.StartTime,
-                    this.EndTime);
-            }
+                var nextLink = string.Empty;
 
-            this.GenerateCmdletOutput(ret);
+                do
+                {
+                    ret = this.AutomationClient.ListDscNodeReports(this.ResourceGroupName, this.AutomationAccountName, this.NodeId, this.StartTime, this.EndTime, ref nextLink);
+                    if (ret != null)
+                    {
+                        this.GenerateCmdletOutput(ret);
+                    }
+
+                } while (!string.IsNullOrEmpty(nextLink));
+            }
         }
     }
 }

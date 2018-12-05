@@ -13,7 +13,7 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Insights.Autoscale;
-using Microsoft.Azure.Management.Insights.Models;
+using Microsoft.Azure.Commands.ScenarioTest;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Moq;
 using System;
@@ -29,20 +29,19 @@ namespace Microsoft.Azure.Commands.Insights.Test.Autoscale
 
         public NewAzureRmAutoscaleProfileCommand Cmdlet { get; set; }
 
-        public NewAzureRmAutoscaleProfileTests()
+        public NewAzureRmAutoscaleProfileTests(Xunit.Abstractions.ITestOutputHelper output = null)
         {
+            TestExecutionHelpers.SetUpSessionAndProfile();
+            if (output != null)
+            {
+                ServiceManagemenet.Common.Models.XunitTracingInterceptor.AddToContext(new ServiceManagemenet.Common.Models.XunitTracingInterceptor(output));
+            }
+
             commandRuntimeMock = new Mock<ICommandRuntime>();
             Cmdlet = new NewAzureRmAutoscaleProfileCommand()
             {
                 CommandRuntime = commandRuntimeMock.Object
             };
-        }
-
-        public NewAzureRmAutoscaleProfileTests(Xunit.Abstractions.ITestOutputHelper output)
-            : this()
-        {
-            ServiceManagemenet.Common.Models.XunitTracingInterceptor.AddToContext(new ServiceManagemenet.Common.Models.XunitTracingInterceptor(output));
-
         }
 
         [Fact]
@@ -56,54 +55,53 @@ namespace Microsoft.Azure.Commands.Insights.Test.Autoscale
             this.InitializeForFixedDate();
             Cmdlet.ExecuteCmdlet();
 
-            Cmdlet.ScheduleDays = null;
-            Cmdlet.ScheduleHours = null;
-            Cmdlet.ScheduleMinutes = null;
+            Cmdlet.ScheduleDay = null;
+            Cmdlet.ScheduleHour = null;
+            Cmdlet.ScheduleMinute = null;
             Cmdlet.ScheduleTimeZone = null;
 
             Cmdlet.ExecuteCmdlet();
         }
 
-        private ScaleRule CreateAutoscaleRule(string metricName = null)
+        private Management.Monitor.Management.Models.ScaleRule CreateAutoscaleRule(string metricName = null)
         {
             var autocaseRuleCmd = new NewAzureRmAutoscaleRuleCommand
             {
                 MetricName = metricName ?? "Requests",
                 MetricResourceId = "/subscriptions/a93fb07c-6c93-40be-bf3b-4f0deba10f4b/resourceGroups/Default-Web-EastUS/providers/microsoft.web/sites/misitiooeltuyo",
-                Operator = ComparisonOperationType.GreaterThan,
-                MetricStatistic = MetricStatisticType.Average,
+                Operator = Management.Monitor.Management.Models.ComparisonOperationType.GreaterThan,
+                MetricStatistic = Management.Monitor.Management.Models.MetricStatisticType.Average,
                 Threshold = 10,
                 TimeGrain = TimeSpan.FromMinutes(1),
                 ScaleActionCooldown = TimeSpan.FromMinutes(5),
-                ScaleActionDirection = ScaleDirection.Increase,
-                ScaleActionScaleType = ScaleType.ChangeCount,
+                ScaleActionDirection = Management.Monitor.Management.Models.ScaleDirection.Increase,
                 ScaleActionValue = "1"
             };
 
             return autocaseRuleCmd.CreateSettingRule();
         }
 
-        public void InitializeAutoscaleProfile(List<ScaleRule> rules = null)
+        internal void InitializeAutoscaleProfile(List<Management.Monitor.Management.Models.ScaleRule> rules = null)
         {
-            List<ScaleRule> autoscaleRules = rules ?? new List<ScaleRule> { this.CreateAutoscaleRule() };
+            List<Management.Monitor.Management.Models.ScaleRule> autoscaleRules = rules ?? new List<Management.Monitor.Management.Models.ScaleRule> { this.CreateAutoscaleRule() };
 
             Cmdlet.Name = "profile1";
             Cmdlet.DefaultCapacity = "1";
             Cmdlet.MaximumCapacity = "10";
             Cmdlet.MinimumCapacity = "1";
-            Cmdlet.Rules = autoscaleRules;
+            Cmdlet.Rule = autoscaleRules;
         }
 
-        public void InitializeForRecurrentSchedule()
+        internal void InitializeForRecurrentSchedule()
         {
-            Cmdlet.RecurrenceFrequency = RecurrenceFrequency.Minute;
-            Cmdlet.ScheduleDays = new List<string> { "1", "2", "3" };
-            Cmdlet.ScheduleHours = new List<int> { 5, 10, 15 };
-            Cmdlet.ScheduleMinutes = new List<int> { 15, 30, 45 };
+            Cmdlet.RecurrenceFrequency = Management.Monitor.Management.Models.RecurrenceFrequency.Minute;
+            Cmdlet.ScheduleDay = new List<string> { "1", "2", "3" };
+            Cmdlet.ScheduleHour = new List<int?> { 5, 10, 15 };
+            Cmdlet.ScheduleMinute = new List<int?> { 15, 30, 45 };
             Cmdlet.ScheduleTimeZone = "GMT";
         }
 
-        public void InitializeForFixedDate()
+        internal void InitializeForFixedDate()
         {
             Cmdlet.StartTimeWindow = DateTime.Now;
             Cmdlet.EndTimeWindow = DateTime.Now.AddMinutes(1);

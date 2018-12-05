@@ -20,8 +20,7 @@ namespace Microsoft.Azure.Commands.Sql.ThreatDetection.Cmdlet
     /// <summary>
     /// Disables auditing on a specific database.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "AzureRmSqlDatabaseThreatDetectionPolicy", SupportsShouldProcess = true),
-            OutputType(typeof(DatabaseThreatDetectionPolicyModel))]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlDatabaseThreatDetectionPolicy", SupportsShouldProcess = true),OutputType(typeof(DatabaseThreatDetectionPolicyModel))]
 
     public class AzureRmSqlDatabaseThreatDetection : SqlDatabaseThreatDetectionCmdletBase
     {

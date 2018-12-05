@@ -13,10 +13,13 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.Azure.Commands.Compute.Common;
 using Microsoft.Azure.Commands.Compute.Models;
-using Microsoft.Azure.Management.Storage;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
+using Microsoft.Azure.Management.Storage.Version2017_10_01;
+using Microsoft.WindowsAzure.Commands.Common.CustomAttributes;
 using Microsoft.WindowsAzure.Commands.Sync.Download;
 using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
@@ -28,7 +31,10 @@ using System.Text;
 
 namespace Microsoft.Azure.Commands.Compute
 {
-    [Cmdlet(VerbsCommon.Get, ProfileNouns.BootDiagnosticsData, DefaultParameterSetName = WindowsParamSet)]
+#if NETSTANDARD
+    [CmdletOutputBreakingChange(typeof(PSVirtualMachineIdentity), DeprecatedOutputProperties = new string[] { "IdentityIds" })]
+#endif
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VMBootDiagnosticsData", DefaultParameterSetName = WindowsParamSet)]
     [OutputType(typeof(PSVirtualMachine), typeof(PSVirtualMachineInstanceView))]
     public class GetAzureVMBootDiagnosticsDataCommand : VirtualMachineBaseCmdlet
     {
@@ -39,6 +45,7 @@ namespace Microsoft.Azure.Commands.Compute
            Mandatory = true,
            Position = 0,
            ValueFromPipelineByPropertyName = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -47,6 +54,7 @@ namespace Microsoft.Azure.Commands.Compute
             Mandatory = true,
             Position = 1,
             ValueFromPipelineByPropertyName = true)]
+        [ResourceNameCompleter("Microsoft.Compute/virtualMachines", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string Name { get; set; }
 
@@ -163,21 +171,21 @@ namespace Microsoft.Azure.Commands.Compute
                 throw new ArgumentOutOfRangeException("Source", sourceUri.ToString());
             }
 
-            var storageClient = AzureSession.ClientFactory.CreateArmClient<StorageManagementClient>(
-                        DefaultProfile.Context, AzureEnvironment.Endpoint.ResourceManager);
+            var storageClient = AzureSession.Instance.ClientFactory.CreateArmClient<StorageManagementClient>(
+                        DefaultProfile.DefaultContext, AzureEnvironment.Endpoint.ResourceManager);
 
 
             var storageService = storageClient.StorageAccounts.GetProperties(this.ResourceGroupName, blobUri.StorageAccountName);
             if (storageService != null)
             {
                 var storageKeys = storageClient.StorageAccounts.ListKeys(this.ResourceGroupName, storageService.Name);
-                storagekey = storageKeys.Key1;
+                storagekey = storageKeys.GetKey1();
             }
 
             StorageCredentials storagecred = new StorageCredentials(blobUri.StorageAccountName, storagekey);
             var blob = new CloudBlob(sourceUri, storagecred);
 
-            blob.DownloadToFile(localFileInfo, FileMode.Create);
+            blob.DownloadToFileAsync(localFileInfo, FileMode.Create).ConfigureAwait(false).GetAwaiter().GetResult();
         }
     }
 }

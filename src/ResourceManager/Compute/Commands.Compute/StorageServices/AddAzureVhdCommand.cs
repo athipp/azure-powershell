@@ -13,10 +13,12 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.Azure.Commands.Compute.Common;
 using Microsoft.Azure.Commands.Compute.Models;
-using Microsoft.Azure.Management.Storage;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
+using Microsoft.Azure.Management.Storage.Version2017_10_01;
 using Microsoft.WindowsAzure.Commands.Sync.Download;
 using Microsoft.WindowsAzure.Commands.Tools.Vhd;
 using Microsoft.WindowsAzure.Commands.Tools.Vhd.Model;
@@ -30,7 +32,7 @@ namespace Microsoft.Azure.Commands.Compute.StorageServices
     /// <summary>
     /// Uploads a vhd as fixed disk format vhd to a blob in Microsoft Azure Storage
     /// </summary>
-    [Cmdlet(VerbsCommon.Add, ProfileNouns.Vhd), OutputType(typeof(VhdUploadContext))]
+    [Cmdlet("Add", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "Vhd"), OutputType(typeof(VhdUploadContext))]
     public class AddAzureVhdCommand : ComputeClientBaseCmdlet
     {
         private const int DefaultNumberOfUploaderThreads = 8;
@@ -39,6 +41,7 @@ namespace Microsoft.Azure.Commands.Compute.StorageServices
             Position = 0,
             Mandatory = false,
             ValueFromPipelineByPropertyName = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -109,6 +112,9 @@ namespace Microsoft.Azure.Commands.Compute.StorageServices
             set;
         }
 
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
+
         public UploadParameters ValidateParameters()
         {
             BlobUri destinationUri;
@@ -166,8 +172,8 @@ namespace Microsoft.Azure.Commands.Compute.StorageServices
         {
             StorageCredentialsFactory storageCredentialsFactory;
 
-            var storageClient = AzureSession.ClientFactory.CreateArmClient<StorageManagementClient>(
-                        DefaultProfile.Context, AzureEnvironment.Endpoint.ResourceManager);
+            var storageClient = AzureSession.Instance.ClientFactory.CreateArmClient<StorageManagementClient>(
+                        DefaultProfile.DefaultContext, AzureEnvironment.Endpoint.ResourceManager);
 
             if (StorageCredentialsFactory.IsChannelRequired(Destination))
             {

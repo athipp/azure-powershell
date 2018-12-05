@@ -19,13 +19,12 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
     using System.Collections.Generic;
     using System.Management.Automation;
 
-    [Cmdlet(VerbsCommon.Get, Constants.ApiManagementLogger, DefaultParameterSetName = GetAll)]
-    [OutputType(typeof(IList<PsApiManagementLogger>), ParameterSetName = new[] { GetAll })]
-    [OutputType(typeof(PsApiManagementLogger), ParameterSetName = new[] { GetById })]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApiManagementLogger", DefaultParameterSetName = GetAll)]
+    [OutputType(typeof(PsApiManagementLogger))]
     public class GetAzureApiManagementLogger : AzureApiManagementCmdletBase
     {
-        private const string GetAll = "Get all loggers";
-        private const string GetById = "Get by logger ID";
+        private const string GetAll = "GetAllLoggers";
+        private const string GetById = "GetByLoggerId";
 
         [Parameter(
             ValueFromPipelineByPropertyName = true,
@@ -37,7 +36,7 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
         [Parameter(
             ParameterSetName = GetById,
             ValueFromPipelineByPropertyName = true,
-            Mandatory = false,
+            Mandatory = true,
             HelpMessage = "Identifier of a logger. If specified will try to find logger by the identifier. This parameter is optional.")]
         public String LoggerId { get; set; }
 

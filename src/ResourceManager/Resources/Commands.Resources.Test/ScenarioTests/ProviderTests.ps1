@@ -82,7 +82,7 @@ function Test-AzureProvider-WithZoneMappings
 function Test-AzureProviderOperation
 {
     # Get all operations by all providers
-    $allActions = Get-AzureRmProviderOperation *
+    $allActions = Get-AzureRmProviderOperation
 	Assert-True { $allActions.Length -gt 0 }
 
 	# Get all operations of microsoft.insights provider
@@ -90,6 +90,12 @@ function Test-AzureProviderOperation
 	$insightsActions
 	Assert-True { $insightsActions.Length -gt 0 }
 	Assert-True { $allActions.Length -gt $insightsActions.Length }
+
+	# Get all operations of microsoft.eventgrid provider
+	$eventgridActions = Get-AzureRmProviderOperation Microsoft.EventGrid/*
+	$eventgridActions
+	Assert-True { $eventgridActions.Length -gt 0 }
+	Assert-True { $allActions.Length -gt $eventgridActions.Length }
 
 	# Filter non-Microsoft.Insights operations and match the lengths
 	$nonInsightsActions = $allActions | Where-Object { $_.Operation.ToLower().StartsWith("microsoft.insights/") -eq $false }
@@ -100,6 +106,7 @@ function Test-AzureProviderOperation
 	foreach ($action in $insightsActions)
 	{
 	    Assert-True { $action.Operation.ToLower().StartsWith("microsoft.insights/"); }
+	    Assert-NotNull $action.isDataAction
 	}
 
 	# Case insenstive search
@@ -109,6 +116,7 @@ function Test-AzureProviderOperation
 	foreach ($action in $insightsCaseActions)
 	{
 		Assert-True { $action.Operation.ToLower().Startswith("microsoft.insights/"); }
+	    Assert-NotNull $action.isDataAction
 	}
 
 	# Get all Read operations of microsoft.insights provider
@@ -119,6 +127,7 @@ function Test-AzureProviderOperation
 	{
 	    Assert-True { $action.Operation.ToLower().EndsWith("/read"); }
 		Assert-True { $action.Operation.ToLower().StartsWith("microsoft.insights/");}
+	    Assert-NotNull $action.isDataAction
 	}
 
 	# Get all Read operations of all providers
@@ -130,6 +139,7 @@ function Test-AzureProviderOperation
 	foreach ($action in $readActions)
 	{
 	    Assert-True { $action.Operation.ToLower().EndsWith("/read"); }
+	    Assert-NotNull $action.isDataAction
 	}
 
 	# Get a particular operation
@@ -141,7 +151,7 @@ function Test-AzureProviderOperation
 	Assert-True { $action.Length -eq 0 }
 
 	# Get operations for non-existing provider
-	$exceptionMessage = "ProviderNotFound: Provider NonExistentProvider not found.";
+	$exceptionMessage = "Provider 'NonExistentProvider' not found.";
 	Assert-Throws { Get-AzureRmProviderOperation NonExistentProvider/* } $exceptionMessage
 
 	# Get operations for non-existing provider
@@ -158,4 +168,22 @@ function Test-AzureProviderOperation
 	# Get operations with ? in search string
 	$exceptionMessage = "Wildcard character ? is not supported.";
 	Assert-Throws {Get-AzureRmProviderOperation Microsoft.Sql/servers/*/rea? } $exceptionMessage
+ }
+
+ <#
+    .SYNOPSIS
+    Tests querying for a resource provider's operations/actions
+#>
+function Test-AzureProviderOperationDataActions
+{
+
+	# Get all operations of microsoft.insights provider
+	$storageDataActions = Get-AzureRmProviderOperation Microsoft.Storage/storageAccounts/blobServices/containers/blobs/*
+
+	foreach ($action in $storageDataActions)
+	{
+	    Assert-NotNull $action
+	    Assert-AreEqual $action.isDataAction $true
+	}
+
  }

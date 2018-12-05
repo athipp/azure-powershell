@@ -17,10 +17,11 @@ using Microsoft.Azure.Commands.Cdn.Common;
 using Microsoft.Azure.Commands.Cdn.Models.Endpoint;
 using Microsoft.Azure.Commands.Cdn.Properties;
 using Microsoft.Azure.Management.Cdn;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Cdn.Endpoint
 {
-    [Cmdlet(VerbsLifecycle.Stop, "AzureRmCdnEndpoint", SupportsShouldProcess = true, DefaultParameterSetName = FieldsParameterSet), OutputType(typeof(bool))]
+    [Cmdlet("Stop", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CdnEndpoint", SupportsShouldProcess = true, DefaultParameterSetName = FieldsParameterSet), OutputType(typeof(bool))]
     public class StopAzureRmCdnEndpoint : AzureCdnCmdletBase
     {
         [Parameter(Mandatory = true, ParameterSetName = FieldsParameterSet, HelpMessage = "Azure CDN endpoint name.")]
@@ -32,6 +33,7 @@ namespace Microsoft.Azure.Commands.Cdn.Endpoint
         public string ProfileName { get; set; }
 
         [Parameter(Mandatory = true, ParameterSetName = FieldsParameterSet, HelpMessage = "The resource group of the Azure CDN profile")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -53,7 +55,7 @@ namespace Microsoft.Azure.Commands.Cdn.Endpoint
 
             ConfirmAction(MyInvocation.InvocationName,
                 EndpointName,
-                () => CdnManagementClient.Endpoints.Stop(EndpointName, ProfileName, ResourceGroupName));
+                () => CdnManagementClient.Endpoints.Stop(ResourceGroupName, ProfileName, EndpointName));
 
             if (PassThru)
             {

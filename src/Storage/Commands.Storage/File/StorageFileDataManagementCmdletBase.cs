@@ -20,6 +20,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File
     using Microsoft.WindowsAzure.Storage.DataMovement;
     using System.Globalization;
     using System.Management.Automation;
+    using System.Threading.Tasks;
 
     public abstract class StorageFileDataManagementCmdletBase : AzureStorageFileCmdletBase
     {
@@ -50,12 +51,23 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File
         /// <summary>
         /// Confirm the overwrite operation
         /// </summary>
-        /// <param name="sourcePath">Indicating the source path.</param>
-        /// <param name="destinationPath">Indicating the destination path.</param>
+        /// <param name="source">Indicating the source.</param>
+        /// <param name="destination">Indicating the destination.</param>
         /// <returns>Returns a value indicating whether to overwrite.</returns>
-        protected bool ConfirmOverwrite(string sourcePath, string destinationPath)
+        protected bool ConfirmOverwrite(object source, object destination)
         {
-            return this.Force || this.OutputStream.ConfirmAsync(string.Format(CultureInfo.CurrentCulture, Resources.OverwriteConfirmation, destinationPath)).Result;
+            return this.Force || this.OutputStream.ConfirmAsync(string.Format(CultureInfo.CurrentCulture, Resources.OverwriteConfirmation, Util.ConvertToString(destination))).Result;
+        }
+
+        /// <summary>
+        /// Confirm the overwrite operation
+        /// </summary>
+        /// <param name="source">Indicating the source.</param>
+        /// <param name="destination">Indicating the destination.</param>
+        /// <returns>Returns a value indicating whether to overwrite.</returns>
+        protected async Task<bool> ConfirmOverwriteAsync(object source, object destination)
+        {
+            return this.Force || await this.OutputStream.ConfirmAsync(string.Format(CultureInfo.CurrentCulture, Resources.OverwriteConfirmation, Util.ConvertToString(destination)));
         }
 
         protected override void BeginProcessing()
@@ -79,11 +91,18 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File
             }
         }
 
-        protected TransferContext GetTransferContext(ProgressRecord record, long totalTransferLength)
+        protected SingleTransferContext GetTransferContext(ProgressRecord record, long totalTransferLength)
         {
-            TransferContext transferContext = new TransferContext();
+            SingleTransferContext transferContext = new SingleTransferContext();
             transferContext.ClientRequestId = CmdletOperationContext.ClientRequestId;
-            transferContext.OverwriteCallback = ConfirmOverwrite;
+            if (this.Force)
+            {
+                transferContext.ShouldOverwriteCallbackAsync = TransferContext.ForceOverwrite;
+            }
+            else
+            {
+                transferContext.ShouldOverwriteCallbackAsync = ConfirmOverwriteAsync;
+            }
 
             transferContext.ProgressHandler = new TransferProgressHandler((transferProgress) =>
             {

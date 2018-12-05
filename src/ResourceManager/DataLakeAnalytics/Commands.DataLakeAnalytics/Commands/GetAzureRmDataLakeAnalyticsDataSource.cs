@@ -13,6 +13,7 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.DataLakeAnalytics.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.DataLake.Analytics.Models;
 using System;
 using System.Collections.Generic;
@@ -20,13 +21,13 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.DataLakeAnalytics
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmDataLakeAnalyticsDataSource", DefaultParameterSetName = ListStorageParameterSetName), OutputType(typeof(StorageAccountInfo), typeof(DataLakeStoreAccountInfo), typeof(IEnumerable<AdlDataSource>))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "DataLakeAnalyticsDataSource", DefaultParameterSetName = ListStorageParameterSetName), OutputType(typeof(PSStorageAccountInfo), typeof(PSDataLakeStoreAccountInfo), typeof(AdlDataSource))]
     [Alias("Get-AdlAnalyticsDataSource")]
     public class GetAzureDataLakeAnalyticsDataSource : DataLakeAnalyticsCmdletBase
     {
-        internal const string DataLakeParameterSetName = "Get a Data Lake Store account";
-        internal const string BlobParameterSetName = "Get a Blob storage account";
-        internal const string ListStorageParameterSetName = "List all data sources";
+        internal const string DataLakeParameterSetName = "GetDataLakeStoreAccount";
+        internal const string BlobParameterSetName = "GetBlobStorageAccount";
+        internal const string ListStorageParameterSetName = "GetAllDataSources";
 
         [Parameter(ValueFromPipelineByPropertyName = true, Position = 0, Mandatory = true,
             ParameterSetName = DataLakeParameterSetName, HelpMessage = "Name of the account to add the data source to.")
@@ -63,6 +64,7 @@ namespace Microsoft.Azure.Commands.DataLakeAnalytics
             ParameterSetName = ListStorageParameterSetName,
             HelpMessage =
                 "Name of resource group under which the Data Lake Analytics account exists to add a data source to.")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -70,11 +72,11 @@ namespace Microsoft.Azure.Commands.DataLakeAnalytics
         {
             if (ParameterSetName.Equals(BlobParameterSetName, StringComparison.InvariantCultureIgnoreCase))
             {
-                WriteObject(DataLakeAnalyticsClient.GetStorageAccount(ResourceGroupName, Account, Blob));
+                WriteObject(new PSStorageAccountInfo(DataLakeAnalyticsClient.GetStorageAccount(ResourceGroupName, Account, Blob)));
             }
             else if ((ParameterSetName.Equals(DataLakeParameterSetName, StringComparison.InvariantCultureIgnoreCase)))
             {
-                WriteObject(DataLakeAnalyticsClient.GetDataLakeStoreAccount(ResourceGroupName, Account, DataLakeStore));
+                WriteObject(new PSDataLakeStoreAccountInfo(DataLakeAnalyticsClient.GetDataLakeStoreAccount(ResourceGroupName, Account, DataLakeStore)));
             }
             else
             {

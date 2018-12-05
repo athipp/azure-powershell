@@ -22,10 +22,7 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Compute
 {
-    [Cmdlet(
-        VerbsCommon.Set,
-        ProfileNouns.VirtualMachineADDomainExtension,
-        SupportsShouldProcess = true)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VMADDomainExtension",SupportsShouldProcess = true)]
     [OutputType(typeof(PSAzureOperationResponse))]
     public class SetAzureVMADDomainExtensionCommand : SetAzureVMExtensionBaseCmdlet
     {
@@ -98,7 +95,7 @@ namespace Microsoft.Azure.Commands.Compute
                     if (Credential != null)
                     {
                         publicSettings.Add(userKey, Credential.UserName);
-                        privateSettings.Add(passwordKey, SecureStringExtensions.ConvertToString(this.Credential.Password));
+                        privateSettings.Add(passwordKey, ConversionUtilities.SecureStringToString(this.Credential.Password));
                     }
 
                     if (string.IsNullOrEmpty(this.Location))
@@ -124,11 +121,10 @@ namespace Microsoft.Azure.Commands.Compute
                         this.Name ?? VirtualMachineADDomainExtensionContext.ExtensionDefaultName,
                         parameters).GetAwaiter().GetResult();
 
-                    var result = Mapper.Map<PSAzureOperationResponse>(op);
+                    var result = ComputeAutoMapperProfile.Mapper.Map<PSAzureOperationResponse>(op);
                     WriteObject(result);
                 });
             }
         }
     }
 }
-

@@ -13,6 +13,7 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.HDInsight.Commands;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.HDInsight.Models;
 using Microsoft.WindowsAzure.Commands.Common;
 using System;
@@ -20,11 +21,7 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.HDInsight
 {
-    [Cmdlet(
-        VerbsSecurity.Grant,
-        Constants.CommandNames.AzureHDInsightRdpServicesAccess),
-    OutputType(
-        typeof(void))]
+    [Cmdlet("Grant", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "HDInsightRdpServicesAccess"),OutputType(typeof(void))]
     public class GrantAzureHDInsightRdpServicesAccessCommand : HDInsightCmdletBase
     {
         #region Input Parameter Definitions
@@ -46,6 +43,7 @@ namespace Microsoft.Azure.Commands.HDInsight
         public DateTime RdpAccessExpiry { get; set; }
 
         [Parameter(HelpMessage = "Gets or sets the name of the resource group.")]
+        [ResourceGroupCompleter]
         public string ResourceGroupName { get; set; }
 
         #endregion

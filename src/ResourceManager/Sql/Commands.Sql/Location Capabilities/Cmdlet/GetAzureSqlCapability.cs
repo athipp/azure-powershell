@@ -13,6 +13,7 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.ResourceManager.Common;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.Location_Capabilities.Model;
 using Microsoft.Azure.Commands.Sql.Location_Capabilities.Services;
 using System.Linq;
@@ -22,11 +23,10 @@ using System.Text;
 namespace Microsoft.Azure.Commands.Sql.Location_Capabilities.Cmdlet
 {
     /// <summary>
-    /// Defines the Get-AzureRmSqlCapability cmdlet
+    /// Defines the Get-AzSqlCapability cmdlet
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmSqlCapability",
-        ConfirmImpact = ConfirmImpact.None,
-        DefaultParameterSetName = _filtered, SupportsShouldProcess = true)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlCapability",ConfirmImpact = ConfirmImpact.None,DefaultParameterSetName = _filtered, SupportsShouldProcess = true)]
+    [OutputType(typeof(LocationCapabilityModel))]
     public class GetAzureSqlCapability : AzureRMCmdlet
     {
         /// <summary>
@@ -46,6 +46,7 @@ namespace Microsoft.Azure.Commands.Sql.Location_Capabilities.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 0,
             HelpMessage = "The name of the Location for which to get the capabilities")]
+        [LocationCompleter("Microsoft.Sql/locations/capabilities")]
         [ValidateNotNullOrEmpty]
         public string LocationName { get; set; }
 
@@ -89,7 +90,7 @@ namespace Microsoft.Azure.Commands.Sql.Location_Capabilities.Cmdlet
         /// </summary>
         public override void ExecuteCmdlet()
         {
-            AzureSqlCapabilitiesAdapter adapter = new AzureSqlCapabilitiesAdapter(DefaultProfile.Context);
+            AzureSqlCapabilitiesAdapter adapter = new AzureSqlCapabilitiesAdapter(DefaultProfile.DefaultContext);
             LocationCapabilityModel model = adapter.GetLocationCapabilities(LocationName);
             int depth = 0;
 
@@ -247,7 +248,7 @@ namespace Microsoft.Azure.Commands.Sql.Location_Capabilities.Cmdlet
             var defaultServiceObjective = defaultEdition[0].SupportedServiceObjectives;
 
             // Assign defaults back to model.
-            defaultServiceObjective[0].SupportedMaxSizes = defaultServiceObjective[0].SupportedMaxSizes.Where(v => { return v.Status == "Default"; }).ToList();
+            defaultServiceObjective[0].SupportedMaxSizes = defaultServiceObjective[0].SupportedMaxSizes.Where(v => { return v.Status.Value.ToString() == "Default"; }).ToList();
             defaultEdition[0].SupportedServiceObjectives = defaultServiceObjective;
             defaultVersion[0].SupportedEditions = defaultEdition;
             model.SupportedServerVersions = defaultVersion;

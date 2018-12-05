@@ -14,10 +14,13 @@
 
 namespace Microsoft.Azure.Commands.Network.Models
 {
-    using Newtonsoft.Json;
     using System.Collections.Generic;
+    using System.Management.Automation;
+    using Microsoft.Azure.Management.Internal.Network.Common;
+    using Newtonsoft.Json;
+    using WindowsAzure.Commands.Common.Attributes;
 
-    public class PSVirtualNetwork : PSTopLevelResource
+    public class PSVirtualNetwork : PSTopLevelResource, IResourceReference
     {
         public PSAddressSpace AddressSpace { get; set; }
 
@@ -27,7 +30,16 @@ namespace Microsoft.Azure.Commands.Network.Models
 
         public List<PSVirtualNetworkPeering> VirtualNetworkPeerings { get; set; }
 
+        [Ps1Xml(Target = ViewControl.Table)]
         public string ProvisioningState { get; set; }
+
+        [Ps1Xml(Target = ViewControl.Table)]
+        public bool? EnableDdosProtection { get; set; }
+
+        [Ps1Xml(Target = ViewControl.Table)]
+        public bool? EnableVmProtection { get; set; }
+
+        public PSResourceId DdosProtectionPlan { get; set; }
 
         [JsonIgnore]
         public string AddressSpaceText
@@ -51,6 +63,24 @@ namespace Microsoft.Azure.Commands.Network.Models
         public string VirtualNetworkPeeringsText
         {
             get { return JsonConvert.SerializeObject(VirtualNetworkPeerings, Formatting.Indented, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore }); }
+        }
+
+        [JsonIgnore]
+        public string EnableDdosProtectionText
+        {
+            get { return JsonConvert.SerializeObject(EnableDdosProtection, Formatting.Indented, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore }); }
+        }
+
+        [JsonIgnore]
+        public string DdosProtectionPlanText
+        {
+            get { return JsonConvert.SerializeObject(DdosProtectionPlan, Formatting.Indented, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore }); }
+        }
+
+        [JsonIgnore]
+        public string EnableVmProtectionText
+        {
+            get { return JsonConvert.SerializeObject(EnableVmProtection, Formatting.Indented, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore }); }
         }
     }
 }

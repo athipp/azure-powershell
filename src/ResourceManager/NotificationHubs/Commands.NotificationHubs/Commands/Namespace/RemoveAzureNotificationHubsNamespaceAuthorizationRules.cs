@@ -12,18 +12,21 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
+using System.Globalization;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.NotificationHubs.Commands.Namespace
 {
 
-    [Cmdlet(VerbsCommon.Remove, "AzureRmNotificationHubsNamespaceAuthorizationRules"), OutputType(typeof(bool))]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "NotificationHubsNamespaceAuthorizationRules", SupportsShouldProcess = true), OutputType(typeof(bool))]
     public class RemoveAzureNotificationHubsNamespaceAuthorizationRules : AzureNotificationHubsCmdletBase
     {
         [Parameter(Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             Position = 0,
             HelpMessage = "The name of the resource group")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroup { get; set; }
 
@@ -41,11 +44,25 @@ namespace Microsoft.Azure.Commands.NotificationHubs.Commands.Namespace
         [ValidateNotNullOrEmpty]
         public string AuthorizationRule { get; set; }
 
+        /// <summary>
+        /// If present, do not ask for confirmation
+        /// </summary>
+        [Parameter(Mandatory = false,
+           HelpMessage = "Do not ask for confirmation.")]
+        public SwitchParameter Force { get; set; }
+
         public override void ExecuteCmdlet()
         {
-            // Create a new namespace authorizationRule
-            var deleteAuthRule = Client.DeleteNamespaceAuthorizationRules(ResourceGroup, Namespace, AuthorizationRule);
-            WriteObject(deleteAuthRule);
+            ConfirmAction(
+                Force.IsPresent,
+                string.Format(CultureInfo.InvariantCulture, Resources.DeleteNamespaceAuthorizationRule_Confirm, AuthorizationRule),
+                Resources.DeleteNamespaceAuthorizationRule_WhatIf,
+                AuthorizationRule,
+                () =>
+                {
+                    // Create a new namespace authorizationRule
+                    Client.DeleteNamespaceAuthorizationRules(ResourceGroup, Namespace, AuthorizationRule);
+                });
         }
     }
 }

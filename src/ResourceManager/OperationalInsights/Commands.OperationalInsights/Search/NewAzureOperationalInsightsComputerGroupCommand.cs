@@ -12,19 +12,20 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using System.Collections;
 using System.Collections.Generic;
 using System.Management.Automation;
-using Microsoft.Azure.Commands.OperationalInsights.Models;
 using Microsoft.Azure.Management.OperationalInsights.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
+using System.Net;
 
 namespace Microsoft.Azure.Commands.OperationalInsights
 {
-    [Cmdlet(VerbsCommon.New, Constants.ComputerGroup, SupportsShouldProcess = true)]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "OperationalInsightsComputerGroup", SupportsShouldProcess = true), OutputType(typeof(HttpStatusCode))]
     public class NewAzureOperationalInsightsComputerGroupCommand : OperationalInsightsBaseCmdlet
     {
         [Parameter(Position = 0, Mandatory = true, ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -64,7 +65,7 @@ namespace Microsoft.Azure.Commands.OperationalInsights
 
         protected override void ProcessRecord()
         {
-            SavedSearchProperties properties = new SavedSearchProperties()
+            SavedSearch properties = new SavedSearch()
             {
                 Category = this.Category,
                 DisplayName = this.DisplayName,
@@ -72,11 +73,6 @@ namespace Microsoft.Azure.Commands.OperationalInsights
                 Version = this.Version,
                 Tags = new List<Tag>() { new Tag() { Name = "Group", Value = "Computer" } }
             };
-
-            if (!SearchCommandHelper.IsListOfComputers(this.Query))
-            {
-                throw new PSArgumentException("Query is not a list of computers. Please use aggregations such as: distinct Computer or measure count() by Computer.");
-            }
 
             WriteObject(OperationalInsightsClient.CreateOrUpdateSavedSearch(ResourceGroupName, WorkspaceName, SavedSearchId, properties, Force, ConfirmAction), true);
         }

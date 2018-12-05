@@ -13,6 +13,7 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Automation.Common;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.Automation.Models;
 using System.Collections;
 using System.Management.Automation;
@@ -24,23 +25,23 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
     /// <summary>
     /// Creates azure automation accounts based on automation account name and location.
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmAutomationAccount")]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "AutomationAccount")]
     [OutputType(typeof(AutomationAccount))]
     public class NewAzureAutomationAccount : ResourceManager.Common.AzureRMCmdlet
     {
         /// <summary>
         /// The automation client.
         /// </summary>
-        private IAutomationClient automationClient;
+        private IAutomationPSClient automationClient;
 
         /// <summary>
         /// Gets or sets the automation client base.
         /// </summary>
-        public IAutomationClient AutomationClient
+        public IAutomationPSClient AutomationClient
         {
             get
             {
-                return this.automationClient = this.automationClient ?? new AutomationClient(DefaultProfile.Context);
+                return this.automationClient = this.automationClient ?? new AutomationPSClient(DefaultProfile.DefaultContext);
             }
 
             set
@@ -53,6 +54,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
         /// Gets or sets the automation account name.
         /// </summary>
         [Parameter(Position = 0, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -68,6 +70,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
         /// Gets or sets the location.
         /// </summary>
         [Parameter(Position = 2, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The geo region of the automation account")]
+        [LocationCompleter("Microsoft.Automation/automationAccounts")]
         public string Location { get; set; }
 
         /// <summary>

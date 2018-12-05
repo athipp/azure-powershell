@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
 {
-    [Cmdlet(VerbsLifecycle.Stop, Constants.FileCopyCmdletName, SupportsShouldProcess = true)]
+    [Cmdlet("Stop", Azure.Commands.ResourceManager.Common.AzureRMConstants.AzurePrefix + "StorageFileCopy", SupportsShouldProcess = true), OutputType(typeof(void))]
     public class StopAzureStorageFileCopyCommand : AzureStorageFileCmdletBase
     {
         [Parameter(
@@ -95,11 +95,11 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
                 //Make sure we use the correct copy id to abort
                 //Use default retry policy for FetchBlobAttributes
                 FileRequestOptions options = RequestOptions;
-                await localChannel.FetchFileAttributesAsync(file, null, options, OperationContext, CmdletCancellationToken);
+                await localChannel.FetchFileAttributesAsync(file, null, options, OperationContext, CmdletCancellationToken).ConfigureAwait(false);
 
                 if (file.CopyState == null || string.IsNullOrEmpty(file.CopyState.CopyId))
                 {
-                    ArgumentException e = new ArgumentException(String.Format(Resources.FileCopyTaskNotFound, file.Uri.ToString()));
+                    ArgumentException e = new ArgumentException(String.Format(Resources.FileCopyTaskNotFound, file.SnapshotQualifiedUri.ToString()));
                     OutputStream.WriteError(taskId, e);
                 }
                 else
@@ -109,10 +109,10 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
 
                 if (!Force)
                 {
-                    string confirmation = String.Format(Resources.ConfirmAbortFileCopyOperation, file.Uri.ToString(), abortCopyId);
-                    if (!await OutputStream.ConfirmAsync(confirmation))
+                    string confirmation = String.Format(Resources.ConfirmAbortFileCopyOperation, file.SnapshotQualifiedUri.ToString(), abortCopyId);
+                    if (!await OutputStream.ConfirmAsync(confirmation).ConfigureAwait(false))
                     {
-                        string cancelMessage = String.Format(Resources.StopCopyOperationCancelled, file.Uri.ToString());
+                        string cancelMessage = String.Format(Resources.StopCopyOperationCancelled, file.SnapshotQualifiedUri.ToString());
                         OutputStream.WriteVerbose(taskId, cancelMessage);
                     }
                 }
@@ -122,8 +122,8 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
                 abortCopyId = copyId;
             }
 
-            await localChannel.AbortCopyAsync(file, abortCopyId, null, requestOptions, OperationContext, CmdletCancellationToken);
-            string message = String.Format(Resources.StopCopyFileSuccessfully, file.Uri.ToString());
+            await localChannel.AbortCopyAsync(file, abortCopyId, null, requestOptions, OperationContext, CmdletCancellationToken).ConfigureAwait(false);
+            string message = String.Format(Resources.StopCopyFileSuccessfully, file.SnapshotQualifiedUri.ToString());
             OutputStream.WriteObject(taskId, message);
         }
     }

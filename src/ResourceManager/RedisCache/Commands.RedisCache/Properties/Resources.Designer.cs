@@ -61,6 +61,69 @@ namespace Microsoft.Azure.Commands.RedisCache.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Redis Cache with name &apos;{0}&apos; does not exists..
+        /// </summary>
+        internal static string CacheNotFound {
+            get {
+                return ResourceManager.GetString("CacheNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Creating patching schedule on redis cache &apos;{0}&apos;....
+        /// </summary>
+        internal static string CreatePatchSchedule {
+            get {
+                return ResourceManager.GetString("CreatePatchSchedule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Creating redis cache &apos;{0}&apos; ....
+        /// </summary>
+        internal static string CreateRedisCache {
+            get {
+                return ResourceManager.GetString("CreateRedisCache", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Creating firewall rule on Redis Cache &apos;{0}&apos;....
+        /// </summary>
+        internal static string CreatingFirewallRule {
+            get {
+                return ResourceManager.GetString("CreatingFirewallRule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exporting data from redis cache &apos;{0}&apos; ....
+        /// </summary>
+        internal static string ExportRedisCache {
+            get {
+                return ResourceManager.GetString("ExportRedisCache", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Operation to create firewall rule failed..
+        /// </summary>
+        internal static string FirewallRuleCreationFailed {
+            get {
+                return ResourceManager.GetString("FirewallRuleCreationFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cache &apos;{0}&apos; does not have a firewall rule with name &apos;{1}&apos;..
+        /// </summary>
+        internal static string FirewallRuleNotFound {
+            get {
+                return ResourceManager.GetString("FirewallRuleNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Are you sure you want to import data into redis cache &apos;{0}&apos;?.
         /// </summary>
         internal static string ImportingRedisCache {
@@ -75,6 +138,15 @@ namespace Microsoft.Azure.Commands.RedisCache.Properties {
         internal static string ImportRedisCache {
             get {
                 return ResourceManager.GetString("ImportRedisCache", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redis Cache Id &apos;{0}&apos;is not valid. Redis Cache Id should be of the form &quot;/subscriptions/&lt;subscription id&gt;/resourceGroups/&lt;resource group name&gt;/providers/Microsoft.Cache/Redis/&lt;cache name&gt;&quot;. .
+        /// </summary>
+        internal static string InvalidRedisCacheId {
+            get {
+                return ResourceManager.GetString("InvalidRedisCacheId", resourceCulture);
             }
         }
         
@@ -97,11 +169,47 @@ namespace Microsoft.Azure.Commands.RedisCache.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Operation to link cache &apos;{0}&apos; to cache &apos;{1}&apos; failed..
+        /// </summary>
+        internal static string LinkedServerCreationFailed {
+            get {
+                return ResourceManager.GetString("LinkedServerCreationFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Primary Cache &apos;{0}&apos; does not have link with secondary cache &apos;{1}&apos;..
+        /// </summary>
+        internal static string LinkedServerNotFound {
+            get {
+                return ResourceManager.GetString("LinkedServerNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Linking Redis Cache &apos;{0}&apos; to &apos;{1}&apos;....
+        /// </summary>
+        internal static string LinkingRedisCache {
+            get {
+                return ResourceManager.GetString("LinkingRedisCache", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The &apos;MaxMemoryPolicy&apos; setting has been deprecated. Please use &apos;RedisConfiguration&apos; setting to set MaxMemoryPolicy. e.g. -RedisConfiguration @{&quot;maxmemory-policy&quot; = &quot;allkeys-lru&quot;}.
         /// </summary>
         internal static string MaxMemoryPolicyException {
             get {
                 return ResourceManager.GetString("MaxMemoryPolicyException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to There are no patch schedules found for redis cache &apos;{0}&apos;..
+        /// </summary>
+        internal static string PatchScheduleNotFound {
+            get {
+                return ResourceManager.GetString("PatchScheduleNotFound", resourceCulture);
             }
         }
         
@@ -151,6 +259,33 @@ namespace Microsoft.Azure.Commands.RedisCache.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Removing firewall rule &apos;{0}&apos; from Redis Cache &apos;{1}&apos;....
+        /// </summary>
+        internal static string RemoveFirewallRule {
+            get {
+                return ResourceManager.GetString("RemoveFirewallRule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unlinking Redis Cache &apos;{0}&apos; from &apos;{1}&apos;....
+        /// </summary>
+        internal static string RemoveLinkedServer {
+            get {
+                return ResourceManager.GetString("RemoveLinkedServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Removing patching schedule from redis cache &apos;{0}&apos;....
+        /// </summary>
+        internal static string RemovePatchSchedule {
+            get {
+                return ResourceManager.GetString("RemovePatchSchedule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Removing redis cache &apos;{0}&apos; ....
         /// </summary>
         internal static string RemoveRedisCache {
@@ -187,11 +322,29 @@ namespace Microsoft.Azure.Commands.RedisCache.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Enabling diagnostics on redis cache &apos;{0}&apos; ....
+        /// </summary>
+        internal static string SetRedisCacheDiagnostics {
+            get {
+                return ResourceManager.GetString("SetRedisCacheDiagnostics", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to StorageAccountId is not valid ARM resource Id..
         /// </summary>
         internal static string StorageAccountIdException {
             get {
                 return ResourceManager.GetString("StorageAccountIdException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Updating redis cache &apos;{0}&apos; ....
+        /// </summary>
+        internal static string UpdateRedisCache {
+            get {
+                return ResourceManager.GetString("UpdateRedisCache", resourceCulture);
             }
         }
     }

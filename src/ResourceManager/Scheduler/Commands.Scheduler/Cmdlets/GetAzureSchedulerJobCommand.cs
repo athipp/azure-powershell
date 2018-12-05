@@ -18,14 +18,16 @@ namespace Microsoft.Azure.Commands.Scheduler.Cmdlets
     using Microsoft.Azure.Commands.Scheduler.Properties;
     using Microsoft.Azure.Commands.Scheduler.Utilities;
     using Microsoft.Azure.Commands.Scheduler.Models;
+    using ResourceManager.Common.ArgumentCompleters;
 
     /// <summary>
     /// Gets jobs info.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmSchedulerJob"), OutputType(typeof(PSSchedulerJobDefinition))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SchedulerJob"), OutputType(typeof(PSSchedulerJobDefinition))]
     public class GetAzureSchedulerJobCommand : SchedulerBaseCmdlet
     {
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The targeted resource group for job.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

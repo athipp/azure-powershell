@@ -14,6 +14,7 @@
 
 namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
 {
+    using Azure.Commands.Common.Authentication.Abstractions;
     using Microsoft.WindowsAzure.Commands.Common.Storage;
     using Microsoft.WindowsAzure.Commands.Storage.Common;
     using Microsoft.WindowsAzure.Commands.Storage.Model.Contract;
@@ -23,7 +24,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
     using System.Management.Automation;
     using System.Security.Permissions;
 
-    [Cmdlet(VerbsCommon.New, StorageNouns.ShareSas), OutputType(typeof(String))]
+    [Cmdlet("New", Azure.Commands.ResourceManager.Common.AzureRMConstants.AzurePrefix + "StorageShareSASToken"), OutputType(typeof(String))]
     public class NewAzureStorageShareSasToken : AzureStorageFileCmdletBase
     {
         /// <summary>
@@ -83,7 +84,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Azure Storage Context Object")]
         [ValidateNotNull]
-        public override AzureStorageContext Context { get; set; }
+        public override IStorageContext Context { get; set; }
 
         // Overwrite the useless parameter
         public override int? ServerTimeoutPerRequest { get; set; }
@@ -113,7 +114,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
 
             if (FullUri)
             {
-                string fullUri = SasTokenHelper.GetFullUriWithSASToken(fileShare.Uri.AbsoluteUri.ToString(), sasToken);
+                string fullUri = SasTokenHelper.GetFullUriWithSASToken(fileShare.SnapshotQualifiedUri.AbsoluteUri.ToString(), sasToken);
 
                 WriteObject(fullUri);
             }

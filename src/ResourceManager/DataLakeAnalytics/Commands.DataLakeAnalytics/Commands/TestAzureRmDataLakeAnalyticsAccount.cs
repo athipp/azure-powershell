@@ -13,11 +13,12 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.DataLakeAnalytics.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.DataLakeAnalytics
 {
-    [Cmdlet(VerbsDiagnostic.Test, "AzureRmDataLakeAnalyticsAccount"), OutputType(typeof(bool))]
+    [Cmdlet("Test", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "DataLakeAnalyticsAccount"), OutputType(typeof(bool))]
     [Alias("Test-AdlAnalyticsAccount")]
     public class TestAzureDataLakeAnalyticsAccount : DataLakeAnalyticsCmdletBase
     {
@@ -28,6 +29,7 @@ namespace Microsoft.Azure.Commands.DataLakeAnalytics
 
         [Parameter(ValueFromPipelineByPropertyName = true, Position = 1, Mandatory = false,
             HelpMessage = "Name of resource group under which want to test the account.")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

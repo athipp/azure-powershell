@@ -22,7 +22,7 @@ using MNM = Microsoft.Azure.Management.Network.Models;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Set, "AzureRmExpressRouteCircuit"), OutputType(typeof(PSExpressRouteCircuit))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ExpressRouteCircuit"), OutputType(typeof(PSExpressRouteCircuit))]
     public class SetAzureExpressRouteCircuitCommand : ExpressRouteCircuitBaseCmdlet
     {
         [Parameter(
@@ -30,6 +30,9 @@ namespace Microsoft.Azure.Commands.Network
             ValueFromPipeline = true,
             HelpMessage = "The ExpressRouteCircuit")]
         public PSExpressRouteCircuit ExpressRouteCircuit { get; set; }
+
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         public override void Execute()
         {
@@ -40,7 +43,7 @@ namespace Microsoft.Azure.Commands.Network
             }
 
             // Map to the sdk object
-            var circuitModel = Mapper.Map<MNM.ExpressRouteCircuit>(this.ExpressRouteCircuit);
+            var circuitModel = NetworkResourceManagerProfile.Mapper.Map<MNM.ExpressRouteCircuit>(this.ExpressRouteCircuit);
             circuitModel.Tags = TagsConversionHelper.CreateTagDictionary(this.ExpressRouteCircuit.Tag, validate: true);
 
             // Execute the Create ExpressRouteCircuit call

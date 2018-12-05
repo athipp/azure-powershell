@@ -17,42 +17,40 @@ namespace Microsoft.Azure.Commands.ApiManagement.Commands
 {
     using Microsoft.Azure.Commands.ApiManagement.Models;
     using ResourceManager.Common;
+    using ResourceManager.Common.ArgumentCompleters;
     using System;
     using System.Management.Automation;
 
-    [Cmdlet(VerbsCommon.New, "AzureRmApiManagementVirtualNetwork"), OutputType(typeof(PsApiManagementVirtualNetwork))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApiManagementVirtualNetwork"), OutputType(typeof(PsApiManagementVirtualNetwork))]
     public class NewAzureApiManagementVirtualNetwork : AzureRMCmdlet
     {
         [Parameter(
             ValueFromPipelineByPropertyName = false,
             Mandatory = true,
             HelpMessage = "Location of the virtual network.")]
-
+        [LocationCompleter("Microsoft.ApiManagement/service")]
         [ValidateNotNullOrEmpty]
+        [Obsolete("The location property will be deprecated in future" +
+            "breaking change release. It is no longer required.")]
         public string Location { get; set; }
 
         [Parameter(
             ValueFromPipelineByPropertyName = false,
             Mandatory = true,
-            HelpMessage = "Name of the sub network.")]
+            HelpMessage = "The full resource ID of a subnet in a virtual network to deploy the Api Management service in. Example format:" +
+                          "/subscriptions/{subid}/resourceGroups/{resourceGroupName}/Microsoft.{Network|ClassicNetwork}/VirtualNetworks/vnet1/subnets/subnet1.")]
         [ValidateNotNullOrEmpty]
-        public string SubnetName { get; set; }
-
-        [Parameter(
-            ValueFromPipelineByPropertyName = false,
-            Mandatory = true,
-            HelpMessage = "Identifier of the virtual network.")]
-        [ValidateNotNullOrEmpty]
-        public Guid VnetId { get; set; }
+        public string SubnetResourceId { get; set; }
 
         public override void ExecuteCmdlet()
         {
             WriteObject(
                 new PsApiManagementVirtualNetwork
                 {
+#pragma warning disable CS0618
                     Location = Location,
-                    SubnetName = SubnetName,
-                    VnetId = VnetId
+#pragma warning restore CS0618
+                    SubnetResourceId = SubnetResourceId
                 });
         }
     }

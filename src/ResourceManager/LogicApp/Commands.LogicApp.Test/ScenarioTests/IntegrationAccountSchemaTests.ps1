@@ -18,7 +18,7 @@ Test New-AzureRmIntegrationAccountSchema command
 #>
 function Test-CreateIntegrationAccountSchema
 {
-	$schemaFilePath = "$TestOutputRoot\Resources\OrderFile.xsd"
+	$schemaFilePath = Join-Path $TestOutputRoot "\Resources\OrderFile.xsd"
 	$schemaContent = [IO.File]::ReadAllText($schemaFilePath)
 	
 	$resourceGroup = TestSetup-CreateNamedResourceGroup "IntegrationAccountPsCmdletTest"
@@ -30,16 +30,16 @@ function Test-CreateIntegrationAccountSchema
 
 	$integrationAccount = TestSetup-CreateIntegrationAccount $resourceGroup.ResourceGroupName $integrationAccountName
 
-	$integrationAccountSchema1 =  New-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -Name $integrationAccountName -SchemaName $integrationAccountSchemaName1 -SchemaDefinition $schemaContent 
+	$integrationAccountSchema1 =  New-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName -SchemaName $integrationAccountSchemaName1 -SchemaDefinition $schemaContent 
 	Assert-AreEqual $integrationAccountSchemaName1 $integrationAccountSchema1.Name
 
-	$integrationAccountSchema2 =  New-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -Name $integrationAccountName -SchemaName $integrationAccountSchemaName2 -SchemaFilePath $schemaFilePath
+	$integrationAccountSchema2 =  New-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName -SchemaName $integrationAccountSchemaName2 -SchemaFilePath $schemaFilePath
 	Assert-AreEqual $integrationAccountSchemaName2 $integrationAccountSchema2.Name
 
-	$integrationAccountSchema3 =  New-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -Name $integrationAccountName -SchemaName $integrationAccountSchemaName3 -SchemaFilePath $schemaFilePath -SchemaType "Xml" -ContentType "application/xml"
+	$integrationAccountSchema3 =  New-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName -SchemaName $integrationAccountSchemaName3 -SchemaFilePath $schemaFilePath -SchemaType "Xml" -ContentType "application/xml"
 	Assert-AreEqual $integrationAccountSchemaName3 $integrationAccountSchema3.Name
 
-	Remove-AzureRmIntegrationAccount -ResourceGroupName $resourceGroup.ResourceGroupName -Name $integrationAccountName -Force
+	Remove-AzureRmIntegrationAccount -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName -Force
 }
 
 <#
@@ -48,9 +48,9 @@ Test Get-AzureRmIntegrationAccountSchema command
 #>
 function Test-GetIntegrationAccountSchema
 {
-	$schemaFilePath = "$TestOutputRoot\Resources\OrderFile.xsd"
-	$schemaContent = [IO.File]::ReadAllText($schemaFilePath)	
-	
+	$schemaFilePath = Join-Path $TestOutputRoot "\Resources\OrderFile.xsd"
+	$schemaContent = [IO.File]::ReadAllText($schemaFilePath)
+
 	$resourceGroup = TestSetup-CreateNamedResourceGroup "IntegrationAccountPsCmdletTest"
 	$integrationAccountName = getAssetname	
 	
@@ -58,17 +58,17 @@ function Test-GetIntegrationAccountSchema
 
 	$integrationAccount = TestSetup-CreateIntegrationAccount $resourceGroup.ResourceGroupName $integrationAccountName
 
-	$integrationAccountSchema =  New-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -Name $integrationAccountName -SchemaName $integrationAccountSchemaName -SchemaDefinition $schemaContent
+	$integrationAccountSchema =  New-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName -SchemaName $integrationAccountSchemaName -SchemaDefinition $schemaContent
 	Assert-AreEqual $integrationAccountSchemaName $integrationAccountSchema.Name
 
-	$result =  Get-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -Name $integrationAccountName -SchemaName $integrationAccountSchemaName
+	$result =  Get-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName -SchemaName $integrationAccountSchemaName
 	Assert-AreEqual $integrationAccountSchemaName $result.Name
 
-	$result1 =  Get-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -Name $integrationAccountName
+	$result1 =  Get-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName
 	Assert-AreEqual $integrationAccountSchemaName $result1.Name
 	Assert-True { $result1.Count -gt 0 }	
 
-	Remove-AzureRmIntegrationAccount -ResourceGroupName $resourceGroup.ResourceGroupName -Name $integrationAccountName -Force
+	Remove-AzureRmIntegrationAccount -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName -Force
 }
 
 <#
@@ -77,7 +77,7 @@ Test Remove-AzureRmIntegrationAccountSchema command
 #>
 function Test-RemoveIntegrationAccountSchema
 {
-	$schemaFilePath = "$TestOutputRoot\Resources\OrderFile.xsd"
+	$schemaFilePath = Join-Path $TestOutputRoot "\Resources\OrderFile.xsd"
 	$schemaContent = [IO.File]::ReadAllText($schemaFilePath)
 	
 	$resourceGroup = TestSetup-CreateNamedResourceGroup "IntegrationAccountPsCmdletTest"
@@ -87,12 +87,12 @@ function Test-RemoveIntegrationAccountSchema
 
 	$integrationAccount = TestSetup-CreateIntegrationAccount $resourceGroup.ResourceGroupName $integrationAccountName
 
-	$integrationAccountSchema =  New-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -Name $integrationAccountName -SchemaName $integrationAccountSchemaName -SchemaDefinition $schemaContent
+	$integrationAccountSchema =  New-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName -SchemaName $integrationAccountSchemaName -SchemaDefinition $schemaContent
 	Assert-AreEqual $integrationAccountSchemaName $integrationAccountSchema.Name
 
-	Remove-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -Name $integrationAccountName -SchemaName $integrationAccountSchemaName -Force	
+	Remove-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName -SchemaName $integrationAccountSchemaName -Force	
 
-	Remove-AzureRmIntegrationAccount -ResourceGroupName $resourceGroup.ResourceGroupName -Name $integrationAccountName -Force
+	Remove-AzureRmIntegrationAccount -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName -Force
 }
 
 <#
@@ -101,7 +101,7 @@ Test Set-AzureRmIntegrationAccountSchema command
 #>
 function Test-UpdateIntegrationAccountSchema
 {
-	$schemaFilePath = "$TestOutputRoot\Resources\OrderFile.xsd"
+	$schemaFilePath = Join-Path $TestOutputRoot "\Resources\OrderFile.xsd"
 	$schemaContent = [IO.File]::ReadAllText($schemaFilePath)
 	
 	$resourceGroup = TestSetup-CreateNamedResourceGroup "IntegrationAccountPsCmdletTest"
@@ -111,14 +111,42 @@ function Test-UpdateIntegrationAccountSchema
 
 	$integrationAccount = TestSetup-CreateIntegrationAccount $resourceGroup.ResourceGroupName $integrationAccountName
 
-	$integrationAccountSchema =  New-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -Name $integrationAccountName -SchemaName $integrationAccountSchemaName -SchemaDefinition $schemaContent
+	$integrationAccountSchema =  New-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName -SchemaName $integrationAccountSchemaName -SchemaDefinition $schemaContent
 	Assert-AreEqual $integrationAccountSchemaName $integrationAccountSchema.Name
 
-	$integrationAccountSchemaUpdated =  Set-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -Name $integrationAccountName -SchemaName $integrationAccountSchemaName -SchemaDefinition $schemaContent -Force
+	$integrationAccountSchemaUpdated =  Set-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName -SchemaName $integrationAccountSchemaName -SchemaDefinition $schemaContent -Force
 	Assert-AreEqual $integrationAccountSchemaName $integrationAccountSchema.Name
 
-	$integrationAccountSchemaUpdated =  Set-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -Name $integrationAccountName -SchemaName $integrationAccountSchemaName -SchemaDefinition $schemaContent -Force
+	$integrationAccountSchemaUpdated =  Set-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName -SchemaName $integrationAccountSchemaName -SchemaDefinition $schemaContent -Force
 	Assert-AreEqual $integrationAccountSchemaName $integrationAccountSchema.Name
 	
-	Remove-AzureRmIntegrationAccount -ResourceGroupName $resourceGroup.ResourceGroupName -Name $integrationAccountName -Force
+	Remove-AzureRmIntegrationAccount -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName -Force
+}
+
+<#
+.SYNOPSIS
+Test Get-AzureRmIntegrationAccountSchema command : Paging test
+#>
+function Test-ListIntegrationAccountSchema
+{
+	$schemaFilePath = Join-Path $TestOutputRoot "\Resources\OrderFile.xsd"
+	$schemaContent = [IO.File]::ReadAllText($schemaFilePath)
+
+	$resourceGroup = TestSetup-CreateNamedResourceGroup "IntegrationAccountPsCmdletTest"
+	$integrationAccountName = getAssetname
+
+	$integrationAccount = TestSetup-CreateIntegrationAccount $resourceGroup.ResourceGroupName $integrationAccountName
+
+	$val=0
+	while($val -ne 1)
+	{
+		$val++ ;
+		$integrationAccountSchemaName = getAssetname
+		New-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName -SchemaName $integrationAccountSchemaName -SchemaDefinition $schemaContent
+	}
+
+	$result =  Get-AzureRmIntegrationAccountSchema -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName
+	Assert-True { $result.Count -eq 1 }
+
+	Remove-AzureRmIntegrationAccount -ResourceGroupName $resourceGroup.ResourceGroupName -IntegrationAccountName $integrationAccountName -Force
 }

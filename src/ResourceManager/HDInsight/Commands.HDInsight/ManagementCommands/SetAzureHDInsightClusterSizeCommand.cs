@@ -14,17 +14,14 @@
 
 using Microsoft.Azure.Commands.HDInsight.Commands;
 using Microsoft.Azure.Commands.HDInsight.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.HDInsight.Models;
 using System.Linq;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.HDInsight
 {
-    [Cmdlet(
-        VerbsCommon.Set,
-        Constants.CommandNames.AzureHDInsightClusterSize),
-    OutputType(
-        typeof(Cluster))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "HDInsightClusterSize"),OutputType(typeof(Cluster))]
     public class SetAzureHDInsightClusterSizeCommand : HDInsightCmdletBase
     {
         private ClusterResizeParameters resizeParams;
@@ -47,6 +44,7 @@ namespace Microsoft.Azure.Commands.HDInsight
         }
 
         [Parameter(HelpMessage = "Gets or sets the name of the resource group.")]
+        [ResourceGroupCompleter]
         public string ResourceGroupName { get; set; }
 
         #endregion

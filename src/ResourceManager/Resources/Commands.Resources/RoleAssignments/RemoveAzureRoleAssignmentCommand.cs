@@ -12,10 +12,12 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Resources.Models;
-using Microsoft.Azure.Commands.Resources.Models.ActiveDirectory;
 using Microsoft.Azure.Commands.Resources.Models.Authorization;
+using Microsoft.Azure.Graph.RBAC.Version1_6.ActiveDirectory;
 using Microsoft.WindowsAzure.Commands.Common;
+using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using System;
 using System.Collections.Generic;
 using System.Management.Automation;
@@ -26,8 +28,7 @@ namespace Microsoft.Azure.Commands.Resources
     /// <summary>
     /// Removes a given role assignment.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "AzureRmRoleAssignment", SupportsShouldProcess = true, 
-        DefaultParameterSetName = ParameterSet.Empty), OutputType(typeof(List<PSRoleAssignment>))]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "RoleAssignment", SupportsShouldProcess = true,DefaultParameterSetName = ParameterSet.Empty), OutputType(typeof(PSRoleAssignment))]
     public class RemoveAzureRoleAssignmentCommand : ResourcesBaseCmdlet
     {
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = ParameterSet.Empty,
@@ -76,6 +77,7 @@ namespace Microsoft.Azure.Commands.Resources
             HelpMessage = "Resource group to assign the role to.")]
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, ParameterSetName = ParameterSet.ResourceWithSPN,
             HelpMessage = "Resource group to assign the role to.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -150,9 +152,20 @@ namespace Microsoft.Azure.Commands.Resources
         [Parameter(Mandatory = false)]
         public SwitchParameter PassThru { get; set; }
 
+        [ValidateNotNullOrEmpty]
+        [Parameter(Position = 0, Mandatory = true, ValueFromPipeline = true, ParameterSetName = ParameterSet.RoleAssignment, HelpMessage = "Role Assignment.")]
+        public PSRoleAssignment InputObject { get; set; }
+
         public override void ExecuteCmdlet()
         {
             IEnumerable<PSRoleAssignment> roleAssignments = null;
+            if (this.IsParameterBound(c => c.InputObject))
+            {
+                Scope = InputObject.Scope;
+                ObjectId = InputObject.ObjectId;
+                RoleDefinitionName = InputObject.RoleDefinitionName;
+            }
+
             FilterRoleAssignmentsOptions options = new FilterRoleAssignmentsOptions()
             {
                 Scope = Scope,
@@ -170,10 +183,16 @@ namespace Microsoft.Azure.Commands.Resources
                     ResourceGroupName = ResourceGroupName,
                     ResourceName = ResourceName,
                     ResourceType = ResourceType,
-                    Subscription = DefaultProfile.Context.Subscription.Id.ToString()
+                    Subscription = DefaultProfile.DefaultContext.Subscription.Id.ToString()
                 },
-                ExcludeAssignmentsForDeletedPrincipals = false
+                ExcludeAssignmentsForDeletedPrincipals = false,
+                // we should never expand principal groups in the Delete scenario
+                ExpandPrincipalGroups = false,
+                // never include classic administrators in the Delete scenario
+                IncludeClassicAdministrators = false
             };
+
+            AuthorizationClient.ValidateScope(options.Scope, true);
 
             ConfirmAction(
                 ProjectResources.RemovingRoleAssignment,
@@ -181,7 +200,7 @@ namespace Microsoft.Azure.Commands.Resources
                 () =>
                 {
                     roleAssignments = PoliciesClient.RemoveRoleAssignment(options,
-                        DefaultProfile.Context.Subscription.Id.ToString());
+                        DefaultProfile.DefaultContext.Subscription.Id.ToString());
                     if (PassThru)
                     {
                         WriteObject(roleAssignments, enumerateCollection: true);

@@ -13,16 +13,13 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.HDInsight.Commands;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.HDInsight.Models;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.HDInsight
 {
-    [Cmdlet(
-        VerbsSecurity.Revoke,
-        Constants.CommandNames.AzureHDInsightRdpServicesAccess),
-    OutputType(
-        typeof(void))]
+    [Cmdlet("Revoke", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "HDInsightRdpServicesAccess"),OutputType(typeof(void))]
     public class RevokeAzureHDInsightRdpServicesAccessCommand : HDInsightCmdletBase
     {
         #region Input Parameter Definitions
@@ -34,6 +31,7 @@ namespace Microsoft.Azure.Commands.HDInsight
         public string ClusterName { get; set; }
 
         [Parameter(HelpMessage = "Gets or sets the name of the resource group.")]
+        [ResourceGroupCompleter]
         public string ResourceGroupName { get; set; }
 
         #endregion

@@ -13,17 +13,14 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.HDInsight.Commands;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.HDInsight.Models;
 using Microsoft.WindowsAzure.Commands.Common;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.HDInsight
 {
-    [Cmdlet(
-        VerbsSecurity.Grant,
-        Constants.CommandNames.AzureHDInsightHttpServicesAccess),
-    OutputType(
-        typeof(HttpConnectivitySettings))]
+    [Cmdlet("Grant", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "HDInsightHttpServicesAccess"),OutputType(typeof(HttpConnectivitySettings))]
     public class GrantAzureHDInsightHttpServicesAccessCommand : HDInsightCmdletBase
     {
         #region Input Parameter Definitions
@@ -40,6 +37,7 @@ namespace Microsoft.Azure.Commands.HDInsight
         public PSCredential HttpCredential { get; set; }
 
         [Parameter(HelpMessage = "Gets or sets the name of the resource group.")]
+        [ResourceGroupCompleter]
         public string ResourceGroupName { get; set; }
 
         #endregion

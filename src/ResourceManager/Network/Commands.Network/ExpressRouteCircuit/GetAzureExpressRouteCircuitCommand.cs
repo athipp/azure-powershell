@@ -16,10 +16,13 @@ using Microsoft.Azure.Commands.Network.Models;
 using Microsoft.Azure.Management.Network;
 using System.Collections.Generic;
 using System.Management.Automation;
+using Microsoft.Azure.Management.Network.Models;
+using Microsoft.Rest.Azure;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmExpressRouteCircuit"), OutputType(typeof(PSExpressRouteCircuit))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ExpressRouteCircuit"), OutputType(typeof(PSExpressRouteCircuit))]
     public class GetAzureExpressRouteCircuitCommand : ExpressRouteCircuitBaseCmdlet
     {
         [Alias("ResourceName")]
@@ -27,6 +30,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource name.")]
+        [ResourceNameCompleter("Microsoft.Network/expressRouteCircuits", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public virtual string Name { get; set; }
 
@@ -34,6 +38,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public virtual string ResourceGroupName { get; set; }
 
@@ -46,23 +51,20 @@ namespace Microsoft.Azure.Commands.Network
 
                 WriteObject(circuit);
             }
-            else if (!string.IsNullOrEmpty(this.ResourceGroupName))
-            {
-                var circuitList = this.ExpressRouteCircuitClient.List(this.ResourceGroupName);
-
-                var psCircuits = new List<PSExpressRouteCircuit>();
-                foreach (var ExpressRouteCircuit in circuitList)
-                {
-                    var psVnet = this.ToPsExpressRouteCircuit(ExpressRouteCircuit);
-                    psVnet.ResourceGroupName = this.ResourceGroupName;
-                    psCircuits.Add(psVnet);
-                }
-
-                WriteObject(psCircuits, true);
-            }
             else
             {
-                var circuitList = this.ExpressRouteCircuitClient.ListAll();
+                IPage<ExpressRouteCircuit> circuitPage;
+                if (!string.IsNullOrEmpty(this.ResourceGroupName))
+                {
+                    circuitPage = this.ExpressRouteCircuitClient.List(this.ResourceGroupName);
+                }
+                else
+                {
+                    circuitPage = this.ExpressRouteCircuitClient.ListAll();
+                }
+
+                // Get all resources by polling on next page link
+                var circuitList = ListNextLink<ExpressRouteCircuit>.GetAllResourcesByPollingNextLink(circuitPage, this.ExpressRouteCircuitClient.ListNext);
 
                 var psCircuits = new List<PSExpressRouteCircuit>();
                 foreach (var ExpressRouteCircuit in circuitList)

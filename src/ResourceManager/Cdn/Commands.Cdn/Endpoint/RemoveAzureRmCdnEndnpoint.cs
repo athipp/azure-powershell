@@ -21,10 +21,11 @@ using Microsoft.Azure.Commands.Cdn.Properties;
 using Microsoft.Azure.Management.Cdn;
 using Microsoft.Azure.Management.Cdn.Models;
 using System.Linq;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Cdn.Endpoint
 {
-    [Cmdlet(VerbsCommon.Remove, "AzureRmCdnEndpoint", SupportsShouldProcess = true), OutputType(typeof(bool))]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CdnEndpoint", SupportsShouldProcess = true), OutputType(typeof(bool))]
     public class RemoveAzureCdnEndpoint : AzureCdnCmdletBase
     {
         [Parameter(Mandatory = true, ParameterSetName = FieldsParameterSet, HelpMessage = "Azure CDN endpoint name.")]
@@ -36,6 +37,7 @@ namespace Microsoft.Azure.Commands.Cdn.Endpoint
         public string ProfileName { get; set; }
 
         [Parameter(Mandatory = true, ParameterSetName = FieldsParameterSet, HelpMessage = "The resource group of the Azure CDN profile")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -58,9 +60,9 @@ namespace Microsoft.Azure.Commands.Cdn.Endpoint
                 EndpointName = CdnEndpoint.Name;
             }
 
-            var existingEndpoint = CdnManagementClient.Endpoints.ListByProfile(ProfileName, ResourceGroupName)
-                .Where(e => e.Name.ToLower() == EndpointName.ToLower())
-                .FirstOrDefault();
+            var existingEndpoint = CdnManagementClient.Endpoints
+                .ListByProfile(ResourceGroupName, ProfileName)
+                .FirstOrDefault(e => e.Name.ToLower() == EndpointName.ToLower());
 
             if(existingEndpoint == null)
             {
@@ -75,7 +77,7 @@ namespace Microsoft.Azure.Commands.Cdn.Endpoint
                 string.Format(Resources.Confirm_RemoveEndpoint, EndpointName, ProfileName, ResourceGroupName),
                 this.MyInvocation.InvocationName,
                 EndpointName,
-                () => CdnManagementClient.Endpoints.DeleteIfExists(EndpointName, ProfileName, ResourceGroupName));
+                () => CdnManagementClient.Endpoints.Delete(ResourceGroupName, ProfileName, EndpointName));
            
             if (PassThru)
             {

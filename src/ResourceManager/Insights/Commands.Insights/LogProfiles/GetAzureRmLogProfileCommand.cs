@@ -12,8 +12,10 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using System.Collections.Generic;
 using Microsoft.Azure.Commands.Insights.OutputClasses;
-using Microsoft.Azure.Management.Insights.Models;
+using Microsoft.Azure.Management.Monitor;
+using Microsoft.Azure.Management.Monitor.Models;
 using System.Linq;
 using System.Management.Automation;
 using System.Threading;
@@ -23,7 +25,7 @@ namespace Microsoft.Azure.Commands.Insights.LogProfiles
     /// <summary>
     /// Gets the log profiles.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmLogProfile"), OutputType(typeof(PSLogProfileCollection))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "LogProfile"), OutputType(typeof(PSLogProfileCollection))]
     public class GetAzureRmLogProfileCommand : ManagementCmdletBase
     {
 
@@ -43,18 +45,17 @@ namespace Microsoft.Azure.Commands.Insights.LogProfiles
             var result = new PSLogProfileCollection();
             if (string.IsNullOrWhiteSpace(this.Name))
             {
-                LogProfileListResponse resultList = this.InsightsManagementClient.LogProfilesOperations.ListAsync(CancellationToken.None).Result;
+                IEnumerable<LogProfileResource> resultList = this.MonitorManagementClient.LogProfiles.ListAsync(cancellationToken: CancellationToken.None).Result;
 
-                result.AddRange(resultList.LogProfileCollection.Value.Select(x => new PSLogProfile(x.Id, x.Name, x.Properties)));
+                result.AddRange(resultList.Select(x => new PSLogProfile(logProfile: x)));
             }
             else
             {
-                LogProfileGetResponse logProfiles = this.InsightsManagementClient.LogProfilesOperations.GetAsync(this.Name, CancellationToken.None).Result;
-                var psResult = new PSLogProfile(logProfiles.Id, this.Name, logProfiles.Properties);
-                result.Add(psResult);
+                LogProfileResource logProfile = this.MonitorManagementClient.LogProfiles.GetAsync(logProfileName: this.Name, cancellationToken: CancellationToken.None).Result;
+                result.Add(new PSLogProfile(logProfile: logProfile));
             }
 
-            WriteObject(result);
+            WriteObject(result, enumerateCollection: true);
         }
     }
 }

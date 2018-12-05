@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,17 +12,25 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.Common;
 using Microsoft.Azure.Commands.Sql.Database.Model;
 using Microsoft.Azure.Commands.Sql.Database.Services;
+using System;
 using System.Collections.Generic;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Sql.Database.Cmdlet
 {
-    public abstract class AzureSqlDatabaseCmdletBase : AzureSqlCmdletBase<IEnumerable<AzureSqlDatabaseModel>, AzureSqlDatabaseAdapter>
+    public abstract class AzureSqlDatabaseCmdletBase<TModel> : AzureSqlCmdletBase<TModel, AzureSqlDatabaseAdapter>
     {
+        // Some const variables used by SetAzureSqlDatabase and NewAzureSqlDatabase cmdlet
+        public const string DtuDatabaseParameterSet = "DtuBasedDatabase";
+        public const string VcoreDatabaseParameterSet = "VcoreBasedDatabase";
+        public const string DefaultDatabaseSkuName = "Standard";
+
         /// <summary>
         /// Gets or sets the name of the database server to use.
         /// </summary>
@@ -30,6 +38,7 @@ namespace Microsoft.Azure.Commands.Sql.Database.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 1,
             HelpMessage = "The name of the Azure SQL Database Server the database is in.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string ServerName { get; set; }
 
@@ -38,9 +47,9 @@ namespace Microsoft.Azure.Commands.Sql.Database.Cmdlet
         /// </summary>
         /// <param name="subscription"></param>
         /// <returns></returns>
-        protected override AzureSqlDatabaseAdapter InitModelAdapter(AzureSubscription subscription)
+        protected override AzureSqlDatabaseAdapter InitModelAdapter(IAzureSubscription subscription)
         {
-            return new AzureSqlDatabaseAdapter(DefaultProfile.Context);
+            return new AzureSqlDatabaseAdapter(DefaultProfile.DefaultContext);
         }
     }
 }

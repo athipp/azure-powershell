@@ -12,61 +12,70 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Management.Insights.Models;
+using Microsoft.Azure.Management.Monitor.Models;
 using System.Collections.Generic;
 
 namespace Microsoft.Azure.Commands.Insights.OutputClasses
 {
     /// <summary>
-    /// Wrapps around the ServiceDiagnosticSettings
+    /// Wrapps around the DiagnosticSettings
     /// </summary>
-    public class PSServiceDiagnosticSettings
+    public class PSServiceDiagnosticSettings : DiagnosticSettingsResource
     {
         /// <summary>
-        /// The storage account id.
+        /// Sets or gets the Location of the Diagnostic Setting
         /// </summary>
-        public string StorageAccountId { get; set; }
+        public string Location { get; set; }
 
         /// <summary>
-        /// The service bus rule id.
+        /// Sets or gets the Tags of the Diagnostic Setting
         /// </summary>
-        public string ServiceBusRuleId { get; set; }
+        public IDictionary<string, string> Tags { get; set; }
 
         /// <summary>
-        /// The storage account name.
+        /// Sets or gets the Logs of the Diagnostic Setting.
+        /// This property in transitional until the namesace change is taken
         /// </summary>
-        public string StorageAccountName { get; set; }
+        public new IList<Microsoft.Azure.Management.Monitor.Management.Models.LogSettings> Logs { get; set; }
 
         /// <summary>
-        /// Gets or sets the metric settings.
+        /// Sets or gets the Logs of the Diagnostic Setting.
+        /// This property in transitional until the namesace change is taken
         /// </summary>
-        public List<PSMetricSettings> Metrics { get; set; }
+        public new IList<Microsoft.Azure.Management.Monitor.Management.Models.MetricSettings> Metrics { get; set; }
 
-        /// <summary>
-        /// Gets or sets the log settings.
-        /// </summary>
-        public List<PSLogSettings> Logs { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the PSServiceDiagnosticSettings class.
         /// </summary>
-        public PSServiceDiagnosticSettings(ServiceDiagnosticSettings serviceDiagnosticSettings)
+        public PSServiceDiagnosticSettings(DiagnosticSettingsResource serviceDiagnosticSettings)
+            : base(
+                name: serviceDiagnosticSettings?.Name,
+                id: serviceDiagnosticSettings?.Id,
+                type: serviceDiagnosticSettings?.Type,
+                metrics: serviceDiagnosticSettings?.Metrics,
+                logs: serviceDiagnosticSettings?.Logs)
         {
-            this.StorageAccountId = serviceDiagnosticSettings.StorageAccountId;
-            this.ServiceBusRuleId = serviceDiagnosticSettings.ServiceBusRuleId;
-            this.Metrics = new List<PSMetricSettings>();
-            foreach (MetricSettings metricSettings in serviceDiagnosticSettings.Metrics)
+            if (serviceDiagnosticSettings != null)
             {
-                this.Metrics.Add(new PSMetricSettings(metricSettings));
-            }
+                this.StorageAccountId = serviceDiagnosticSettings.StorageAccountId;
+                this.EventHubName = serviceDiagnosticSettings.EventHubName;
+                this.ServiceBusRuleId = serviceDiagnosticSettings.ServiceBusRuleId;
+                this.EventHubAuthorizationRuleId = serviceDiagnosticSettings.EventHubAuthorizationRuleId;
+                this.Metrics = new List<Management.Monitor.Management.Models.MetricSettings>();
+                foreach (MetricSettings metricSettings in serviceDiagnosticSettings.Metrics)
+                {
+                    this.Metrics.Add(new PSMetricSettings(metricSettings));
+                }
 
-            this.Logs = new List<PSLogSettings>();
-            foreach (LogSettings LogSettings in serviceDiagnosticSettings.Logs)
-            {
-                this.Logs.Add(new PSLogSettings(LogSettings));
-            }
+                this.Logs = new List<Management.Monitor.Management.Models.LogSettings>();
+                foreach (LogSettings logSettings in serviceDiagnosticSettings.Logs)
+                {
+                    this.Logs.Add(new PSLogSettings(logSettings));
+                }
 
-            this.StorageAccountName = serviceDiagnosticSettings.StorageAccountName;
+                this.WorkspaceId = serviceDiagnosticSettings.WorkspaceId;
+            }
         }
     }
 }

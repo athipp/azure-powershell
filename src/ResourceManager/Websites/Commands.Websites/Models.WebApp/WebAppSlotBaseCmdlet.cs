@@ -12,6 +12,7 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.WebApps.Models;
 using Microsoft.Azure.Commands.WebApps.Utilities;
 using Microsoft.Azure.Management.WebSites.Models;
@@ -25,20 +26,23 @@ namespace Microsoft.Azure.Commands.WebApps
         protected const string ParameterSet2Name = "S2";
 
         [Parameter(ParameterSetName = ParameterSet1Name, Position = 0, Mandatory = true, HelpMessage = "The name of the resource group.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
         [Parameter(ParameterSetName = ParameterSet1Name, Position = 1, Mandatory = true, HelpMessage = "The name of the web app.", ValueFromPipelineByPropertyName = true)]
+        [ResourceNameCompleter("Microsoft.Web/sites", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string Name { get; set; }
 
         [Parameter(ParameterSetName = ParameterSet1Name, Position = 2, Mandatory = true, HelpMessage = "The name of the web app slot.")]
+        [ResourceNameCompleter("Microsoft.Web/sites/slots", "ResourceGroupName", "Name")]
         [ValidateNotNullOrEmpty]
         public string Slot { get; set; }
 
         [Parameter(ParameterSetName = ParameterSet2Name, Position = 0, Mandatory = true, HelpMessage = "The web app object", ValueFromPipeline = true)]
         [ValidateNotNullOrEmpty]
-        public Site WebApp { get; set; }
+        public PSSite WebApp { get; set; }
 
         public override void ExecuteCmdlet()
         {

@@ -21,10 +21,10 @@ using MNM = Microsoft.Azure.Management.Network.Models;
 
 namespace Microsoft.Azure.Commands.Network
 {
+    using ResourceManager.Common.ArgumentCompleters;
     using System.Collections;
 
-    [Cmdlet(VerbsCommon.Move, "AzureRmExpressRouteCircuit", SupportsShouldProcess = true),
-        OutputType(typeof(PSExpressRouteCircuit))]
+    [Cmdlet("Move", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ExpressRouteCircuit", SupportsShouldProcess = true),OutputType(typeof(PSExpressRouteCircuit))]
     public class MoveAzureExpressRouteCircuitCommand : ExpressRouteCircuitBaseCmdlet
     {
         [Alias("ResourceName")]
@@ -32,6 +32,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource name.")]
+        [ResourceNameCompleter("Microsoft.Network/expressRouteCircuits", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public virtual string Name { get; set; }
 
@@ -39,6 +40,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public virtual string ResourceGroupName { get; set; }
 
@@ -46,6 +48,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The location.")]
+        [LocationCompleter("Microsoft.Network/expressRouteCircuits")]
         [ValidateNotNullOrEmpty]
         public virtual string Location { get; set; }
 
@@ -66,6 +69,9 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = false,
             HelpMessage = "Do not ask for confirmation if you want to overrite a resource")]
         public SwitchParameter Force { get; set; }
+
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         public override void Execute()
         {
@@ -93,7 +99,7 @@ namespace Microsoft.Azure.Commands.Network
             circuit.Location = this.Location;
 
             // Map to the sdk object
-            var circuitModel = Mapper.Map<MNM.ExpressRouteCircuit>(circuit);
+            var circuitModel = NetworkResourceManagerProfile.Mapper.Map<MNM.ExpressRouteCircuit>(circuit);
             circuitModel.Tags = TagsConversionHelper.CreateTagDictionary(this.Tag, validate: true);
 
             // Execute the Create ExpressRouteCircuit call
@@ -104,7 +110,3 @@ namespace Microsoft.Azure.Commands.Network
         }
     }
 }
-
-
-
-

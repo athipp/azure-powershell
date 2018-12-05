@@ -24,7 +24,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
     /// <summary>
     /// Sets an azure automation runbook definition.
     /// </summary>
-    [Cmdlet(VerbsData.Import, "AzureRmAutomationRunbook", SupportsShouldProcess = true)]
+    [Cmdlet("Import", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "AutomationRunbook", SupportsShouldProcess = true)]
     [OutputType(typeof(Runbook))]
     public class ImportAzureAutomationRunbook : AzureAutomationBaseCmdlet
     {
@@ -66,6 +66,7 @@ namespace Microsoft.Azure.Commands.Automation.Cmdlet
             Constants.RunbookType.PowerShellWorkflow,
             Constants.RunbookType.GraphicalPowerShellWorkflow,
             Constants.RunbookType.Graph,
+            Constants.RunbookType.Python2,
             IgnoreCase = true)]
         [ValidateNotNullOrEmpty]
         public string Type { get; set; }

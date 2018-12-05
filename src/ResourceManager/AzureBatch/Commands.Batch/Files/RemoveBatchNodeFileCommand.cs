@@ -20,7 +20,7 @@ using Constants = Microsoft.Azure.Commands.Batch.Utils.Constants;
 
 namespace Microsoft.Azure.Commands.Batch
 {
-    [Cmdlet(VerbsCommon.Remove, Constants.AzureBatchNodeFile, SupportsShouldProcess = true)]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzurePrefix + "BatchNodeFile", SupportsShouldProcess = true), OutputType(typeof(void))]
     public class RemoveBatchNodeFileCommand : BatchObjectModelCmdletBase
     {
         internal const string TaskParameterSet = "Task";
@@ -46,10 +46,11 @@ namespace Microsoft.Azure.Commands.Batch
         public string ComputeNodeId { get; set; }
 
         [Parameter(ParameterSetName = TaskParameterSet, Mandatory = true,
-            HelpMessage = "The name of the node file to delete.")]
+            HelpMessage = "The file path of the node file to delete.")]
         [Parameter(Position = 2, ParameterSetName = ComputeNodeParameterSet, Mandatory = true)]
+        [Alias("Name")]
         [ValidateNotNullOrEmpty]
-        public string Name { get; set; }
+        public string Path { get; set; }
 
         [Parameter(Position = 0, ParameterSetName = Constants.InputObjectParameterSet, ValueFromPipeline = true)]
         [ValidateNotNullOrEmpty]
@@ -63,15 +64,15 @@ namespace Microsoft.Azure.Commands.Batch
 
         public override void ExecuteCmdlet()
         {
-            string fileName = this.InputObject == null ? this.Name : this.InputObject.Name;
+            string filePath = this.InputObject == null ? this.Path : this.InputObject.Path;
             NodeFileOperationParameters parameters = new NodeFileOperationParameters(this.BatchContext, this.JobId, this.TaskId, this.PoolId,
-                this.ComputeNodeId, this.Name, this.InputObject, this.AdditionalBehaviors);
+                this.ComputeNodeId, this.Path, this.InputObject, this.AdditionalBehaviors);
 
             ConfirmAction(
                 Force.IsPresent,
-                string.Format(Resources.RemoveNodeFileConfirm, fileName),
+                string.Format(Resources.RemoveNodeFileConfirm, filePath),
                 Resources.RemoveNodeFile,
-                fileName,
+                filePath,
                 () => BatchClient.DeleteNodeFile(Recursive.IsPresent, parameters));
         }
     }

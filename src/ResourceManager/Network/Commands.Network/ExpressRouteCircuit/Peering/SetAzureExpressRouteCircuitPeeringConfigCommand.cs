@@ -19,7 +19,7 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Set, "AzureRmExpressRouteCircuitPeeringConfig"), OutputType(typeof(PSExpressRouteCircuit))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ExpressRouteCircuitPeeringConfig", DefaultParameterSetName = "SetByResource"), OutputType(typeof(PSExpressRouteCircuit))]
     public class SetAzureExpressRouteCircuitPeeringConfigCommand : AzureExpressRouteCircuitPeeringConfigBase
     {
         [Parameter(
@@ -45,10 +45,16 @@ namespace Microsoft.Azure.Commands.Network
                 throw new ArgumentException("Peering with the specified name does not exist");
             }
 
+            if (string.Equals(ParameterSetName, ParamSetByRouteFilter))
+            {
+                if (this.RouteFilter != null)
+                {
+                    this.RouteFilterId = this.RouteFilter.Id;
+                }
+            }
+
             peering.Name = this.Name;
             peering.PeeringType = this.PeeringType;
-            peering.PrimaryPeerAddressPrefix = this.PrimaryPeerAddressPrefix;
-            peering.SecondaryPeerAddressPrefix = this.SecondaryPeerAddressPrefix;
             peering.PeerASN = this.PeerASN;
             peering.VlanId = this.VlanId;
 
@@ -57,14 +63,17 @@ namespace Microsoft.Azure.Commands.Network
                 peering.SharedKey = this.SharedKey;
             }
 
-            if (this.MicrosoftConfigAdvertisedPublicPrefixes != null
-                && this.MicrosoftConfigAdvertisedPublicPrefixes.Any())
+            if(PeerAddressType == IPv6)
             {
-                peering.MicrosoftPeeringConfig = new PSPeeringConfig();
-                peering.MicrosoftPeeringConfig.AdvertisedPublicPrefixes = this.MicrosoftConfigAdvertisedPublicPrefixes;
-                peering.MicrosoftPeeringConfig.CustomerASN = this.MicrosoftConfigCustomerAsn;
-                peering.MicrosoftPeeringConfig.RoutingRegistryName = this.MicrosoftConfigRoutingRegistryName;
+                this.SetIpv6PeeringParameters(peering);
             }
+            else
+            {
+                // Set IPv4 config even if no PeerAddresType has been specified for backward compatibility
+                this.SetIpv4PeeringParameters(peering);
+            }
+
+            this.ConstructMicrosoftConfig(peering);
 
             WriteObject(this.ExpressRouteCircuit);
         }

@@ -17,11 +17,12 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
     using System.Globalization;
     using Microsoft.Azure.Commands.LogicApp.Utilities;
     using System.Management.Automation;
+    using ResourceManager.Common.ArgumentCompleters;
 
     /// <summary>
     /// Removes the integration account schema. 
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "AzureRmIntegrationAccountSchema", SupportsShouldProcess = true), OutputType(typeof(object))]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "IntegrationAccountSchema", SupportsShouldProcess = true), OutputType(typeof(void))]
     public class RemoveAzureIntegrationAccountSchemaCommand : LogicAppBaseCmdlet
     {
 
@@ -29,12 +30,13 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 
         [Parameter(Mandatory = true, HelpMessage = "The integration account resource group name.",
             ValueFromPipelineByPropertyName = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The integration account name.")]
-        [Alias("ResourceName")]
         [ValidateNotNullOrEmpty]
+        [Alias("IntegrationAccountName", "ResourceName")]
         public string Name { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The integration account schema name.")]

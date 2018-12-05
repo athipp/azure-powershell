@@ -14,11 +14,12 @@
 
 using Microsoft.Azure.Commands.DataLakeAnalytics.Models;
 using Microsoft.Azure.Commands.DataLakeAnalytics.Properties;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.DataLakeAnalytics
 {
-    [Cmdlet(VerbsCommon.Remove, "AzureRmDataLakeAnalyticsAccount", SupportsShouldProcess = true), OutputType(typeof(bool))]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "DataLakeAnalyticsAccount", SupportsShouldProcess = true), OutputType(typeof(bool))]
     [Alias("Remove-AdlAnalyticsAccount")]
     public class RemoveAzureDataLakeAnalyticsAccount : DataLakeAnalyticsCmdletBase
     {
@@ -29,6 +30,7 @@ namespace Microsoft.Azure.Commands.DataLakeAnalytics
 
         [Parameter(ValueFromPipelineByPropertyName = true, Position = 1, Mandatory = false,
             HelpMessage = "Name of resource group under which the account exists.")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

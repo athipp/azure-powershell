@@ -24,7 +24,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Automation.Test.UnitTests
     [TestClass]
     public class NewAzureAutomationWebhookTest : RMTestBase
     {
-        private Mock<IAutomationClient> mockAutomationClient;
+        private Mock<IAutomationPSClient> mockAutomationClient;
 
         private MockCommandRuntime mockCommandRuntime;
 
@@ -33,7 +33,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Automation.Test.UnitTests
         [TestInitialize]
         public void SetupTest()
         {
-            this.mockAutomationClient = new Mock<IAutomationClient>();
+            this.mockAutomationClient = new Mock<IAutomationPSClient>();
             this.mockCommandRuntime = new MockCommandRuntime();
             this.cmdlet = new NewAzureAutomationWebhook
             {
@@ -53,7 +53,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Automation.Test.UnitTests
             DateTimeOffset expiryTime = DateTimeOffset.Now.AddDays(1);
 
             this.mockAutomationClient.Setup(
-                f => f.CreateWebhook(resourceGroupName, accountName, name, runbookName, true, expiryTime, null));
+                f => f.CreateWebhook(resourceGroupName, accountName, name, runbookName, true, expiryTime, null, null));
 
             // Test
             this.cmdlet.ResourceGroupName = resourceGroupName;
@@ -67,7 +67,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Automation.Test.UnitTests
 
             // Assert
             this.mockAutomationClient.Verify(
-                f => f.CreateWebhook(resourceGroupName, accountName, name, runbookName, true, expiryTime, null),
+                f => f.CreateWebhook(resourceGroupName, accountName, name, runbookName, true, expiryTime, null, null),
                 Times.Once());
         }
     }

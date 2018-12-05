@@ -14,8 +14,10 @@
 
 namespace Microsoft.Azure.Commands.TrafficManager.Models
 {
+    using Microsoft.Azure.Commands.ResourceManager.Common.Tags;
     using Microsoft.Azure.Commands.TrafficManager.Utilities;
     using Microsoft.Azure.Management.TrafficManager.Models;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -41,37 +43,59 @@ namespace Microsoft.Azure.Commands.TrafficManager.Models
 
         public string MonitorPath { get; set; }
 
+        public int? MonitorIntervalInSeconds { get; set; }
+
+        public int? MonitorTimeoutInSeconds { get; set; }
+
+        public int? MonitorToleratedNumberOfFailures { get; set; }
+
+        public long? MaxReturn { get; set; }
+
         public List<TrafficManagerEndpoint> Endpoints { get; set; }
+
+        public List<TrafficManagerCustomHeader> CustomHeaders { get; set; }
+
+        public List<TrafficManagerExpectedStatusCodeRange> ExpectedStatusCodeRanges { get; set; }
+
+        public Hashtable Tags { get; set; }
 
         public Profile ToSDKProfile()
         {
-            var profile = new Profile
+            var tags = TagsConversionHelper.CreateTagDictionary(this.Tags, validate: true);
+
+            var profile = new Profile(
+                this.Id,
+                this.Name,
+                Constants.ProfileType,
+                tags,
+                TrafficManagerClient.ProfileResourceLocation)
             {
-                Id = this.Id,
-                Name = this.Name,
-                Type = Constants.ProfileType,
-                Location = TrafficManagerClient.ProfileResourceLocation,
-                Properties = new ProfileProperties
+                ProfileStatus = this.ProfileStatus,
+                TrafficRoutingMethod = this.TrafficRoutingMethod,
+                MaxReturn = this.MaxReturn,
+                DnsConfig = new DnsConfig
                 {
-                    ProfileStatus = this.ProfileStatus,
-                    TrafficRoutingMethod = this.TrafficRoutingMethod,
-                    DnsConfig = new DnsConfig
-                    {
-                        RelativeName = this.RelativeDnsName,
-                        Ttl = this.Ttl
-                    },
-                    MonitorConfig = new MonitorConfig
-                    {
-                        Protocol = this.MonitorProtocol,
-                        Port = this.MonitorPort,
-                        Path = this.MonitorPath
-                    }
+                    RelativeName = this.RelativeDnsName,
+                    Ttl = this.Ttl
+                },
+                MonitorConfig = new MonitorConfig
+                {
+                    Protocol = this.MonitorProtocol,
+                    Port = this.MonitorPort,
+                    Path = this.MonitorPath,
+                    IntervalInSeconds = this.MonitorIntervalInSeconds,
+                    TimeoutInSeconds = this.MonitorTimeoutInSeconds,
+                    ToleratedNumberOfFailures = this.MonitorToleratedNumberOfFailures,
+                    CustomHeaders = this.CustomHeaders?.Select(
+                        customHeader => customHeader.ToSDKMonitorConfigCustomHeadersItem()).ToList(),
+                    ExpectedStatusCodeRanges = this.ExpectedStatusCodeRanges?.Select(
+                        expectedStatusCodeRange => expectedStatusCodeRange.ToSDKMonitorConfigStatusCodeRangesItem()).ToList()
                 }
             };
 
             if (this.Endpoints != null && this.Endpoints.Any())
             {
-                profile.Properties.Endpoints = this.Endpoints.Select(endpoint => endpoint.ToSDKEndpoint()).ToList();
+                profile.Endpoints = this.Endpoints.Select(endpoint => endpoint.ToSDKEndpoint()).ToList();
             }
 
             return profile;

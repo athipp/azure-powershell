@@ -14,23 +14,25 @@
 
 
 using System.Management.Automation;
+using System.Linq;
+using Microsoft.Azure.Management.WebSites;
 
 namespace Microsoft.Azure.Commands.WebApps.Cmdlets.WebApps
 {
     /// <summary>
     ///     Gets the status of an Azure Web App backup
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmWebAppBackupList"), OutputType(typeof(AzureWebAppBackup[]))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "WebAppBackupList"), OutputType(typeof(AzureWebAppBackup))]
     public class GetAzureWebAppBackupList : WebAppOptionalSlotBaseCmdlet
     {
         public override void ExecuteCmdlet()
         {
             base.ExecuteCmdlet();
-            var list = WebsitesClient.ListSiteBackups(ResourceGroupName, Name, Slot).Value;
-            AzureWebAppBackup[] backups = new AzureWebAppBackup[list.Count];
+            var list = WebsitesClient.ListSiteBackups(ResourceGroupName, Name, Slot);
+            AzureWebAppBackup[] backups = new AzureWebAppBackup[list.Count()];
             for (int i = 0; i < backups.Length; i++)
             {
-                backups[i] = BackupRestoreUtils.BackupItemToAppBackup(list[i], ResourceGroupName, Name, Slot);
+                backups[i] = BackupRestoreUtils.BackupItemToAppBackup(list.ElementAt(i), ResourceGroupName, Name, Slot);
             }
             WriteObject(backups, true);
         }

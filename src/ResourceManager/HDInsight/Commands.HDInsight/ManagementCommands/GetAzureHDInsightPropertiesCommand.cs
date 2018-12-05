@@ -13,16 +13,13 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.HDInsight.Commands;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.HDInsight.Models;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.HDInsight
 {
-    [Cmdlet(
-        VerbsCommon.Get,
-        Constants.CommandNames.AzureHDInsightProperties),
-    OutputType(
-        typeof(CapabilitiesResponse))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "HDInsightProperties"),OutputType(typeof(CapabilitiesResponse))]
     public class GetAzureHDInsightPropertiesCommand : HDInsightCmdletBase
     {
         #region Input Parameter Definitions
@@ -31,6 +28,7 @@ namespace Microsoft.Azure.Commands.HDInsight
             Position = 0,
             Mandatory = true,
             HelpMessage = "Gets or sets the datacenter location for the cluster.")]
+        [LocationCompleter("Microsoft.HDInsight/locations/capabilities")]
         public string Location { get; set; }
 
         #endregion

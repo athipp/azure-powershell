@@ -17,18 +17,20 @@ using Microsoft.Azure.Management.Logic.Models;
 namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 {
     using Microsoft.Azure.Commands.LogicApp.Utilities;
+    using ResourceManager.Common.ArgumentCompleters;
     using System.Management.Automation;
 
     /// <summary>
     /// Gets the action in the workflow run
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmLogicAppRunAction"), OutputType(typeof(object))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "LogicAppRunAction"), OutputType(typeof(WorkflowRunAction))]
     public class GetAzureLogicAppRunActionCommand : LogicAppBaseCmdlet
     {
         #region Input Parameters
 
         [Parameter(Mandatory = true, HelpMessage = "The targeted resource group for the workflow.",
             ValueFromPipelineByPropertyName = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

@@ -42,14 +42,18 @@ namespace Microsoft.Azure.Commands.Automation.Model
             Requires.Argument("jobSchedule", jobSchedule).NotNull();
             this.ResourceGroupName = resourceGroupName;
             this.AutomationAccountName = automationAccountName;
-            this.JobScheduleId = jobSchedule.Properties.Id.ToString();
-            this.RunbookName = jobSchedule.Properties.Runbook.Name;
-            this.ScheduleName = jobSchedule.Properties.Schedule.Name;
+            this.JobScheduleId = jobSchedule.JobScheduleId.ToString();
+            this.RunbookName = jobSchedule.Runbook.Name;
+            this.ScheduleName = jobSchedule.Schedule.Name;
             this.Parameters = new Hashtable(StringComparer.InvariantCultureIgnoreCase);
-            foreach (var kvp in jobSchedule.Properties.Parameters.Where(kvp => 0 != String.Compare(kvp.Key, Constants.JobStartedByParameterName, CultureInfo.InvariantCulture,
-                CompareOptions.IgnoreCase)))
+            this.HybridWorker = jobSchedule.RunOn;
+            if (jobSchedule.Parameters != null)
             {
-                this.Parameters.Add(kvp.Key, (object)PowerShellJsonConverter.Deserialize(kvp.Value));
+                foreach (var kvp in jobSchedule.Parameters.Where(kvp => 0 != String.Compare(kvp.Key, Constants.JobStartedByParameterName, CultureInfo.InvariantCulture,
+                    CompareOptions.IgnoreCase)))
+                {
+                    this.Parameters.Add(kvp.Key, (object)PowerShellJsonConverter.Deserialize(kvp.Value));
+                }
             }
         }
 
@@ -64,6 +68,8 @@ namespace Microsoft.Azure.Commands.Automation.Model
         /// Gets or sets the resource group name.
         /// </summary>
         public string ResourceGroupName { get; set; }
+
+        public string RunOn { get; set; }
 
         /// <summary>
         /// Gets or sets the automation account name.
@@ -89,5 +95,10 @@ namespace Microsoft.Azure.Commands.Automation.Model
         /// Gets or sets the runbook parameters.
         /// </summary>
         public Hashtable Parameters { get; set; }
+
+        /// <summary>
+        /// Gets or sets the HybridWorker.
+        /// </summary>
+        public string HybridWorker { get; set; }
     }
 }

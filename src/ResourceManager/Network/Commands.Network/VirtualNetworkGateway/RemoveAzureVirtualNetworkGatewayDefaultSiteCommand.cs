@@ -22,7 +22,7 @@ using MNM = Microsoft.Azure.Management.Network.Models;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Remove, "AzureRmVirtualNetworkGatewayDefaultSite"), OutputType(typeof(PSVirtualNetworkGateway))]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VirtualNetworkGatewayDefaultSite"), OutputType(typeof(PSVirtualNetworkGateway))]
     public class RemoveAzureVirtualNetworkGatewayDefaultSiteCommand : VirtualNetworkGatewayBaseCmdlet
     {
         [Parameter(
@@ -37,13 +37,13 @@ namespace Microsoft.Azure.Commands.Network
             base.Execute();
             if (!this.IsVirtualNetworkGatewayPresent(this.VirtualNetworkGateway.ResourceGroupName, this.VirtualNetworkGateway.Name))
             {
-                throw new ArgumentException(Microsoft.Azure.Commands.Network.Properties.Resources.ResourceNotFound);
+                throw new ArgumentException(string.Format(Microsoft.Azure.Commands.Network.Properties.Resources.ResourceNotFound, this.VirtualNetworkGateway.Name));
             }
 
             this.VirtualNetworkGateway.GatewayDefaultSite = null;
 
             // Map to the sdk object
-            var virtualnetGatewayModel = Mapper.Map<MNM.VirtualNetworkGateway>(this.VirtualNetworkGateway);
+            var virtualnetGatewayModel = NetworkResourceManagerProfile.Mapper.Map<MNM.VirtualNetworkGateway>(this.VirtualNetworkGateway);
             virtualnetGatewayModel.Tags = TagsConversionHelper.CreateTagDictionary(this.VirtualNetworkGateway.Tag, validate: true);
 
             this.VirtualNetworkGatewayClient.CreateOrUpdate(this.VirtualNetworkGateway.ResourceGroupName, this.VirtualNetworkGateway.Name, virtualnetGatewayModel);
@@ -54,4 +54,3 @@ namespace Microsoft.Azure.Commands.Network
         }
     }
 }
-

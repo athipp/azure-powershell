@@ -26,8 +26,8 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
     /// <summary>
     /// Get all locations with the supported providers.
     /// </summary>
-     [Cmdlet(VerbsCommon.Get, "AzureRmLocation"), OutputType(typeof(List<PSResourceProviderLocation>))]
-    public class GetAzureLocationCmdlet: ResourceManagerCmdletBase
+    [Cmdlet(VerbsCommon.Get, ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "Location"), OutputType(typeof(PSResourceProviderLocation))]
+    public class GetAzureLocationCmdlet : ResourceManagerCmdletBase
     {
         /// <summary>
         /// Executes the cmdlet
@@ -41,7 +41,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
             this.WriteObject(providerLocations, enumerateCollection: true);
         }
 
-        private List<PSResourceProviderLocation> ConstructResourceProviderLocations(List<Location> locations, List<Provider> providers)
+        private List<PSResourceProviderLocation> ConstructResourceProviderLocations(List<Internal.Subscriptions.Models.Location> locations, List<Provider> providers)
         {
             var locationProviderMap = GetLocationProviderMap(providers);
 

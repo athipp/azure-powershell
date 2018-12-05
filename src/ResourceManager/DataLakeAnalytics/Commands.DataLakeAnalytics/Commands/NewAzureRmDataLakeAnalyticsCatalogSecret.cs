@@ -20,12 +20,13 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.DataLakeAnalytics
 {
-    [Cmdlet(VerbsCommon.New, "AzureRmDataLakeAnalyticsCatalogSecret"), OutputType(typeof(USqlSecret))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "DataLakeAnalyticsCatalogSecret"), OutputType(typeof(USqlSecret))]
     [Alias("New-AdlCatalogSecret")]
+    [Obsolete("Catalog secrets are being deprecated in a future release. Please use New-AzDataLakeAnalyticsCatalogCredential directly instead.")]
     public class NewAzureDataLakeAnalyticsCatalogSecret : DataLakeAnalyticsCmdletBase
     {
-        internal const string BaseParameterSetName = "Specify full URI";
-        internal const string HostAndPortParameterSetName = "Specify host name and port";
+        internal const string BaseParameterSetName = "CreateByFullURI";
+        internal const string HostAndPortParameterSetName = "CreateByHostNameAndPort";
 
         [Parameter(ValueFromPipelineByPropertyName = true, ParameterSetName = BaseParameterSetName, Position = 0,
             Mandatory = true, HelpMessage = "The account name that contains the catalog to create the secret in.")]
@@ -64,6 +65,7 @@ namespace Microsoft.Azure.Commands.DataLakeAnalytics
 
         public override void ExecuteCmdlet()
         {
+            WriteWarning(Resources.IncorrectOutputTypeWarning);
             if (Uri != null && Uri.Port <= 0)
             {
                 WriteWarning(string.Format(Resources.NoPortSpecified, Uri));
@@ -71,8 +73,8 @@ namespace Microsoft.Azure.Commands.DataLakeAnalytics
 
             var toUse = Uri ?? new Uri(string.Format("https://{0}:{1}", DatabaseHost, Port));
 
-            WriteObject(DataLakeAnalyticsClient.CreateSecret(Account, DatabaseName, Secret.UserName,
-                Secret.GetNetworkCredential().Password, toUse.AbsoluteUri));
+            DataLakeAnalyticsClient.CreateSecret(Account, DatabaseName, Secret.UserName,
+                Secret.GetNetworkCredential().Password, toUse.AbsoluteUri);
         }
     }
 }

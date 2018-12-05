@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +12,13 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.Common;
 using Microsoft.Azure.Commands.Sql.ElasticPool.Model;
 using Microsoft.Azure.Commands.Sql.ElasticPool.Services;
+using System;
 using System.Collections.Generic;
 using System.Management.Automation;
 
@@ -30,6 +33,7 @@ namespace Microsoft.Azure.Commands.Sql.ElasticPool.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 1,
             HelpMessage = "The name of the Azure SQL Server the Elastic Pool is in.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string ServerName { get; set; }
 
@@ -40,17 +44,27 @@ namespace Microsoft.Azure.Commands.Sql.ElasticPool.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 2,
             HelpMessage = "The name of the Azure SQL Elastic Pool.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers/elasticPools", "ResourceGroupName", "ServerName")]
         [ValidateNotNullOrEmpty]
         public string ElasticPoolName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the operation id to use.
+        /// </summary>
+        [Parameter(Mandatory = false,
+            ValueFromPipelineByPropertyName = true,
+            HelpMessage = "The ID of the operation to retrieve.")]
+        [ValidateNotNullOrEmpty]
+        public Guid? OperationId { get; set; }
 
         /// <summary>
         /// Initializes the adapter
         /// </summary>
         /// <param name="subscription"></param>
         /// <returns></returns>
-        protected override AzureSqlElasticPoolAdapter InitModelAdapter(AzureSubscription subscription)
+        protected override AzureSqlElasticPoolAdapter InitModelAdapter(IAzureSubscription subscription)
         {
-            return new AzureSqlElasticPoolAdapter(DefaultProfile.Context);
+            return new AzureSqlElasticPoolAdapter(DefaultProfile.DefaultContext);
         }
     }
 }

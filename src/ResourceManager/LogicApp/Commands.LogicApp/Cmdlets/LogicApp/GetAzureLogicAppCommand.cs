@@ -14,13 +14,15 @@
 
 namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 {
+    using Management.Logic.Models;
     using Microsoft.Azure.Commands.LogicApp.Utilities;
+    using ResourceManager.Common.ArgumentCompleters;
     using System.Management.Automation;
 
     /// <summary>
     /// Creates a new LogicApp workflow 
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmLogicApp"), OutputType(typeof(object))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "LogicApp"), OutputType(typeof(Workflow), typeof(WorkflowVersion))]
     public class GetAzureLogicAppCommand : LogicAppBaseCmdlet
     {
 
@@ -28,6 +30,7 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 
         [Parameter(Mandatory = true, HelpMessage = "The targeted resource group for the workflow.",
             ValueFromPipelineByPropertyName = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

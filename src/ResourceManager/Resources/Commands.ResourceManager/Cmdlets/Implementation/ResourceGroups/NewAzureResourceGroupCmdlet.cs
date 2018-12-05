@@ -14,8 +14,8 @@
 
 namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
 {
+    using Common.ArgumentCompleters;
     using Microsoft.Azure.Commands.ResourceManager.Cmdlets.SdkModels;
-    using ProjectResources = Microsoft.Azure.Commands.ResourceManager.Cmdlets.Properties.Resources;
     using System.Collections;
     using System.Collections.Generic;
     using System.Management.Automation;
@@ -23,15 +23,17 @@ namespace Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation
     /// <summary>
     /// Filters resource groups.
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmResourceGroup", SupportsShouldProcess = true), OutputType(typeof(List<PSResourceGroup>))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ResourceGroup", SupportsShouldProcess = true), OutputType(typeof(PSResourceGroup))]
     public class NewAzureResourceGroupCmdlet : ResourceManagerCmdletBase
     {
         [Alias("ResourceGroupName")]
         [Parameter(Position = 0, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string Name { get; set; }
 
         [Parameter(Position = 1, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The resource group location.")]
+        [LocationCompleter("Microsoft.Resources/resourceGroups")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 

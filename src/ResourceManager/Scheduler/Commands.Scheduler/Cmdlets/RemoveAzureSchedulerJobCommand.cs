@@ -17,14 +17,16 @@ namespace Microsoft.Azure.Commands.Scheduler.Cmdlets
     using System.Management.Automation;
     using Microsoft.Azure.Commands.Scheduler.Properties;
     using Microsoft.Azure.Commands.Scheduler.Utilities;
+    using ResourceManager.Common.ArgumentCompleters;
 
     /// <summary>
     /// Deletes existing job.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "AzureRmSchedulerJob", SupportsShouldProcess = true)]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SchedulerJob", SupportsShouldProcess = true), OutputType(typeof(string))]
     public class RemoveAzureSchedulerJobCommand : SchedulerBaseCmdlet
     {
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The targeted resource group for job.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

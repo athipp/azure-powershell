@@ -12,10 +12,12 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication;
 using Microsoft.Azure.Commands.Insights.Alerts;
-using Microsoft.Azure.Management.Insights;
-using Microsoft.Azure.Management.Insights.Models;
-using Microsoft.Azure.ServiceManagemenet.Common.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common;
+using Microsoft.Azure.Commands.ScenarioTest;
+using Microsoft.Azure.Management.Monitor;
+using Microsoft.Azure.Management.Monitor.Models;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Moq;
 using System;
@@ -32,40 +34,54 @@ namespace Microsoft.Azure.Commands.Insights.Test.Alerts
     public class AddAzureRmWebtestAlertRuleTests
     {
         private readonly AddAzureRmWebtestAlertRuleCommand cmdlet;
-        private readonly Mock<InsightsManagementClient> insightsManagementClientMock;
-        private readonly Mock<IAlertOperations> insightsAlertRuleOperationsMock;
+        private readonly Mock<MonitorManagementClient> insightsManagementClientMock;
+        private readonly Mock<IAlertRulesOperations> insightsAlertRuleOperationsMock;
         private Mock<ICommandRuntime> commandRuntimeMock;
-        private AzureOperationResponse response;
+        private Rest.Azure.AzureOperationResponse<AlertRuleResource> response;
         private string resourceGroup;
-        private RuleCreateOrUpdateParameters createOrUpdatePrms;
+        private AlertRuleResource createOrUpdatePrms;
 
         public AddAzureRmWebtestAlertRuleTests(ITestOutputHelper output)
         {
-            XunitTracingInterceptor.AddToContext(new XunitTracingInterceptor(output));
-            insightsAlertRuleOperationsMock = new Mock<IAlertOperations>();
-            insightsManagementClientMock = new Mock<InsightsManagementClient>();
+            ServiceManagemenet.Common.Models.XunitTracingInterceptor.AddToContext(new ServiceManagemenet.Common.Models.XunitTracingInterceptor(output));
+            TestExecutionHelpers.SetUpSessionAndProfile();
+            insightsAlertRuleOperationsMock = new Mock<IAlertRulesOperations>();
+            insightsManagementClientMock = new Mock<MonitorManagementClient>() { CallBase = true };
             commandRuntimeMock = new Mock<ICommandRuntime>();
             cmdlet = new AddAzureRmWebtestAlertRuleCommand()
             {
                 CommandRuntime = commandRuntimeMock.Object,
-                InsightsManagementClient = insightsManagementClientMock.Object
+                MonitorManagementClient = insightsManagementClientMock.Object
             };
 
-            response = new AzureOperationResponse()
+            AlertRuleResource alertRuleResourceInput = new AlertRuleResource()
             {
-                RequestId = Guid.NewGuid().ToString(),
-                StatusCode = HttpStatusCode.OK,
+                Location = null, 
+                IsEnabled = true, 
+                AlertRuleResourceName = "a name"
             };
 
-            insightsAlertRuleOperationsMock.Setup(f => f.CreateOrUpdateRuleAsync(It.IsAny<string>(), It.IsAny<RuleCreateOrUpdateParameters>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult<AzureOperationResponse>(response))
-                .Callback((string resourceGrp, RuleCreateOrUpdateParameters createOrUpdateParams, CancellationToken t) =>
+            response = new Rest.Azure.AzureOperationResponse<AlertRuleResource>()
+            {
+                Body = alertRuleResourceInput
+            };
+
+            insightsAlertRuleOperationsMock.Setup(f => f.CreateOrUpdateWithHttpMessagesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<AlertRuleResource>(), It.IsAny<Dictionary<string, List<string>>>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult<Rest.Azure.AzureOperationResponse<AlertRuleResource>>(response))
+                .Callback((string resourceGrp, string name, AlertRuleResource createOrUpdateParams, Dictionary<string, List<string>> headers, CancellationToken t) =>
                 {
                     resourceGroup = resourceGrp;
                     createOrUpdatePrms = createOrUpdateParams;
+                    response.Body = createOrUpdateParams;
                 });
 
-            insightsManagementClientMock.SetupGet(f => f.AlertOperations).Returns(this.insightsAlertRuleOperationsMock.Object);
+            insightsManagementClientMock.SetupGet(f => f.AlertRules).Returns(this.insightsAlertRuleOperationsMock.Object);
+
+            // Setup Confirmation
+            commandRuntimeMock.Setup(f => f.ShouldProcess(It.IsAny<string>())).Returns(true);
+            commandRuntimeMock.Setup(f => f.ShouldProcess(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
+            commandRuntimeMock.Setup(f => f.ShouldProcess(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(true);
+            commandRuntimeMock.Setup(f => f.ShouldContinue(It.IsAny<string>(), It.IsAny<string>())).Returns(true);
         }
 
         [Fact]
@@ -75,9 +91,9 @@ namespace Microsoft.Azure.Commands.Insights.Test.Alerts
             // Test null actions
             cmdlet.Name = Utilities.Name;
             cmdlet.Location = "East US";
-            cmdlet.ResourceGroup = Utilities.ResourceGroup;
+            cmdlet.ResourceGroupName = Utilities.ResourceGroup;
             cmdlet.FailedLocationCount = 10;
-            cmdlet.Actions = null;
+            cmdlet.Action = null;
             cmdlet.WindowSize = TimeSpan.FromMinutes(15);
 
             cmdlet.ExecuteCmdlet();
@@ -107,7 +123,7 @@ namespace Microsoft.Azure.Commands.Insights.Test.Alerts
 
             // Test empty actions
             cmdlet.DisableRule = false;
-            cmdlet.Actions = new List<RuleAction>();
+            cmdlet.Action = new List<Management.Monitor.Management.Models.RuleAction>();
 
             cmdlet.ExecuteCmdlet();
 
@@ -123,13 +139,13 @@ namespace Microsoft.Azure.Commands.Insights.Test.Alerts
             // Test non-empty actions (one action)
             List<string> eMails = new List<string>();
             eMails.Add("le@hypersoft.com");
-            RuleAction ruleAction = new RuleEmailAction
+            Management.Monitor.Management.Models.RuleAction ruleAction = new Management.Monitor.Management.Models.RuleEmailAction
             {
                 SendToServiceOwners = true,
                 CustomEmails = eMails
             };
 
-            cmdlet.Actions.Add(ruleAction);
+            cmdlet.Action.Add(ruleAction);
 
             cmdlet.ExecuteCmdlet();
 
@@ -145,13 +161,13 @@ namespace Microsoft.Azure.Commands.Insights.Test.Alerts
             // Test non-empty actions (two actions)
             var properties = new Dictionary<string, string>();
             properties.Add("hello", "goodbye");
-            ruleAction = new RuleWebhookAction
+            ruleAction = new Management.Monitor.Management.Models.RuleWebhookAction
             {
                 ServiceUri = "http://bueno.net",
                 Properties = properties
             };
 
-            cmdlet.Actions.Add(ruleAction);
+            cmdlet.Action.Add(ruleAction);
 
             cmdlet.ExecuteCmdlet();
 
@@ -183,33 +199,32 @@ namespace Microsoft.Azure.Commands.Insights.Test.Alerts
         {
             Assert.Equal(Utilities.ResourceGroup, this.resourceGroup);
             Assert.Equal(location, this.createOrUpdatePrms.Location);
-            Assert.True(this.createOrUpdatePrms.Tags.ContainsKey(tagsKey));
+            Assert.True(this.createOrUpdatePrms.Tags.ContainsKey(tagsKey), "Checking tags");
 
             Assert.NotNull(this.createOrUpdatePrms);
             if (actionsNull)
             {
-                Assert.Null(this.createOrUpdatePrms.Properties.Actions);
+                Assert.Null(this.createOrUpdatePrms.Actions);
             }
             else
             {
-                Assert.NotNull(this.createOrUpdatePrms.Properties.Actions);
-                Assert.Equal(actionsCount, this.createOrUpdatePrms.Properties.Actions.Count);
+                Assert.NotNull(this.createOrUpdatePrms.Actions);
+                Assert.Equal(actionsCount, this.createOrUpdatePrms.Actions.Count);
             }
 
-            Assert.Equal(Utilities.Name, this.createOrUpdatePrms.Properties.Name);
-            Assert.Equal(isEnabled, this.createOrUpdatePrms.Properties.IsEnabled);
-            Assert.True(this.createOrUpdatePrms.Properties.Condition is LocationThresholdRuleCondition);
+            Assert.Equal(Utilities.Name, this.createOrUpdatePrms.AlertRuleResourceName);
+            Assert.Equal(isEnabled, this.createOrUpdatePrms.IsEnabled);
+            Assert.True(this.createOrUpdatePrms.Condition is Management.Monitor.Models.LocationThresholdRuleCondition, "Checking type #1");
 
-            var condition = this.createOrUpdatePrms.Properties.Condition as LocationThresholdRuleCondition;
+            var condition = this.createOrUpdatePrms.Condition as Management.Monitor.Models.LocationThresholdRuleCondition;
             Assert.Equal(failedLocationCount, condition.FailedLocationCount);
-            Assert.Equal(totalMinutes, condition.WindowSize.TotalMinutes);
+            Assert.Equal(totalMinutes, ((TimeSpan)condition.WindowSize).TotalMinutes);
 
             // This is probably unnecessary
-            Assert.True(condition.DataSource is RuleMetricDataSource);
-            var dataSource = condition.DataSource as RuleMetricDataSource;
+            Assert.True(condition.DataSource is Management.Monitor.Models.RuleMetricDataSource, "Checking type #2");
+            var dataSource = condition.DataSource as Management.Monitor.Models.RuleMetricDataSource;
             Assert.Null(dataSource.MetricName);
             Assert.Null(dataSource.ResourceUri);
-            Assert.Null(dataSource.MetricNamespace);
         }
     }
 }

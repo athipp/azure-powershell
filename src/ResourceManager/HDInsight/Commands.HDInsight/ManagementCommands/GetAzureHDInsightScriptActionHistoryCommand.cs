@@ -14,15 +14,14 @@
 
 using Microsoft.Azure.Commands.HDInsight.Commands;
 using Microsoft.Azure.Commands.HDInsight.Models.Management;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.HDInsight
 {
-    [Cmdlet(VerbsCommon.Get,
-        Constants.CommandNames.AzureHDInsightScriptActionHistory),
-    OutputType(typeof(IList<AzureHDInsightRuntimeScriptActionDetail>))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "HDInsightScriptActionHistory"),OutputType(typeof(AzureHDInsightRuntimeScriptActionDetail))]
     public class GetAzureHDInsightScriptActionHistory : HDInsightCmdletBase
     {
         #region Input Parameter Definitions
@@ -38,6 +37,7 @@ namespace Microsoft.Azure.Commands.HDInsight
         public long? ScriptExecutionId { get; set; }
 
         [Parameter(HelpMessage = "Gets or sets the name of the resource group.")]
+        [ResourceGroupCompleter]
         public string ResourceGroupName { get; set; }
 
         #endregion

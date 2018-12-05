@@ -19,9 +19,9 @@ using System.Management.Automation;
 namespace Microsoft.Azure.Commands.Sql.FirewallRule.Cmdlet
 {
     /// <summary>
-    /// Defines the Get-AzureRmSqlServerFirewallRule cmdlet
+    /// Defines the Get-AzSqlServerFirewallRule cmdlet
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "AzureRmSqlServerFirewallRule", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Low)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlServerFirewallRule", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Low), OutputType(typeof(Model.AzureSqlServerFirewallRuleModel))]
     public class SetAzureSqlServerFirewallRule : AzureSqlServerFirewallRuleCmdletBase
     {
         /// <summary>
@@ -31,6 +31,7 @@ namespace Microsoft.Azure.Commands.Sql.FirewallRule.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 2,
             HelpMessage = "The name of the Azure Sql Database Server Firewall Rule.")]
+        [Alias("Name")]
         [ValidateNotNullOrEmpty]
         public string FirewallRuleName { get; set; }
 

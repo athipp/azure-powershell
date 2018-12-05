@@ -24,10 +24,7 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.DevTestLabs
 {
-    [Cmdlet(VerbsCommon.Set, "AzureRmDtlAutoStartPolicy",
-        HelpUri = Constants.DevTestLabsHelpUri,
-        DefaultParameterSetName = ParameterSetEnable,
-        SupportsShouldProcess = true)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "DtlAutoStartPolicy",HelpUri = Constants.DevTestLabsHelpUri,DefaultParameterSetName = ParameterSetEnable,SupportsShouldProcess = true)]
     [OutputType(typeof(PSSchedule))]
     public class SetAzureRmDtlAutoStartPolicy : DtlPolicyCmdletBase
     {
@@ -65,8 +62,7 @@ namespace Microsoft.Azure.Commands.DevTestLabs
 
             try
             {
-                inputSchedule = DataServiceClient.Schedule.GetResource(
-                                ResourceGroupName,
+                inputSchedule = DataServiceClient.Schedules.Get(
                                 LabName,
                                 PolicyName);
             }
@@ -91,7 +87,7 @@ namespace Microsoft.Azure.Commands.DevTestLabs
                 inputSchedule = new Schedule
                 {
                     TimeZoneId = TimeZoneInfo.Local.Id,
-                    TaskType = TaskType.LabVmsStartupTask,
+                    TaskType = "LabVmsStartupTask",
                     WeeklyRecurrence = new WeekDetails
                     {
                         Time = Time.Value.ToString("HHmm"),
@@ -139,8 +135,7 @@ namespace Microsoft.Azure.Commands.DevTestLabs
                 return;
             }
 
-            var outputSchedule = DataServiceClient.Schedule.CreateOrUpdateResource(
-                ResourceGroupName,
+            var outputSchedule = DataServiceClient.Schedules.CreateOrUpdate(
                 LabName,
                 PolicyName,
                 inputSchedule

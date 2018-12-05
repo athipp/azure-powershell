@@ -14,6 +14,7 @@
 
 using Microsoft.Azure.Commands.Compute.Common;
 using Microsoft.Azure.Commands.Compute.Models;
+using Microsoft.WindowsAzure.Commands.Common.CustomAttributes;
 using System;
 using System.Linq;
 using System.Management.Automation;
@@ -23,11 +24,10 @@ namespace Microsoft.Azure.Commands.Compute
     /// <summary>
     /// Setup the network interface.
     /// </summary>
-    [Cmdlet(
-        VerbsCommon.Remove,
-        ProfileNouns.NetworkInterface),
-    OutputType(
-        typeof(PSVirtualMachine))]
+#if NETSTANDARD
+    [CmdletOutputBreakingChange(typeof(PSVirtualMachineIdentity), DeprecatedOutputProperties = new string[] { "IdentityIds" })]
+#endif
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VMNetworkInterface",SupportsShouldProcess = true),OutputType(typeof(PSVirtualMachine))]
     public class RemoveAzureVMNetworkInterfaceCommand : Microsoft.Azure.Commands.ResourceManager.Common.AzureRMCmdlet
     {
         [Alias("VMProfile")]
@@ -42,32 +42,42 @@ namespace Microsoft.Azure.Commands.Compute
 
         [Alias("Id", "NicIds")]
         [Parameter(
-            Mandatory = true,
+            Mandatory = false,
             Position = 1,
-            ValueFromPipelineByPropertyName = true,
+            ValueFromPipelineByPropertyName = false,
             HelpMessage = HelpMessages.VMNetworkInterfaceID)]
         [ValidateNotNullOrEmpty]
         public string[] NetworkInterfaceIDs { get; set; }
 
         public override void ExecuteCmdlet()
         {
-            var networkProfile = this.VM.NetworkProfile;
-
-            foreach (var id in this.NetworkInterfaceIDs)
+            if (this.ShouldProcess("NetworkInterface", VerbsCommon.Remove))
             {
-                if (networkProfile != null &&
-                    networkProfile.NetworkInterfaces != null &&
-                    networkProfile.NetworkInterfaces.Any(nic =>
-                        string.Equals(nic.Id, id, StringComparison.OrdinalIgnoreCase)))
+                var networkProfile = this.VM.NetworkProfile;
+
+                if (NetworkInterfaceIDs == null)
                 {
-                    var nicReference = networkProfile.NetworkInterfaces.First(nic => string.Equals(nic.Id, id, StringComparison.OrdinalIgnoreCase));
-                    networkProfile.NetworkInterfaces.Remove(nicReference);
+                    networkProfile.NetworkInterfaces.Clear();
                 }
+                else
+                {
+                    foreach (var id in this.NetworkInterfaceIDs)
+                    {
+                        if (networkProfile != null &&
+                            networkProfile.NetworkInterfaces != null &&
+                            networkProfile.NetworkInterfaces.Any(nic =>
+                                string.Equals(nic.Id, id, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            var nicReference = networkProfile.NetworkInterfaces.First(nic => string.Equals(nic.Id, id, StringComparison.OrdinalIgnoreCase));
+                            networkProfile.NetworkInterfaces.Remove(nicReference);
+                        }
+                    }
+                }
+
+                this.VM.NetworkProfile = networkProfile;
+
+                WriteObject(this.VM);
             }
-
-            this.VM.NetworkProfile = networkProfile;
-
-            WriteObject(this.VM);
         }
     }
 }

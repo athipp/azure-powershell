@@ -21,10 +21,9 @@ using System.Management.Automation;
 namespace Microsoft.Azure.Commands.Sql.Advisor.Cmdlet
 {
     /// <summary>
-    /// Defines the Set-AzureRmSqlServerAdvisorAutoExecuteStatus cmdlet
+    /// Defines the Set-AzSqlServerAdvisorAutoExecuteStatus cmdlet
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "AzureRmSqlServerAdvisorAutoExecuteStatus",
-        SupportsShouldProcess = true)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlServerAdvisorAutoExecuteStatus",SupportsShouldProcess = true), OutputType(typeof(AzureSqlServerAdvisorModel))]
     public class SetAzureSqlServerAdvisorAutoExecuteStatus : AzureSqlServerAdvisorCmdletBase
     {
         /// <summary>

@@ -20,10 +20,11 @@ using Microsoft.Azure.Commands.Cdn.Properties;
 using Microsoft.Azure.Management.Cdn;
 using System.Linq;
 using Microsoft.Azure.Commands.Cdn.Models.Endpoint;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Cdn.CustomDomain
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmCdnCustomDomain", DefaultParameterSetName = FieldsParameterSet), OutputType(typeof(PSCustomDomain))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CdnCustomDomain", DefaultParameterSetName = FieldsParameterSet), OutputType(typeof(PSCustomDomain))]
     public class GetAzureRmCdnCustomDomain : AzureCdnCmdletBase
     {
         [Parameter(Mandatory = false, HelpMessage = "Azure CDN custom domain name.")]
@@ -39,6 +40,7 @@ namespace Microsoft.Azure.Commands.Cdn.CustomDomain
         public string ProfileName { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The resource group of the Azure CDN profile.", ParameterSetName = FieldsParameterSet)]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -58,17 +60,17 @@ namespace Microsoft.Azure.Commands.Cdn.CustomDomain
             if (CustomDomainName == null)
             {
                 //List all custom domains on this endpoint
-                var customDomains = CdnManagementClient.CustomDomains.ListByEndpoint(EndpointName, ProfileName, ResourceGroupName).Select(c => c.ToPsCustomDomain());
+                var customDomains = CdnManagementClient.CustomDomains.ListByEndpoint(ResourceGroupName, ProfileName, EndpointName).Select(c => c.ToPsCustomDomain());
                 WriteVerbose(Resources.Success);
                 WriteObject(customDomains, true);
             }
             else
             {
                 var customDomain = CdnManagementClient.CustomDomains.Get(
-                    CustomDomainName,
-                    EndpointName,
+                    ResourceGroupName,
                     ProfileName,
-                    ResourceGroupName);
+                    EndpointName,
+                    CustomDomainName);
 
                 WriteVerbose(Resources.Success);
                 WriteObject(customDomain.ToPsCustomDomain());

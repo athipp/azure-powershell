@@ -14,17 +14,14 @@
 
 using Microsoft.Azure.Commands.HDInsight.Commands;
 using Microsoft.Azure.Commands.HDInsight.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.HDInsight
 {
-    [Cmdlet(
-        VerbsCommon.Get,
-        Constants.CommandNames.AzureHDInsightCluster),
-    OutputType(
-        typeof(List<AzureHDInsightCluster>))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "HDInsightCluster"),OutputType(typeof(AzureHDInsightCluster))]
     public class GetAzureHDInsightCommand : HDInsightCmdletBase
     {
         #region Input Parameter Definitions
@@ -32,6 +29,7 @@ namespace Microsoft.Azure.Commands.HDInsight
         [Parameter(
             Position = 0,
             HelpMessage = "Gets or sets the name of the resource group.")]
+        [ResourceGroupCompleter]
         public string ResourceGroupName { get; set; }
 
         [Parameter(
@@ -54,7 +52,8 @@ namespace Microsoft.Azure.Commands.HDInsight
             {
                 string resourceGroupName = ClusterConfigurationUtils.GetResourceGroupFromClusterId(entry.Id);
                 var configuration = HDInsightManagementClient.GetClusterConfigurations(resourceGroupName, entry.Name, "core-site");
-                return new AzureHDInsightCluster(entry, configuration);
+                var clusterIdentity = HDInsightManagementClient.GetClusterConfigurations(resourceGroupName, entry.Name, "clusterIdentity");
+                return new AzureHDInsightCluster(entry, configuration, clusterIdentity);
             }).ToList();
 
             WriteObject(output, true);

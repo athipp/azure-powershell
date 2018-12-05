@@ -13,48 +13,41 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Common.Authentication;
-using Microsoft.Azure.Insights;
-using Microsoft.Azure.Management.Insights;
-using Microsoft.Azure.Test;
+using Microsoft.Azure.Management.Monitor;
+using Microsoft.Azure.Test.HttpRecorder;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Microsoft.WindowsAzure.Commands.Test.Utilities.Common;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using RestTestFramework = Microsoft.Rest.ClientRuntime.Azure.TestFramework;
 
 namespace Microsoft.Azure.Commands.Insights.Test.ScenarioTests
 {
     public sealed class TestsController : RMTestBase
     {
-        private CSMTestEnvironmentFactory csmTestFactory;
-        private EnvironmentSetupHelper helper;
+        private readonly EnvironmentSetupHelper _helper;
 
-        public IInsightsClient InsightsClient { get; private set; }
-        public IInsightsManagementClient InsightsManagementClient { get; private set; }
+        public IMonitorManagementClient MonitorManagementClient { get; private set; }
 
-        public string UserDomain { get; private set; }
-
-        public static TestsController NewInstance
-        {
-            get
-            {
-                return new TestsController();
-            }
-        }
+        public static TestsController NewInstance => new TestsController();
 
         public TestsController()
         {
-            helper = new EnvironmentSetupHelper();
+            _helper = new EnvironmentSetupHelper();
         }
 
-        public void RunPsTest(params string[] scripts)
+        public void RunPsTest(ServiceManagemenet.Common.Models.XunitTracingInterceptor logger, params string[] scripts)
         {
-            var callingClassType = TestUtilities.GetCallingClass(2);
-            var mockName = TestUtilities.GetCurrentMethodName(2);
+            var sf = new StackTrace().GetFrame(1);
+            var callingClassType = sf.GetMethod().ReflectedType?.ToString();
+            var mockName = sf.GetMethod().Name;
 
+            _helper.TracingInterceptor = logger;
             RunPsTestWorkflow(
                 () => scripts,
-                // no custom initializer
-                null,
                 // no custom cleanup 
                 null,
                 callingClassType,
@@ -63,34 +56,35 @@ namespace Microsoft.Azure.Commands.Insights.Test.ScenarioTests
 
         public void RunPsTestWorkflow(
             Func<string[]> scriptBuilder,
-            Action<CSMTestEnvironmentFactory> initialize,
             Action cleanup,
             string callingClassType,
             string mockName)
         {
-            using (UndoContext context = UndoContext.Current)
+            var providers = new Dictionary<string, string>()
             {
-                context.Start(callingClassType, mockName);
+                { "Microsoft.Insights", null }
+            };
 
-                this.csmTestFactory = new CSMTestEnvironmentFactory();
+            var providersToIgnore = new Dictionary<string, string>();
+            providersToIgnore.Add("Microsoft.Azure.Management.Resources.ResourceManagementClient", "2016-02-01");
 
-                if (initialize != null)
-                {
-                    initialize(this.csmTestFactory);
-                }
+            HttpMockServer.Matcher = new PermissiveRecordMatcherWithApiExclusion(ignoreResourcesClient: true, providers: providers, userAgents: providersToIgnore);
+            HttpMockServer.RecordsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SessionRecords");
 
-                SetupManagementClients();
+            using (RestTestFramework.MockContext context = RestTestFramework.MockContext.Start(callingClassType, mockName))
+            {
+                SetupManagementClients(context);
 
-                helper.SetupEnvironment(AzureModule.AzureResourceManager);
+                _helper.SetupEnvironment(AzureModule.AzureResourceManager);
 
                 var callingClassName = callingClassType
                                         .Split(new[] { "." }, StringSplitOptions.RemoveEmptyEntries)
                                         .Last();
-                helper.SetupModules(AzureModule.AzureResourceManager,
+                _helper.SetupModules(AzureModule.AzureResourceManager,
+                    _helper.RMProfileModule,
+                    _helper.GetRMModulePath("AzureRM.Insights.psd1"),
                     "ScenarioTests\\Common.ps1",
-                    "ScenarioTests\\" + callingClassName + ".ps1",
-                    helper.RMProfileModule,
-                    helper.GetRMModulePath("AzureRM.Insights.psd1"));
+                    "ScenarioTests\\" + callingClassName + ".ps1");
 
                 try
                 {
@@ -100,36 +94,41 @@ namespace Microsoft.Azure.Commands.Insights.Test.ScenarioTests
 
                         if (psScripts != null)
                         {
-                            helper.RunPowerShellTest(psScripts);
+                            _helper.RunPowerShellTest(psScripts);
                         }
                     }
                 }
                 finally
                 {
-                    if (cleanup != null)
-                    {
-                        cleanup();
-                    }
+                    cleanup?.Invoke();
                 }
             }
         }
 
-        private void SetupManagementClients()
+        private void SetupManagementClients(RestTestFramework.MockContext context)
         {
-            this.InsightsClient = this.GetInsightsClient();
-            this.InsightsManagementClient = this.GetInsightsManagementClient();
+            if (HttpMockServer.Mode == HttpRecorderMode.Record)
+            {
+                // This allows the use of a particular subscription if the user is associated to several
+                // "TEST_CSM_ORGID_AUTHENTICATION=SubscriptionId=<subscription-id>"
+                string subId = Environment.GetEnvironmentVariable("TEST_CSM_ORGID_AUTHENTICATION");
+                RestTestFramework.TestEnvironment environment = new RestTestFramework.TestEnvironment(connectionString: subId);
+                this.MonitorManagementClient = this.GetInsightsManagementClient(context: context, env: environment);
+            }
+            else if (HttpMockServer.Mode == HttpRecorderMode.Playback)
+            {
+                this.MonitorManagementClient = this.GetInsightsManagementClient(context: context, env: null);
+            }
 
-            helper.SetupManagementClients(this.InsightsClient, this.InsightsManagementClient);
+            _helper.SetupManagementClients(
+                this.MonitorManagementClient);
         }
 
-        private IInsightsClient GetInsightsClient()
+        private IMonitorManagementClient GetInsightsManagementClient(RestTestFramework.MockContext context, RestTestFramework.TestEnvironment env)
         {
-            return TestBase.GetServiceClient<InsightsClient>(this.csmTestFactory);
-        }
-
-        private IInsightsManagementClient GetInsightsManagementClient()
-        {
-            return TestBase.GetServiceClient<InsightsManagementClient>(this.csmTestFactory);
+            return env != null 
+                ? context.GetServiceClient<MonitorManagementClient>(currentEnvironment: env) 
+                : context.GetServiceClient<MonitorManagementClient>();
         }
     }
 }

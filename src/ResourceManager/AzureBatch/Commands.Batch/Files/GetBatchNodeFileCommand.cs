@@ -19,8 +19,7 @@ using Constants = Microsoft.Azure.Commands.Batch.Utils.Constants;
 
 namespace Microsoft.Azure.Commands.Batch
 {
-    [Cmdlet(VerbsCommon.Get, Constants.AzureBatchNodeFile, DefaultParameterSetName = ComputeNodeAndIdParameterSet),
-        OutputType(typeof(PSNodeFile))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzurePrefix + "BatchNodeFile", DefaultParameterSetName = ComputeNodeAndIdParameterSet),OutputType(typeof(PSNodeFile))]
     public class GetBatchNodeFileCommand : BatchObjectModelCmdletBase
     {
         internal const string TaskAndIdParameterSet = "Task_Id";
@@ -70,8 +69,9 @@ namespace Microsoft.Azure.Commands.Batch
 
         [Parameter(Position = 2, ParameterSetName = ComputeNodeAndIdParameterSet)]
         [Parameter(ParameterSetName = TaskAndIdParameterSet)]
+        [Alias("Name")]
         [ValidateNotNullOrEmpty]
-        public string Name { get; set; }
+        public string Path { get; set; }
 
         [Parameter(ParameterSetName = TaskAndODataParameterSet)]
         [Parameter(ParameterSetName = ParentTaskObjectParameterSet)]
@@ -100,7 +100,7 @@ namespace Microsoft.Azure.Commands.Batch
             ListNodeFileOptions options = new ListNodeFileOptions(this.BatchContext, this.JobId, this.TaskId, this.Task, this.PoolId,
                 this.ComputeNodeId, this.ComputeNode, this.AdditionalBehaviors)
             {
-                NodeFileName = this.Name,
+                Path = this.Path,
                 Filter = this.Filter,
                 MaxCount = this.MaxCount,
                 Recursive = this.Recursive.IsPresent

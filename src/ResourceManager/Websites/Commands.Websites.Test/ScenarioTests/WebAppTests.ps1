@@ -15,6 +15,8 @@
 <#
 .SYNOPSIS
 Tests retrieving websites
+.DESCRIPTION
+SmokeTest
 #>
 function Test-GetWebApp
 {
@@ -22,7 +24,7 @@ function Test-GetWebApp
 	$rgname = Get-ResourceGroupName
 	$wname = Get-WebsiteName
 	$wname2 = Get-WebsiteName
-	$location = Get-Location
+	$location = Get-WebLocation
 	$whpName = Get-WebHostPlanName
 	$tier = "Shared"
 	$apiversion = "2015-08-01"
@@ -80,14 +82,14 @@ function Test-GetWebApp
 		Assert-True { $result.Count -ge 2 }
 
 	}
-    finally
+	finally
 	{
 		# Cleanup
 		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Force
 		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $wname2 -Force
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Force
 		Remove-AzureRmResourceGroup -Name $rgname -Force
-    }
+	}
 }
 
 <#
@@ -99,7 +101,7 @@ function Test-GetWebAppMetrics
 	# Setup
 	$rgname = Get-ResourceGroupName
 	$wname = Get-WebsiteName
-	$location = Get-Location
+	$location = Get-WebLocation
 	$whpName = Get-WebHostPlanName
 	$tier = "Shared"
 	$apiversion = "2015-08-01"
@@ -148,13 +150,13 @@ function Test-GetWebAppMetrics
 			Assert-True { $actualMetricNames -contains $i}
 		}
 	}
-    finally
+	finally
 	{
 		# Cleanup
 		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Force
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Force
 		Remove-AzureRmResourceGroup -Name $rgname -Force
-    }
+	}
 }
 
 <#
@@ -166,7 +168,7 @@ function Test-StartStopRestartWebApp
 	# Setup
 	$rgname = Get-ResourceGroupName
 	$wname = Get-WebsiteName
-	$location = Get-Location
+	$location = Get-WebLocation
 	$whpName = Get-WebHostPlanName
 	$tier = "Shared"
 	$apiversion = "2015-08-01"
@@ -221,13 +223,13 @@ function Test-StartStopRestartWebApp
 		Assert-AreEqual "Running" $webApp.State
 		$ping = PingWebApp $webApp
 	}
-    finally
+	finally
 	{
 		# Cleanup
 		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Force
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Force
 		Remove-AzureRmResourceGroup -Name $rgname -Force
-    }
+	}
 }
 
 <#
@@ -239,7 +241,7 @@ function Test-CloneNewWebApp
 	# Setup
 	$rgname = Get-ResourceGroupName
 	$appname = Get-WebsiteName
-	$location = Get-Location
+	$location = Get-WebLocation
 	$planName = Get-WebHostPlanName
 	$tier = "Premium"
 	$apiversion = "2015-08-01"
@@ -285,7 +287,7 @@ function Test-CloneNewWebApp
 		# Assert
 		Assert-AreEqual $destAppName $webapp2.Name
 	}
-    finally
+	finally
 	{
 		# Cleanup
 		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $appname -Force
@@ -294,7 +296,7 @@ function Test-CloneNewWebApp
 		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $destAppName -Force
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $destPlanName -Force
 		Remove-AzureRmResourceGroup -Name $rgname -Force
-    }
+	}
 }
 
 <#
@@ -308,7 +310,7 @@ function Test-CloneNewWebAppAndDeploymentSlots
 	$appname = Get-WebsiteName
 	$slot1name = "staging"
 	$slot2name = "testing"
-	$location = Get-Location
+	$location = Get-WebLocation
 	$planName = Get-WebHostPlanName
 	$tier = "Premium"
 	$apiversion = "2015-08-01"
@@ -387,7 +389,7 @@ function Test-CloneNewWebAppAndDeploymentSlots
 		Assert-AreEqual $appWithSlotName $slot2.Name
 		Assert-AreEqual $serverFarm2.Id $slot2.ServerFarmId
 	}
-    finally
+	finally
 	{
 		# Cleanup
 		Remove-AzureRmWebAppSlot -ResourceGroupName $rgname -Name $appname -Slot $slot1name -Force
@@ -400,7 +402,7 @@ function Test-CloneNewWebAppAndDeploymentSlots
 		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $destAppName -Force
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $destPlanName -Force
 		Remove-AzureRmResourceGroup -Name $rgname -Force
-    }
+	}
 }
 
 <#
@@ -412,7 +414,7 @@ function Test-CloneNewWebAppWithTrafficManager
 	# Setup
 	$rgname = Get-ResourceGroupName
 	$wname = Get-WebsiteName
-	$location = Get-Location
+	$location = Get-WebLocation
 	$whpName = Get-WebHostPlanName
 	$tier = "Premium"
 	$apiversion = "2015-08-01"
@@ -459,7 +461,7 @@ function Test-CloneNewWebAppWithTrafficManager
 		# Assert
 		Assert-AreEqual $destWebAppName $result.Name
 	}
-    finally
+	finally
 	{
 		# Cleanup
 		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Force
@@ -468,19 +470,21 @@ function Test-CloneNewWebAppWithTrafficManager
 		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $destWebAppName -Force
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $destAppServicePlanName -Force
 		Remove-AzureRmResourceGroup -Name $rgname -Force
-    }
+	}
 }
 
 <#
 .SYNOPSIS
 Tests creating a new website.
+.DESCRIPTION
+SmokeTest
 #>
 function Test-CreateNewWebApp
 {
 	# Setup
 	$rgname = Get-ResourceGroupName
 	$wname = Get-WebsiteName
-	$location = Get-Location
+	$location = Get-WebLocation
 	$whpName = Get-WebHostPlanName
 	$tier = "Shared"
 	$apiversion = "2015-08-01"
@@ -492,7 +496,9 @@ function Test-CreateNewWebApp
 		$serverFarm = New-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Location  $location -Tier $tier
 		
 		# Create new web app
-		$actual = New-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Location $location -AppServicePlan $whpName 
+		$job = New-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Location $location -AppServicePlan $whpName -AsJob
+		$job | Wait-Job
+		$actual = $job | Receive-Job
 		
 		# Assert
 		Assert-AreEqual $wname $actual.Name
@@ -505,13 +511,550 @@ function Test-CreateNewWebApp
 		Assert-AreEqual $wname $result.Name
 		Assert-AreEqual $serverFarm.Id $result.ServerFarmId
 	}
-    finally
+	finally
 	{
 		# Cleanup
 		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Force
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Force
 		Remove-AzureRmResourceGroup -Name $rgname -Force
-    }
+	}
+}
+
+<#
+.SYNOPSIS
+Tests creating a new windows continer app.
+.DESCRIPTION
+SmokeTest
+#>
+function Test-CreateNewWebAppHyperV
+{
+	# Setup
+	$rgname = Get-ResourceGroupName
+	$wname = Get-WebsiteName
+	$location = Get-WebLocation
+	$whpName = Get-WebHostPlanName
+	$tier = "PremiumContainer"
+	$apiversion = "2015-08-01"
+	$resourceType = "Microsoft.Web/sites"
+    $containerImageName = "testcontainer.io/paltest/iis"
+    $containerRegistryUrl = "https://testcontainer.azurecr.io"
+    $ontainerRegistryUser = "testregistry"
+    $pass = "7Dxo9p79Ins2K3ZU"
+    $containerRegistryPassword = ConvertTo-SecureString -String $pass -AsPlainText -Force
+    $dockerPrefix = "DOCKER|" 
+
+
+	try
+	{
+		#Setup
+		New-AzureRmResourceGroup -Name $rgname -Location $location
+		$serverFarm = New-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Location  $location -Tier $tier -WorkerSize Small -HyperV
+		
+		# Create new web app
+		$job = New-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Location $location -AppServicePlan $whpName -ContainerImageName $containerImageName -ContainerRegistryUrl $containerRegistryUrl -ContainerRegistryUser $ontainerRegistryUser -ContainerRegistryPassword $containerRegistryPassword -AsJob
+		$job | Wait-Job
+		$actual = $job | Receive-Job
+		
+		# Assert
+		Assert-AreEqual $wname $actual.Name
+		Assert-AreEqual $serverFarm.Id $actual.ServerFarmId
+
+		# Get new web app
+		$result = Get-AzureRmWebApp -ResourceGroupName $rgname -Name $wname
+		
+		# Assert
+		Assert-AreEqual $wname $result.Name
+		Assert-AreEqual $serverFarm.Id $result.ServerFarmId
+        Assert-AreEqual $true $result.IsXenon
+        Assert-AreEqual ($dockerPrefix + $containerImageName)  $result.SiteConfig.WindowsFxVersion
+
+        $appSettings = @{
+        "DOCKER_REGISTRY_SERVER_URL" = $containerRegistryUrl;
+        "DOCKER_REGISTRY_SERVER_USERNAME" = $ontainerRegistryUser;
+        "DOCKER_REGISTRY_SERVER_PASSWORD" = $pass;}
+
+        foreach($nvp in $webApp.SiteConfig.AppSettings)
+		{
+			Assert-True { $appSettings.Keys -contains $nvp.Name }
+			Assert-True { $appSettings[$nvp.Name] -match $nvp.Value }
+		}
+
+
+	}
+	finally
+	{
+		# Cleanup
+		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Force
+		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Force
+		Remove-AzureRmResourceGroup -Name $rgname -Force
+	}
+}
+
+<#
+.SYNOPSIS
+Tests enagbling continuous deployment for container and getting continuous deployment url.
+.DESCRIPTION
+SmokeTest
+#>
+function Test-EnableContainerContinuousDeploymentAndGetUrl
+{
+	# Setup
+	$rgname = Get-ResourceGroupName
+	$wname = Get-WebsiteName
+	$location = Get-WebLocation
+	$whpName = Get-WebHostPlanName
+	$tier = "PremiumContainer"
+	$apiversion = "2015-08-01"
+	$resourceType = "Microsoft.Web/sites"
+    $containerImageName = "microsoft/iis"
+    $containerRegistryUrl = "https://testcontainer.azurecr.io"
+    $ontainerRegistryUser = "testregistry"
+    $pass = "7Dxo9p79Ins2K3ZU"
+    $containerRegistryPassword = ConvertTo-SecureString -String $pass -AsPlainText -Force
+    $dockerPrefix = "DOCKER|"
+ 	try
+	{
+		#Setup
+		New-AzureRmResourceGroup -Name $rgname -Location $location
+		$serverFarm = New-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Location  $location -Tier $tier -WorkerSize Small -HyperV
+
+		# Create new web app
+		$job = New-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Location $location -AppServicePlan $whpName -ContainerImageName $containerImageName -ContainerRegistryUrl $containerRegistryUrl -ContainerRegistryUser $ontainerRegistryUser -ContainerRegistryPassword $containerRegistryPassword -EnableContainerContinuousDeployment -AsJob
+		$job | Wait-Job
+		$actual = $job | Receive-Job
+		
+		# Assert
+		Assert-AreEqual $wname $actual.Name
+		Assert-AreEqual $serverFarm.Id $actual.ServerFarmId
+ 		# Get new web app
+		$result = Get-AzureRmWebApp -ResourceGroupName $rgname -Name $wname
+
+		# Assert
+		Assert-AreEqual $wname $result.Name
+		Assert-AreEqual $serverFarm.Id $result.ServerFarmId
+        Assert-AreEqual $true $result.IsXenon
+        Assert-AreEqual ($dockerPrefix + $containerImageName)  $result.SiteConfig.WindowsFxVersion
+         $appSettings = @{
+        "DOCKER_REGISTRY_SERVER_URL" = $containerRegistryUrl;
+        "DOCKER_REGISTRY_SERVER_USERNAME" = $ontainerRegistryUser;
+        "DOCKER_REGISTRY_SERVER_PASSWORD" = $pass;
+        "DOCKER_ENABLE_CI" = "true"}
+         foreach($nvp in $webApp.SiteConfig.AppSettings)
+		{
+			Assert-True { $appSettings.Keys -contains $nvp.Name }
+			Assert-True { $appSettings[$nvp.Name] -match $nvp.Value }
+		}
+
+         $ci_url = Get-AzureRmWebAppContainerContinuousDeploymentUrl -ResourceGroupName $rgname -Name $wname
+
+		 $expression = "https://" + $wname + ":(.*)@" + $wname + ".scm.azurewebsites.net/docker/hook"
+		 $sanitizedCiUrl = { $ci_url -replace '$','' }
+
+		 $matchResult = { $sanitizedCiUrl -match $expression }
+
+		 Assert-AreEqual $true $matchResult
+ 	}
+	finally
+	{
+		# Cleanup
+		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Force
+		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Force
+		Remove-AzureRmResourceGroup -Name $rgname -Force
+	}
+}
+
+<#
+.SYNOPSIS
+Tests issuing an EnterPsSession command to a Windows container web app.
+.DESCRIPTION
+SmokeTest
+#>
+function Test-WindowsContainerCanIssueWebAppPSSession
+{
+	# Setup
+	$rgname = Get-ResourceGroupName
+	$wname = Get-WebsiteName
+	$location = Get-WebLocation
+	$whpName = Get-WebHostPlanName
+	$tier = "PremiumContainer"
+	$apiversion = "2015-08-01"
+	$resourceType = "Microsoft.Web/sites"
+    $containerImageName = "mcr.microsoft.com/azure-app-service/samples/aspnethelloworld:latest"
+    $containerRegistryUrl = "https://mcr.microsoft.com"
+	$containerRegistryUser = "testregistry"
+    $pass = "7Dxo9p79Ins2K3ZU"
+    $containerRegistryPassword = ConvertTo-SecureString -String $pass -AsPlainText -Force
+	$dockerPrefix = "DOCKER|"
+
+ 	try
+	{
+
+		Write-Debug "Creating app service plan..."
+
+		#Setup
+		New-AzureRmResourceGroup -Name $rgname -Location $location
+		$serverFarm = New-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Location  $location -Tier $tier -WorkerSize Large -HyperV
+
+		Write-Debug "App service plan created"
+
+		Write-Debug "Creating web app plan..."
+
+		# Create new web app
+		$job = New-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Location $location -AppServicePlan $whpName -ContainerImageName $containerImageName -ContainerRegistryUrl $containerRegistryUrl -ContainerRegistryUser $containerRegistryUser -ContainerRegistryPassword $containerRegistryPassword -AsJob
+		$job | Wait-Job
+		$actual = $job | Receive-Job
+		
+		Write-Debug "Webapp created"
+
+		# Assert
+		Assert-AreEqual $wname $actual.Name
+		Assert-AreEqual $serverFarm.Id $actual.ServerFarmId
+ 		# Get new web app
+		$result = Get-AzureRmWebApp -ResourceGroupName $rgname -Name $wname
+
+		Write-Debug "Webapp retrieved"
+
+		Write-Debug "Validating web app properties..."
+
+		# Assert
+		Assert-AreEqual $wname $result.Name
+		Assert-AreEqual $serverFarm.Id $result.ServerFarmId
+        Assert-AreEqual $true $result.IsXenon
+        Assert-AreEqual ($dockerPrefix + $containerImageName)  $result.SiteConfig.WindowsFxVersion
+
+		$actualAppSettings = @{}
+
+		foreach ($kvp in $result.SiteConfig.AppSettings)
+		{
+			$actualAppSettings[$kvp.Name] = $kvp.Value
+		}
+
+		# Validate Appsettings
+
+		$expectedAppSettings = @{}
+		$expectedAppSettings["DOCKER_REGISTRY_SERVER_URL"] = $containerRegistryUrl;
+		$expectedAppSettings["DOCKER_REGISTRY_SERVER_USERNAME"] = $containerRegistryUser;
+		$expectedAppSettings["DOCKER_REGISTRY_SERVER_PASSWORD"] = $pass;
+
+		foreach ($key in $expectedAppSettings.Keys)
+		{
+			Assert-True {$actualAppSettings.Keys -contains $key}
+			Assert-AreEqual $actualAppSettings[$key] $expectedAppSettings[$key]
+		}
+
+		Write-Debug "Enabling Win-RM..."
+
+		# Adding Appsetting: enabling WinRM
+		$actualAppSettings["CONTAINER_WINRM_ENABLED"] = "1"
+        $webApp = Set-AzureRmWebApp -ResourceGroupName $rgname -Name $wName -AppSettings $actualAppSettings
+
+		# Validating that the client can at least issue the EnterPsSession command.
+		# This will validate that this cmdlet will run succesfully in Cloud Shell.
+		# If the current PsVersion is 5.1 or less (Windows PowerShell) and the current WSMAN settings will not allow the user
+		# to connect (for example: invalid Trusted Hosts, Basic Auth not enabled) this command will issue a Warning instructing the user
+		# to fix WSMAN settings. It will not attempt to run EnterPsSession.
+		#
+		# If the current version is 6.0 (PowerShell Core) this command will not attempt to validate WSMAN settings and 
+		# just try to run EnterPsSession. EnterPsSession is available in Cloud Shell
+		#
+		# We need an real Windows Container app running to fully validate the returned PsSession object, which is not 
+		# possible in 'Playback' mode.
+		#
+		# This assert at least verifies that the EnterPsSession command is attempted and that the behavior is the expected in
+		# Windows PowerShell and PowerShell Core.
+		New-AzureRmWebAppContainerPSSession -ResourceGroupName $rgname -Name $wname -WarningVariable wv -WarningAction SilentlyContinue -ErrorAction SilentlyContinue -Force
+		
+
+		if ((Get-WebsitesTestMode) -ne 'Playback') 
+		{
+			# Message for Recording mode
+			$message = "Connecting to remote server $wname.azurewebsites.net failed with the following error message : The connection to the specified remote host was refused."
+			$resultError = $Error[0] -like "*$($message)*"
+			Write-Debug "Expected Message: $message"
+		}
+		else
+		{
+			# Two possible messages in Playback mode since the site will not exist.
+			$messageDNS = "Connecting to remote server $wname.azurewebsites.net failed with the following error message : The WinRM client cannot process the request because the server name cannot be resolved"
+			$messageUnavailable = "Connecting to remote server $wname.azurewebsites.net failed with the following error message : The WinRM client sent a request to an HTTP server and got a response saying the requested HTTP URL was not available."
+			$resultError = ($Error[0] -like "*$($messageDNS)*") -or ($Error[0] -like "*$($messageUnavailable)*")
+			Write-Debug "Expected Message 1: $messageDNS"
+			Write-Debug "Expected Message 2: $messageUnavailable"
+		}
+		
+		Write-Debug "Error: $Error[0]"
+		Write-Debug "Warnings: $wv"
+		
+		Write-Debug "Printing PsVersion"
+		foreach ($key in $PsVersionTable.Keys)
+		{
+			Write-Debug "$key"
+			foreach($v in $PsVersionTable[$key])
+			{
+				Write-Debug "   $v"
+			}
+		}
+
+		
+		If(!$resultError)
+		{
+			Write-Output "expected error $($message), actual error $($Error[0])"
+			Write-Output "Warnings: $wv"
+		}
+		Assert-True {$resultError}
+ 	}
+	finally
+	{
+		# Cleanup
+		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Force
+		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Force
+		Remove-AzureRmResourceGroup -Name $rgname -Force
+	}
+}
+
+<#
+.SYNOPSIS
+Tests that a PsSession can be established to a Windows Container App. It is expected to fail in Playback mode
+.DESCRIPTION
+SmokeTest
+#>
+function Test-WindowsContainerWebAppPSSessionOpened
+{
+	# Setup
+	$rgname = Get-ResourceGroupName
+	$wname = Get-WebsiteName
+	$location = Get-WebLocation
+	$whpName = Get-WebHostPlanName
+	$tier = "PremiumContainer"
+	$apiversion = "2015-08-01"
+	$resourceType = "Microsoft.Web/sites"
+    $containerImageName = "mcr.microsoft.com/azure-app-service/samples/aspnethelloworld:latest"
+    $containerRegistryUrl = "https://mcr.microsoft.com"
+	$containerRegistryUser = "testregistry"
+    $pass = "7Dxo9p79Ins2K3ZU"
+    $containerRegistryPassword = ConvertTo-SecureString -String $pass -AsPlainText -Force
+	$dockerPrefix = "DOCKER|"
+
+ 	try
+	{
+
+		Write-Debug "Creating app service plan..."
+
+		#Setup
+		New-AzureRmResourceGroup -Name $rgname -Location $location
+		$serverFarm = New-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Location  $location -Tier $tier -WorkerSize Large -HyperV
+
+		Write-Debug "App service plan created"
+
+		Write-Debug "Creating web app plan..."
+
+		# Create new web app
+		$job = New-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Location $location -AppServicePlan $whpName -ContainerImageName $containerImageName -ContainerRegistryUrl $containerRegistryUrl -ContainerRegistryUser $containerRegistryUser -ContainerRegistryPassword $containerRegistryPassword -AsJob
+		$job | Wait-Job
+		$actual = $job | Receive-Job
+		
+		Write-Debug "Webapp created"
+
+		# Assert
+		Assert-AreEqual $wname $actual.Name
+		Assert-AreEqual $serverFarm.Id $actual.ServerFarmId
+ 		# Get new web app
+		$result = Get-AzureRmWebApp -ResourceGroupName $rgname -Name $wname
+
+		Write-Debug "Webapp retrieved"
+
+		Write-Debug "Validating web app properties..."
+
+		# Assert
+		Assert-AreEqual $wname $result.Name
+		Assert-AreEqual $serverFarm.Id $result.ServerFarmId
+        Assert-AreEqual $true $result.IsXenon
+        Assert-AreEqual ($dockerPrefix + $containerImageName)  $result.SiteConfig.WindowsFxVersion
+
+		$actualAppSettings = @{}
+
+		foreach ($kvp in $result.SiteConfig.AppSettings)
+		{
+			$actualAppSettings[$kvp.Name] = $kvp.Value
+		}
+
+		# Validate Appsettings
+
+		$expectedAppSettings = @{}
+		$expectedAppSettings["DOCKER_REGISTRY_SERVER_URL"] = $containerRegistryUrl;
+		$expectedAppSettings["DOCKER_REGISTRY_SERVER_USERNAME"] = $containerRegistryUser;
+		$expectedAppSettings["DOCKER_REGISTRY_SERVER_PASSWORD"] = $pass;
+
+		foreach ($key in $expectedAppSettings.Keys)
+		{
+			Assert-True {$actualAppSettings.Keys -contains $key}
+			Assert-AreEqual $actualAppSettings[$key] $expectedAppSettings[$key]
+		}
+
+		Write-Debug "Enabling Win-RM..."
+
+		# Adding Appsetting: enabling WinRM
+		$actualAppSettings["CONTAINER_WINRM_ENABLED"] = "1"
+        $webApp = Set-AzureRmWebApp -ResourceGroupName $rgname -Name $wName -AppSettings $actualAppSettings
+
+		$status = PingWebApp($webApp)
+		Write-Debug "Just pinged the web app"
+		Write-Debug "Status: $status"
+
+		# Wait for the container app to return 200.
+		# Windows Container apps return 503 when starting up. Usualy takes 8-9 minutes.
+		# Timing out at 15 minutes
+
+		$count=0
+		while (($status -like "ServiceUnavailable") -and $count -le 15)
+		{
+			Wait-Seconds 60
+		    $status = PingWebApp($webApp)
+			Write-Debug $count
+			$count++
+		}
+
+		# Asserting status of the last ping to the web app
+		Assert-AreEqual $status "200"
+
+		$ps_session = New-AzureRmWebAppContainerPSSession -ResourceGroupName $rgname -Name $wname -Force
+
+		Write-Debug "After PSSession"
+
+		Assert-AreEqual $ps_session.ComputerName $wname".azurewebsites.net"
+		Assert-AreEqual $ps_session.State "Opened"
+ 	}
+	finally
+	{
+		# Cleanup
+		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Force
+		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Force
+		Remove-AzureRmResourceGroup -Name $rgname -Force
+	}
+}
+
+<#
+.SYNOPSIS
+Tests setting and Azure Storage Account in a new Windows container app.
+.DESCRIPTION
+SmokeTest
+#>
+function Test-SetAzureStorageWebAppHyperV
+{
+	# Setup
+	$rgname = Get-ResourceGroupName
+	$wname = Get-WebsiteName
+	$location = Get-WebLocation
+	$whpName = Get-WebHostPlanName
+	$tier = "PremiumContainer"
+	$apiversion = "2015-08-01"
+	$resourceType = "Microsoft.Web/sites"
+    $containerImageName = "testcontainer.io/test/iis"
+    $containerRegistryUrl = "https://testcontainer.azurecr.io"
+    $ontainerRegistryUser = "testregistry"
+    $pass = "7Dxo9p79Ins2K3ZU"
+    $containerRegistryPassword = ConvertTo-SecureString -String $pass -AsPlainText -Force
+    $dockerPrefix = "DOCKER|" 
+	$azureStorageAccountCustomId1 = "mystorageaccount"
+	$azureStorageAccountType1 = "AzureFiles"
+	$azureStorageAccountName1 = "myaccountname.file.core.windows.net"
+	$azureStorageAccountShareName1 = "myremoteshare"
+	$azureStorageAccountAccessKey1 = "AnAccessKey"
+	$azureStorageAccountMountPath1 = "C:\mymountpath"
+	$azureStorageAccountCustomId2 = "mystorageaccount2"
+	$azureStorageAccountType2 = "AzureFiles"
+	$azureStorageAccountName2 = "myaccountname2.file.core.windows.net"
+	$azureStorageAccountShareName2 = "myremoteshare2"
+	$azureStorageAccountAccessKey2 = "AnAccessKey2"
+	$azureStorageAccountMountPath2 = "C:\mymountpath2"
+
+	try
+	{
+		#Setup
+		New-AzureRmResourceGroup -Name $rgname -Location $location
+		$serverFarm = New-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Location  $location -Tier $tier -WorkerSize Small -HyperV
+		
+		# Create new web app
+		$job = New-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Location $location -AppServicePlan $whpName -ContainerImageName $containerImageName -ContainerRegistryUrl $containerRegistryUrl -ContainerRegistryUser $ontainerRegistryUser -ContainerRegistryPassword $containerRegistryPassword -AsJob
+		$job | Wait-Job
+		$actual = $job | Receive-Job
+		
+		# Assert
+		Assert-AreEqual $wname $actual.Name
+		Assert-AreEqual $serverFarm.Id $actual.ServerFarmId
+
+		# Get new web app
+		$result = Get-AzureRmWebApp -ResourceGroupName $rgname -Name $wname
+		
+		# Assert
+		Assert-AreEqual $wname $result.Name
+		Assert-AreEqual $serverFarm.Id $result.ServerFarmId
+        Assert-AreEqual $true $result.IsXenon
+        Assert-AreEqual ($dockerPrefix + $containerImageName)  $result.SiteConfig.WindowsFxVersion
+
+		$testStorageAccount1 = New-AzureRmWebAppAzureStoragePath -Name $azureStorageAccountCustomId1 -Type $azureStorageAccountType1 -AccountName $azureStorageAccountName1 -ShareName $azureStorageAccountShareName1 -AccessKey $azureStorageAccountAccessKey1 -MountPath $azureStorageAccountMountPath1
+		$testStorageAccount2 = New-AzureRmWebAppAzureStoragePath -Name $azureStorageAccountCustomId2 -Type $azureStorageAccountType2 -AccountName $azureStorageAccountName2 -ShareName $azureStorageAccountShareName2 -AccessKey $azureStorageAccountAccessKey2 -MountPath $azureStorageAccountMountPath2
+
+		Write-Debug "Created the new storage account paths"
+
+		Write-Debug $testStorageAccount1.Name
+		Write-Debug $testStorageAccount2.Name
+
+
+		# set Azure Storage accounts
+        $webApp = Set-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -AzureStoragePath $testStorageAccount1, $testStorageAccount2
+
+		Write-Debug "Set the new storage account paths"
+
+
+		# get the web app
+		$result = Get-AzureRmWebApp -ResourceGroupName $rgname -Name $wname
+		$azureStorageAccounts = $result.AzureStoragePath
+
+		# Assert
+		Write-Debug $azureStorageAccounts[0].Name
+		Assert-AreEqual $azureStorageAccounts[0].Name $azureStorageAccountCustomId1
+
+		Write-Debug $azureStorageAccounts[0].Type
+		Assert-AreEqual $azureStorageAccounts[0].Type $azureStorageAccountType1
+		
+		Write-Debug $azureStorageAccounts[0].AccountName
+		Assert-AreEqual $azureStorageAccounts[0].AccountName $azureStorageAccountName1
+		
+		Write-Debug $azureStorageAccounts[0].ShareName
+		Assert-AreEqual $azureStorageAccounts[0].ShareName $azureStorageAccountShareName1
+		
+		Write-Debug $azureStorageAccounts[0].AccessKey 
+		Assert-AreEqual $azureStorageAccounts[0].AccessKey $azureStorageAccountAccessKey1
+		
+		Write-Debug $azureStorageAccounts[0].MountPath
+		Assert-AreEqual $azureStorageAccounts[0].MountPath $azureStorageAccountMountPath1
+
+		Write-Debug $azureStorageAccounts[1].Name
+		Assert-AreEqual $azureStorageAccounts[1].Name $azureStorageAccountCustomId2
+
+		Write-Debug $azureStorageAccounts[1].Type
+		Assert-AreEqual $azureStorageAccounts[1].Type $azureStorageAccountType2
+
+		Write-Debug $azureStorageAccounts[1].AccountName
+		Assert-AreEqual $azureStorageAccounts[1].AccountName $azureStorageAccountName2
+
+		Write-Debug $azureStorageAccounts[1].ShareName
+		Assert-AreEqual $azureStorageAccounts[1].ShareName $azureStorageAccountShareName2
+
+		Write-Debug $azureStorageAccounts[1].AccessKey
+		Assert-AreEqual $azureStorageAccounts[1].AccessKey $azureStorageAccountAccessKey2
+
+		Write-Debug $azureStorageAccounts[1].MountPath
+		Assert-AreEqual $azureStorageAccounts[1].MountPath $azureStorageAccountMountPath2
+	}
+	finally
+	{
+		# Cleanup
+		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Force
+		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName -Force
+		Remove-AzureRmResourceGroup -Name $rgname -Force
+	}
 }
 
 <#
@@ -521,12 +1064,13 @@ Tests creating a new website on an ase
 function Test-CreateNewWebAppOnAse
 {
 	# Setup
+	# Creating and provisioning an ASE currently takes 30 mins to an hour, hence this test requires that the ASE & ASP are already created 
+	# before creating the app on the ASE
 	$rgname = "appdemorg"
 	$wname = Get-WebsiteName
 	$location = "West US"
-	$whpName = "travel_production_plan"
-	$aseName = "asedemo"
-	$apiversion = "2015-08-01"
+	$whpName = "travelproductionplan"
+	$aseName = "asedemops"
 	$resourceType = "Microsoft.Web/sites"
 	try
 	{
@@ -534,7 +1078,9 @@ function Test-CreateNewWebAppOnAse
 		$serverFarm = Get-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $whpName
 
 		# Create new web app
-		$actual = New-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Location $location -AppServicePlan $whpName -AseName $aseName
+		$job = New-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Location $location -AppServicePlan $whpName -AseName $aseName -AsJob
+		$job | Wait-Job
+		$actual = $job | Receive-Job
 		
 		# Assert
 		Assert-AreEqual $wname $actual.Name
@@ -547,29 +1093,32 @@ function Test-CreateNewWebAppOnAse
 		Assert-AreEqual $wname $result.Name
 		Assert-AreEqual $serverFarm.Id $result.ServerFarmId
 	}
-    finally
+	finally
 	{
 		# Cleanup
 		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $wname -Force
-    }
+	}
 }
 
 <#
 .SYNOPSIS
 Tests retrieving websites
+.DESCRIPTION
+SmokeTest
 #>
 function Test-SetWebApp
 {
 	# Setup
 	$rgname = Get-ResourceGroupName
 	$webAppName = Get-WebsiteName
-	$location = Get-Location
+	$location = Get-WebLocation
 	$appServicePlanName1 = Get-WebHostPlanName
 	$appServicePlanName2 = Get-WebHostPlanName
 	$tier1 = "Shared"
 	$tier2 = "Standard"
 	$apiversion = "2015-08-01"
 	$resourceType = "Microsoft.Web/sites"
+	$capacity = 2
 
 	try
 	{
@@ -580,23 +1129,34 @@ function Test-SetWebApp
 		
 		# Create new web app
 		$webApp = New-AzureRmWebApp -ResourceGroupName $rgname -Name $webAppName -Location $location -AppServicePlan $appServicePlanName1 
-		
+		Write-Debug "DEBUG: Created the Web App"
+
 		# Assert
 		Assert-AreEqual $webAppName $webApp.Name
 		Assert-AreEqual $serverFarm1.Id $webApp.ServerFarmId
+		Assert-Null $webApp.Identity
+		Assert-NotNull $webApp.SiteConfig.phpVersion
 		
-		# Change service plan
-		$webApp = Set-AzureRmWebApp -ResourceGroupName $rgname -Name $webAppName -AppServicePlan $appServicePlanName2
+		# Change service plan & set site properties
+		$job = Set-AzureRmWebApp -ResourceGroupName $rgname -Name $webAppName -AppServicePlan $appServicePlanName2 -HttpsOnly $true -AsJob
+		$job | Wait-Job
+		$webApp = $job | Receive-Job
+
+		Write-Debug "DEBUG: Changed service plan"
 
 		# Assert
 		Assert-AreEqual $webAppName $webApp.Name
 		Assert-AreEqual $serverFarm2.Id $webApp.ServerFarmId
+		Assert-AreEqual $true $webApp.HttpsOnly
 
 		# Set config properties
 		$webapp.SiteConfig.HttpLoggingEnabled = $true
 		$webapp.SiteConfig.RequestTracingEnabled = $true
 
+		# Set site properties
 		$webApp = $webApp | Set-AzureRmWebApp
+
+		Write-Debug "DEBUG: Changed site properties"
 
 		# Assert
 		Assert-AreEqual $webAppName $webApp.Name
@@ -604,47 +1164,60 @@ function Test-SetWebApp
 		Assert-AreEqual $true $webApp.SiteConfig.HttpLoggingEnabled
 		Assert-AreEqual $true $webApp.SiteConfig.RequestTracingEnabled
 
-		# set app settings and connection strings
 		$appSettings = @{ "setting1" = "valueA"; "setting2" = "valueB"}
 		$connectionStrings = @{ connstring1 = @{ Type="MySql"; Value="string value 1"}; connstring2 = @{ Type = "SQLAzure"; Value="string value 2"}}
 
-		$webApp = Set-AzureRmWebApp -ResourceGroupName $rgname -Name $webAppName -AppSettings $appSettings -ConnectionStrings $connectionStrings
+        # set app settings and assign Identity
+        $webApp = Set-AzureRmWebApp -ResourceGroupName $rgname -Name $webAppName -AppSettings $appSettings -AssignIdentity $true
+
+        # Assert
+        Assert-NotNull  $webApp.Identity
+        # AssignIdentity adds an appsetting to handle enabling / disabling AssignIdentity
+        Assert-AreEqual ($appSettings.Keys.Count) $webApp.SiteConfig.AppSettings.Count
+        Assert-NotNull  $webApp.Identity
+
+        # set app settings and connection strings
+		$webApp = Set-AzureRmWebApp -ResourceGroupName $rgname -Name $webAppName -AppSettings $appSettings -ConnectionStrings $connectionStrings -NumberofWorkers $capacity -PhpVersion "off"
 
 		# Assert
 		Assert-AreEqual $webAppName $webApp.Name
-		Assert-AreEqual $appSettings.Keys.Count $webApp.SiteConfig.AppSettings.Count
-		foreach($nvp in $webApp.SiteConfig.AppSettings)
+        foreach($nvp in $webApp.SiteConfig.AppSettings)
 		{
 			Assert-True { $appSettings.Keys -contains $nvp.Name }
 			Assert-True { $appSettings[$nvp.Name] -match $nvp.Value }
 		}
-
 		Assert-AreEqual $connectionStrings.Keys.Count $webApp.SiteConfig.ConnectionStrings.Count
 		foreach($connStringInfo in $webApp.SiteConfig.ConnectionStrings)
 		{
 			Assert-True { $connectionStrings.Keys -contains $connStringInfo.Name }
 		}
+
+		Assert-AreEqual $capacity $webApp.SiteConfig.NumberOfWorkers
+		Assert-AreEqual "" $webApp.SiteConfig.PhpVersion
+
 	}
-    finally
+	finally
 	{
 		# Cleanup
 		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $webAppName -Force
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $appServicePlanName1 -Force
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $appServicePlanName2 -Force
 		Remove-AzureRmResourceGroup -Name $rgname -Force
-    }
+	}
 }
 
 <#
 .SYNOPSIS
 Tests remove a web app
+.DESCRIPTION
+SmokeTest
 #>
 function Test-RemoveWebApp
 {
 	# Setup
 	$rgname = Get-ResourceGroupName
 	$appName = Get-WebsiteName
-	$location = Get-Location
+	$location = Get-WebLocation
 	$planName = Get-WebHostPlanName
 	$tier = "Shared"
 	$apiversion = "2015-08-01"
@@ -657,26 +1230,29 @@ function Test-RemoveWebApp
 		$serverFarm = New-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $planName -Location  $location -Tier $tier
 		
 		# Create new web app
-		$webapp = New-AzureRmWebApp -ResourceGroupName $rgname -Name $appName -Location $location -AppServicePlan $planName 
+		$webapp = New-AzureRmWebApp -ResourceGroupName $rgname -Name $appName -Location $location -AppServicePlan $planName
 		
 		# Assert
 		Assert-AreEqual $appName $webapp.Name
 		Assert-AreEqual $serverFarm.Id $webapp.ServerFarmId
 
 		# Remove web app via pipeline obj
-		$webapp | Remove-AzureRmWebApp -Force
+		$webapp | Remove-AzureRmWebApp -Force -AsJob | Wait-Job
 
 		# Retrieve web app by name
-		$webappNames = Get-AzureRmWebApp -ResourceGroupName $rgname | Select -expand Name
+		# TODO: Temporarily changed the call below to use parentheses around the Get,
+		# since an issue exists currently that causes the test to fail.
+		# https://github.com/Azure/azure-powershell/issues/5174
+		$webappNames = (Get-AzureRmWebApp -ResourceGroupName $rgname) | Select -Property Name
 
 		Assert-False { $webappNames -contains $appName }
 	}
-    finally
+	finally
 	{
 		# Cleanup
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $planName -Force
 		Remove-AzureRmResourceGroup -Name $rgname -Force
-    }
+	}
 }
 
 <#
@@ -688,7 +1264,7 @@ function Test-WebAppPublishingProfile
 	# Setup
 	$rgname = Get-ResourceGroupName
 	$appName = Get-WebsiteName
-	$location = Get-Location
+	$location = Get-WebLocation
 	$planName = Get-WebHostPlanName
 	$tier = "Shared"
 	$apiversion = "2015-08-01"
@@ -728,12 +1304,38 @@ function Test-WebAppPublishingProfile
 
 		# Assert
 		Assert-True { $fileZillaProfile.Name -eq $appName }
+
+		# Get web app publishing profile without OutputFile
+		[xml]$profile = Get-AzureRmWebAppPublishingProfile -ResourceGroupName $rgname -Name $appName
+
+		# Assert
+		Assert-NotNull $profile
+
 	}
-    finally
+	finally
 	{
 		# Cleanup
 		Remove-AzureRmWebApp -ResourceGroupName $rgname -Name $appName -Force
 		Remove-AzureRmAppServicePlan -ResourceGroupName $rgname -Name  $planName -Force
 		Remove-AzureRmResourceGroup -Name $rgname -Force
-    }
+	}
+}
+
+<#
+.SYNOPSIS
+Tests creating a web app with a simple parameterset.
+#>
+function Test-CreateNewWebAppSimple
+{
+	$appName = Get-WebsiteName
+	try
+	{
+		$webapp = New-AzureRmWebApp -Name $appName
+
+		Assert-AreEqual $appName $webapp.Name
+	}
+	finally
+	{
+		Remove-AzureRmResourceGroup $appName
+	}
 }

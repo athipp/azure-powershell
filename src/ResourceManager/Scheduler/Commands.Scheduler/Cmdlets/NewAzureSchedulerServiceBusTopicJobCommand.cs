@@ -21,14 +21,16 @@ namespace Microsoft.Azure.Commands.Scheduler.Cmdlets
     using Microsoft.Azure.Commands.Scheduler.Properties;
     using Microsoft.Azure.Commands.Scheduler.Utilities;
     using SchedulerModels = Microsoft.Azure.Management.Scheduler.Models;
+    using ResourceManager.Common.ArgumentCompleters;
 
     /// <summary>
     /// Creates new service bus topic job.
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmSchedulerServiceBusTopicJob", SupportsShouldProcess = true), OutputType(typeof(PSSchedulerJobDefinition))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SchedulerServiceBusTopicJob", SupportsShouldProcess = true), OutputType(typeof(PSSchedulerJobDefinition))]
     public class NewAzureSchedulerServiceBusTopicJobCommand : JobBaseCmdlet, IDynamicParameters
     {
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The targeted resource group for job.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

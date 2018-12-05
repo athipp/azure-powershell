@@ -20,10 +20,11 @@ using Microsoft.Azure.Commands.Cdn.Properties;
 using Microsoft.Azure.Management.Cdn;
 using System.Linq;
 using Microsoft.Azure.Commands.Cdn.Models.Endpoint;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Cdn.Origin
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmCdnOrigin", DefaultParameterSetName = FieldsParameterSet), OutputType(typeof(PSOrigin))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CdnOrigin", DefaultParameterSetName = FieldsParameterSet), OutputType(typeof(PSOrigin))]
     public class GetAzureRmCdnOrigin : AzureCdnCmdletBase
     {
         [Parameter(Mandatory = false, HelpMessage = "Azure CDN origin name.")]
@@ -39,6 +40,7 @@ namespace Microsoft.Azure.Commands.Cdn.Origin
         public string ProfileName { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The resource group of the Azure CDN profile.", ParameterSetName = FieldsParameterSet)]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -59,13 +61,13 @@ namespace Microsoft.Azure.Commands.Cdn.Origin
             if (OriginName == null)
             {
                 //list all origins on this endpoint
-                var origins = CdnManagementClient.Origins.ListByEndpoint(EndpointName, ProfileName, ResourceGroupName).Select(o => o.ToPsOrigin());
+                var origins = CdnManagementClient.Origins.ListByEndpoint(ResourceGroupName, ProfileName, EndpointName).Select(o => o.ToPsOrigin());
                 WriteVerbose(Resources.Success);
                 WriteObject(origins, true);
             }
             else
             {
-                var origin = CdnManagementClient.Origins.Get(OriginName, EndpointName, ProfileName, ResourceGroupName);
+                var origin = CdnManagementClient.Origins.Get(ResourceGroupName, ProfileName, EndpointName, OriginName);
                 WriteVerbose(Resources.Success);
                 WriteObject(origin.ToPsOrigin());
             }

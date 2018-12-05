@@ -21,7 +21,7 @@ namespace Microsoft.Azure.Commands.Sql.DataMasking.Cmdlet
     /// <summary>
     /// Sets the data masking policy properties for a specific database.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "AzureRmSqlDatabaseDataMaskingPolicy", SupportsShouldProcess = true), OutputType(typeof(DatabaseDataMaskingPolicyModel))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlDatabaseDataMaskingPolicy", SupportsShouldProcess = true), OutputType(typeof(DatabaseDataMaskingPolicyModel))]
     public class SetAzureSqlDatabaseDataMaskingPolicy : SqlDatabaseDataMaskingPolicyCmdletBase
     {
         /// <summary>

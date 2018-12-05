@@ -79,6 +79,31 @@ namespace Microsoft.Azure.Commands.Network
                 HelpMessage = "Application gateway UrlPathMap")]
         [ValidateNotNullOrEmpty]
         public PSApplicationGatewayUrlPathMap UrlPathMap { get; set; }
+
+        [Parameter(
+                ParameterSetName = "SetByResourceId",
+                HelpMessage = "ID of the application gateway RewriteRuleSet")]
+        [ValidateNotNullOrEmpty]
+        public string RewriteRuleSetId { get; set; }
+
+        [Parameter(
+                ParameterSetName = "SetByResource",
+                HelpMessage = "Application gateway RewriteRuleSet")]
+        [ValidateNotNullOrEmpty]
+        public PSApplicationGatewayRewriteRuleSet RewriteRuleSet { get; set; }
+
+        [Parameter(
+                ParameterSetName = "SetByResourceId",
+                HelpMessage = "ID of the application gateway RedirectConfiguration")]
+        [ValidateNotNullOrEmpty]
+        public string RedirectConfigurationId { get; set; }
+
+        [Parameter(
+                ParameterSetName = "SetByResource",
+                HelpMessage = "Application gateway RedirectConfiguration")]
+        [ValidateNotNullOrEmpty]
+        public PSApplicationGatewayRedirectConfiguration RedirectConfiguration { get; set; }
+
         public override void ExecuteCmdlet()
         {
             base.ExecuteCmdlet();
@@ -100,6 +125,14 @@ namespace Microsoft.Azure.Commands.Network
                 if (UrlPathMap != null)
                 {
                     this.UrlPathMapId = this.UrlPathMap.Id;
+                }
+                if (RewriteRuleSet != null)
+                {
+                    this.RewriteRuleSetId = this.RewriteRuleSet.Id;
+                }
+                if (RedirectConfiguration != null)
+                {
+                    this.RedirectConfigurationId = this.RedirectConfiguration.Id;
                 }
             }
         }
@@ -130,6 +163,16 @@ namespace Microsoft.Azure.Commands.Network
             {
                 requestRoutingRule.UrlPathMap = new PSResourceId();
                 requestRoutingRule.UrlPathMap.Id = this.UrlPathMapId;
+            }
+            if (!string.IsNullOrEmpty(this.RewriteRuleSetId))
+            {
+                requestRoutingRule.RewriteRuleSet = new PSResourceId();
+                requestRoutingRule.RewriteRuleSet.Id = this.RewriteRuleSetId;
+            }
+            if (!string.IsNullOrEmpty(this.RedirectConfigurationId))
+            {
+                requestRoutingRule.RedirectConfiguration = new PSResourceId();
+                requestRoutingRule.RedirectConfiguration.Id = this.RedirectConfigurationId;
             }
 
             requestRoutingRule.Id = ApplicationGatewayChildResourceHelper.GetResourceNotSetId(

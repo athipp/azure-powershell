@@ -24,7 +24,7 @@ namespace Microsoft.Azure.Commands.Sql.DataMasking.Cmdlet
     /// <summary>
     /// Returns a new data masking rule for a specific database
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmSqlDatabaseDataMaskingRule", SupportsShouldProcess = true)]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlDatabaseDataMaskingRule", SupportsShouldProcess = true), OutputType(typeof(DatabaseDataMaskingRuleModel))]
     public class NewAzureSqlDatabaseDataMaskingRule : BuildAzureSqlDatabaseDataMaskingRule
     {
         /// <summary>
@@ -41,7 +41,7 @@ namespace Microsoft.Azure.Commands.Sql.DataMasking.Cmdlet
         /// <returns>A model object</returns>
         protected override IEnumerable<DatabaseDataMaskingRuleModel> GetEntity()
         {
-            return ModelAdapter.GetDatabaseDataMaskingRules(ResourceGroupName, ServerName, DatabaseName, clientRequestId);
+            return ModelAdapter.GetDatabaseDataMaskingRules(ResourceGroupName, ServerName, DatabaseName);
         }
 
         /// <summary>

@@ -29,6 +29,8 @@ namespace Microsoft.Azure.Commands.Management.Storage
 
         protected const string StorageAccountNounStr = "AzureRmStorageAccount";
         protected const string StorageAccountKeyNounStr = StorageAccountNounStr + "Key";
+        protected const string StorageAccountRuleNounStr = StorageAccountNounStr + "NetworkRule";
+        protected const string StorageAccountRuleSetNounStr = StorageAccountRuleNounStr + "Set";
 
         protected const string StorageAccountNameAlias = "StorageAccountName";
         protected const string AccountNameAlias = "AccountName";
@@ -36,6 +38,8 @@ namespace Microsoft.Azure.Commands.Management.Storage
         protected const string StorageAccountTypeAlias = "StorageAccountType";
         protected const string AccountTypeAlias = "AccountType";
         protected const string Account_TypeAlias = "Type";
+
+        protected const string StorageAccountKeySourceStr = StorageAccountNounStr + "EncryptionKeySource";
 
         protected const string TagsAlias = "Tags";
 
@@ -54,6 +58,7 @@ namespace Microsoft.Azure.Commands.Management.Storage
         protected struct AccountKind
         {
             internal const string Storage = "Storage";
+            internal const string StorageV2 = "StorageV2";
             internal const string BlobStorage = "BlobStorage";
         }
         protected struct AccountAccessTier
@@ -61,9 +66,13 @@ namespace Microsoft.Azure.Commands.Management.Storage
             internal const string Hot = "Hot";
             internal const string Cool = "Cool";
         }
+
+        [Flags]
         public enum EncryptionSupportServiceEnum
         {
-            Blob = 1
+            None = 0,
+            Blob = 1,
+            File = 2
         }
 
         public IStorageManagementClient StorageClient
@@ -72,13 +81,11 @@ namespace Microsoft.Azure.Commands.Management.Storage
             {
                 if (storageClientWrapper == null)
                 {
-                    storageClientWrapper = new StorageManagementClientWrapper(DefaultProfile.Context)
-                    {
-                        VerboseLogger = WriteVerboseWithTimestamp,
-                        ErrorLogger = WriteErrorWithTimestamp
-                    };
+                    storageClientWrapper = new StorageManagementClientWrapper(DefaultProfile.DefaultContext);
                 }
 
+                this.storageClientWrapper.VerboseLogger = WriteVerboseWithTimestamp;
+                this.storageClientWrapper.ErrorLogger = WriteErrorWithTimestamp;
                 return storageClientWrapper.StorageManagementClient;
             }
 
@@ -89,7 +96,7 @@ namespace Microsoft.Azure.Commands.Management.Storage
         {
             get
             {
-                return DefaultProfile.Context.Subscription.Id.ToString();
+                return DefaultProfile.DefaultContext.Subscription.Id.ToString();
             }
         }
 
@@ -103,14 +110,10 @@ namespace Microsoft.Azure.Commands.Management.Storage
             return returnSkuName;
         }
 
-        protected static Kind? ParseAccountKind(string accountKind)
+        protected static Kind ParseAccountKind(string accountKind)
         {
             Kind returnKind;
-            if (accountKind == null)
-            {
-                return null;
-            }
-            else if (!Enum.TryParse<Kind>(accountKind, true, out returnKind))
+            if (!Enum.TryParse<Kind>(accountKind, true, out returnKind))
             {
                 throw new ArgumentOutOfRangeException("Kind");
             }
@@ -126,26 +129,18 @@ namespace Microsoft.Azure.Commands.Management.Storage
             return returnAccessTier;
         }
 
-        protected static Encryption ParseEncryption(EncryptionSupportServiceEnum? EnableService, EncryptionSupportServiceEnum? DisableService = null)
+        protected static Encryption ParseEncryption(bool storageEncryption = false, bool keyVaultEncryption = false, string keyName = null, string keyVersion = null, string keyVaultUri = null)
         {
-            //DisableService and EnableService should not have overlap
-            if (DisableService != null && EnableService != null)
-            {
-                if ((DisableService & EnableService) != 0)
-                    throw new ArgumentOutOfRangeException("EnableEncryptionService, DisableEncryptionService", String.Format("EnableEncryptionService and DisableEncryptionService should no have overlap Service: {0}", DisableService & EnableService));
-            }
-
             Encryption accountEncryption = new Encryption();
-            accountEncryption.Services = new EncryptionServices();
-            if (EnableService != null && (EnableService & EncryptionSupportServiceEnum.Blob) == EncryptionSupportServiceEnum.Blob)
+
+            if (storageEncryption)
             {
-                accountEncryption.Services.Blob = new EncryptionService();
-                accountEncryption.Services.Blob.Enabled = true;
+                accountEncryption.KeySource = "Microsoft.Storage";
             }
-            if (DisableService != null && (DisableService & EncryptionSupportServiceEnum.Blob) == EncryptionSupportServiceEnum.Blob)
+            if (keyVaultEncryption)
             {
-                accountEncryption.Services.Blob = new EncryptionService();
-                accountEncryption.Services.Blob.Enabled = false;
+                accountEncryption.KeySource = "Microsoft.Keyvault";
+                accountEncryption.KeyVaultProperties = new KeyVaultProperties(keyName, keyVersion, keyVaultUri);
             }
             return accountEncryption;
         }

@@ -1,4 +1,4 @@
-// ----------------------------------------------------------------------------------
+﻿// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@ using System.Security.Permissions;
 
 namespace Microsoft.Azure.Commands.StreamAnalytics
 {
-    [Cmdlet(VerbsCommon.Remove, Constants.StreamAnalyticsInput, SupportsShouldProcess = true)]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "StreamAnalyticsInput", SupportsShouldProcess = true), OutputType(typeof(bool))]
     public class RemoveAzureStreamAnalyticsInputCommand : StreamAnalyticsResourceProviderBaseCmdlet
     {
         [Parameter(Position = 1, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The azure stream analytics job name.")]
@@ -63,15 +63,8 @@ namespace Microsoft.Azure.Commands.StreamAnalytics
 
         private void ExecuteDelete()
         {
-            HttpStatusCode statusCode = StreamAnalyticsClient.RemovePSInput(ResourceGroupName, JobName, Name);
-            if (statusCode == HttpStatusCode.NoContent)
-            {
-                WriteWarning(string.Format(CultureInfo.InvariantCulture, Resources.InputNotFound, Name, JobName, ResourceGroupName));
-            }
-            else
-            {
-                WriteObject(true);
-            }
+            StreamAnalyticsClient.RemovePSInput(ResourceGroupName, JobName, Name);
+            WriteObject(true);
         }
     }
 }

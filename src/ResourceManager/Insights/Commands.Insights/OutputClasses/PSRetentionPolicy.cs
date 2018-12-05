@@ -12,32 +12,21 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Management.Insights.Models;
+using Microsoft.Azure.Management.Monitor.Models;
 
 namespace Microsoft.Azure.Commands.Insights.OutputClasses
 {
     /// <summary>
-    /// Wrapps around the ServiceDiagnosticSettings
+    /// Wrapps around the DiagnosticSettings
     /// </summary>
-    public class PSRetentionPolicy
+    public class PSRetentionPolicy : Microsoft.Azure.Management.Monitor.Management.Models.RetentionPolicy
     {
         /// <summary>
-        /// Gets or sets a value indicating whether the retention is enabled.
+        /// Initializes a new instance of the PSRetention class
         /// </summary>
-        public bool Enabled { get; set; }
-
-        /// <summary>
-        /// Gets or sets the retention in days.
-        /// </summary>
-        public int Days { get; set; }
-
-        /// <summary>
-        /// Initializes a new instance of the PSRetentionPolicy class.
-        /// </summary>
-        public PSRetentionPolicy(RetentionPolicy retentionPolicy)
+        /// <param name="retentionPolicy">The retention policy class from the new namespace</param>
+        public PSRetentionPolicy(RetentionPolicy retentionPolicy) : base(retentionPolicy)
         {
-            this.Enabled = retentionPolicy.Enabled;
-            this.Days = retentionPolicy.Days;
         }
     }
 }

@@ -16,6 +16,7 @@ using AutoMapper;
 using Microsoft.Azure.Commands.Compute.Common;
 using Microsoft.Azure.Commands.Compute.Extension.AzureVMBackup;
 using Microsoft.Azure.Commands.Compute.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.Compute;
 using Microsoft.Azure.Management.Compute.Models;
 using Microsoft.Rest.Azure;
@@ -26,11 +27,7 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
 {
-    [Cmdlet(
-        VerbsCommon.Set,
-        ProfileNouns.AzureDiskEncryptionExtension,
-        SupportsShouldProcess = true,
-        DefaultParameterSetName = AzureDiskEncryptionExtensionConstants.aadClientSecretParameterSet)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VMDiskEncryptionExtension",SupportsShouldProcess = true,DefaultParameterSetName = AzureDiskEncryptionExtensionConstants.singlePassParameterSet)]
     [OutputType(typeof(PSAzureOperationResponse))]
     public class SetAzureDiskEncryptionExtensionCommand : VirtualMachineExtensionBaseCmdlet
     {
@@ -39,6 +36,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
            Position = 0,
            ValueFromPipelineByPropertyName = true,
            HelpMessage = "The resource group name to which the VM belongs to")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -48,6 +46,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
             Position = 1,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Name of the virtual machine")]
+        [ResourceNameCompleter("Microsoft.Compute/virtualMachines", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string VMName { get; set; }
 
@@ -55,6 +54,13 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
            Mandatory = true,
            Position = 2,
            ValueFromPipelineByPropertyName = true,
+           ParameterSetName = AzureDiskEncryptionExtensionConstants.aadClientSecretParameterSet,
+           HelpMessage = "Client ID of AAD app with permissions to write secrets to KeyVault")]
+        [Parameter(
+           Mandatory = true,
+           Position = 2,
+           ValueFromPipelineByPropertyName = true,
+           ParameterSetName = AzureDiskEncryptionExtensionConstants.aadClientCertParameterSet,
            HelpMessage = "Client ID of AAD app with permissions to write secrets to KeyVault")]
         public string AadClientID { get; set; }
 
@@ -118,8 +124,11 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
             Mandatory = false,
             Position = 9,
             ValueFromPipelineByPropertyName = true,
-            HelpMessage = "Type of the volume (OS or Data) to perform encryption operation")]
-        [ValidateSet("OS", "Data", "All")]
+            HelpMessage = "Type of the volume (OS, Data, or All) to encrypt")]
+        [ValidateSet(
+            AzureDiskEncryptionExtensionContext.VolumeTypeOS,
+            AzureDiskEncryptionExtensionContext.VolumeTypeData,
+            AzureDiskEncryptionExtensionContext.VolumeTypeAll)]
         public string VolumeType { get; set; }
 
         [Parameter(
@@ -166,6 +175,32 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Disable auto-upgrade of minor version")]
         public SwitchParameter DisableAutoUpgradeMinorVersion { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            Position = 15,
+            ValueFromPipelineByPropertyName = true,
+            HelpMessage = "Skip backup creation for Linux VMs")]
+        public SwitchParameter SkipVmBackup { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            ValueFromPipelineByPropertyName = true,
+            HelpMessage = "The extension type. Specify this parameter to override its default value of \"AzureDiskEncryption\" for Windows VMs and \"AzureDiskEncryptionForLinux\" for Linux VMs.")]
+        [ValidateNotNullOrEmpty]
+        public string ExtensionType { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            ValueFromPipelineByPropertyName = true,
+            HelpMessage = "The extension publisher name. Specify this parameter only to override the default value of \"Microsoft.Azure.Security\".")]
+        [ValidateNotNullOrEmpty]
+        public string ExtensionPublisherName { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            HelpMessage = "Encrypt-Format all data drives that are not already encrypted")]
+        public SwitchParameter EncryptFormatAll { get; set; }
 
         private OperatingSystemTypes? currentOSType = null;
 
@@ -216,16 +251,20 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
             bool publisherMatch = false;
             if (OperatingSystemTypes.Linux.Equals(currentOSType))
             {
-                if (returnedExtension.Publisher.Equals(AzureDiskEncryptionExtensionContext.LinuxExtensionDefaultPublisher, StringComparison.InvariantCultureIgnoreCase) &&
-                    returnedExtension.ExtensionType.Equals(AzureDiskEncryptionExtensionContext.LinuxExtensionDefaultName, StringComparison.InvariantCultureIgnoreCase))
+                this.ExtensionPublisherName = this.ExtensionPublisherName ?? AzureDiskEncryptionExtensionContext.LinuxExtensionDefaultPublisher;
+                this.ExtensionType = this.ExtensionType ?? AzureDiskEncryptionExtensionContext.LinuxExtensionDefaultType;
+                if (returnedExtension.Publisher.Equals(this.ExtensionPublisherName, StringComparison.InvariantCultureIgnoreCase) &&
+                    returnedExtension.ExtensionType.Equals(this.ExtensionType, StringComparison.InvariantCultureIgnoreCase))
                 {
                     publisherMatch = true;
                 }
             }
             else if (OperatingSystemTypes.Windows.Equals(currentOSType))
             {
-                if (returnedExtension.Publisher.Equals(AzureDiskEncryptionExtensionContext.ExtensionDefaultPublisher, StringComparison.InvariantCultureIgnoreCase) &&
-                    returnedExtension.ExtensionType.Equals(AzureDiskEncryptionExtensionContext.ExtensionDefaultName, StringComparison.InvariantCultureIgnoreCase))
+                this.ExtensionPublisherName = this.ExtensionPublisherName ?? AzureDiskEncryptionExtensionContext.ExtensionDefaultPublisher;
+                this.ExtensionType = this.ExtensionType ?? AzureDiskEncryptionExtensionContext.ExtensionDefaultType;
+                if (returnedExtension.Publisher.Equals(this.ExtensionPublisherName, StringComparison.InvariantCultureIgnoreCase) &&
+                    returnedExtension.ExtensionType.Equals(this.ExtensionType, StringComparison.InvariantCultureIgnoreCase))
                 {
                     publisherMatch = true;
                 }
@@ -258,7 +297,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
         /// <summary>
         /// This function gets the VM model, fills in the OSDisk properties with encryptionSettings and does an UpdateVM
         /// </summary>
-        private AzureOperationResponse<VirtualMachine> UpdateVmEncryptionSettings()
+        private AzureOperationResponse<VirtualMachine> UpdateVmEncryptionSettings(DiskEncryptionSettings encryptionSettingsBackup)
         {
             string statusMessage = GetExtensionStatusMessage();
 
@@ -269,7 +308,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
                 (vmParameters.StorageProfile.OsDisk == null))
             {
                 //VM should have been created and have valid storageProfile and OSDisk by now
-                ThrowTerminatingError(new ErrorRecord(new ApplicationException(string.Format(CultureInfo.CurrentUICulture, "Set-AzureDiskEncryptionExtension can enable encryption only on a VM that was already created and has appropriate storageProfile and OS disk")),
+                ThrowTerminatingError(new ErrorRecord(new ApplicationException(string.Format(CultureInfo.CurrentUICulture, "Set-AzDiskEncryptionExtension can enable encryption only on a VM that was already created and has appropriate storageProfile and OS disk")),
                                                       "InvalidResult",
                                                       ErrorCategory.InvalidResult,
                                                       null));
@@ -299,10 +338,54 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
                 Location = vmParameters.Location,
                 Tags = vmParameters.Tags
             };
-            return this.ComputeClient.ComputeManagementClient.VirtualMachines.CreateOrUpdateWithHttpMessagesAsync(
-                this.ResourceGroupName,
-                vmParameters.Name,
-                parameters).GetAwaiter().GetResult();
+
+            AzureOperationResponse<VirtualMachine> updateResult = null;
+
+            // The 2nd pass. TODO: If something goes wrong here, try to revert to encryptionSettingsBackup.
+            if (encryptionSettingsBackup.Enabled != true)
+            {
+                updateResult = this.ComputeClient.ComputeManagementClient.VirtualMachines.CreateOrUpdateWithHttpMessagesAsync(
+                    this.ResourceGroupName,
+                    vmParameters.Name,
+                    parameters).GetAwaiter().GetResult();
+            }
+            else
+            {
+
+                // stop-update-start
+                // stop vm
+                this.ComputeClient.ComputeManagementClient.VirtualMachines
+                    .DeallocateWithHttpMessagesAsync(this.ResourceGroupName, this.VMName).GetAwaiter()
+                    .GetResult();
+                
+                // update vm
+                vmParameters = (this.ComputeClient.ComputeManagementClient.VirtualMachines.Get(
+                this.ResourceGroupName, this.VMName));
+                vmParameters.StorageProfile.OsDisk.EncryptionSettings = encryptionSettings;
+                parameters = new VirtualMachine
+                {
+                    DiagnosticsProfile = vmParameters.DiagnosticsProfile,
+                    HardwareProfile = vmParameters.HardwareProfile,
+                    StorageProfile = vmParameters.StorageProfile,
+                    NetworkProfile = vmParameters.NetworkProfile,
+                    OsProfile = vmParameters.OsProfile,
+                    Plan = vmParameters.Plan,
+                    AvailabilitySet = vmParameters.AvailabilitySet,
+                    Location = vmParameters.Location,
+                    Tags = vmParameters.Tags
+                };
+
+                updateResult = this.ComputeClient.ComputeManagementClient.VirtualMachines.CreateOrUpdateWithHttpMessagesAsync(
+                    this.ResourceGroupName,
+                    vmParameters.Name,
+                    parameters).GetAwaiter().GetResult();
+
+                // start vm
+                this.ComputeClient.ComputeManagementClient.VirtualMachines
+                    .StartWithHttpMessagesAsync(ResourceGroupName, this.VMName).GetAwaiter().GetResult();
+            }
+
+            return updateResult;
         }
 
         private Hashtable GetExtensionPublicSettings()
@@ -310,11 +393,21 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
             Hashtable publicSettings = new Hashtable();
             publicSettings.Add(AzureDiskEncryptionExtensionConstants.aadClientIDKey, AadClientID ?? String.Empty);
             publicSettings.Add(AzureDiskEncryptionExtensionConstants.aadClientCertThumbprintKey, AadClientCertThumbprint ?? String.Empty);
+            publicSettings.Add(AzureDiskEncryptionExtensionConstants.keyVaultResourceIdKey, DiskEncryptionKeyVaultId ?? string.Empty);
             publicSettings.Add(AzureDiskEncryptionExtensionConstants.keyVaultUrlKey, DiskEncryptionKeyVaultUrl ?? String.Empty);
+            publicSettings.Add(AzureDiskEncryptionExtensionConstants.kekVaultResourceIdKey, KeyEncryptionKeyVaultId ?? string.Empty);
             publicSettings.Add(AzureDiskEncryptionExtensionConstants.keyEncryptionKeyUrlKey, KeyEncryptionKeyUrl ?? String.Empty);
             publicSettings.Add(AzureDiskEncryptionExtensionConstants.volumeTypeKey, VolumeType ?? String.Empty);
-            publicSettings.Add(AzureDiskEncryptionExtensionConstants.encryptionOperationKey, AzureDiskEncryptionExtensionConstants.enableEncryptionOperation);
             publicSettings.Add(AzureDiskEncryptionExtensionConstants.sequenceVersionKey, SequenceVersion ?? String.Empty);
+
+            if (EncryptFormatAll.IsPresent)
+            {
+                publicSettings.Add(AzureDiskEncryptionExtensionConstants.encryptionOperationKey, AzureDiskEncryptionExtensionConstants.enableEncryptionFormatAllOperation);
+            }
+            else
+            {
+                publicSettings.Add(AzureDiskEncryptionExtensionConstants.encryptionOperationKey, AzureDiskEncryptionExtensionConstants.enableEncryptionOperation);
+            }
 
             string keyEncryptAlgorithm = string.Empty;
             if (!string.IsNullOrEmpty(this.KeyEncryptionKeyUrl))
@@ -348,10 +441,11 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
         {
             Hashtable SettingString = GetExtensionPublicSettings();
             Hashtable ProtectedSettingString = GetExtensionProtectedSettings();
+            string typeHandlerDefaultVersion;  // determined by parameter set and VM operating system type
 
             if (vmParameters == null)
             {
-                ThrowTerminatingError(new ErrorRecord(new ApplicationException(string.Format(CultureInfo.CurrentUICulture, "Set-AzureDiskEncryptionExtension can enable encryption only on a VM that was already created ")),
+                ThrowTerminatingError(new ErrorRecord(new ApplicationException(string.Format(CultureInfo.CurrentUICulture, "Set-AzDiskEncryptionExtension can enable encryption only on a VM that was already created ")),
                                                       "InvalidResult",
                                                       ErrorCategory.InvalidResult,
                                                       null));
@@ -362,12 +456,21 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
             if (OperatingSystemTypes.Windows.Equals(currentOSType))
             {
                 this.Name = this.Name ?? AzureDiskEncryptionExtensionContext.ExtensionDefaultName;
+
+                if (this.ParameterSetName.Equals(AzureDiskEncryptionExtensionConstants.singlePassParameterSet))
+                {
+                    typeHandlerDefaultVersion = AzureDiskEncryptionExtensionContext.ExtensionSinglePassVersion;
+                }
+                else
+                {
+                    typeHandlerDefaultVersion = AzureDiskEncryptionExtensionContext.ExtensionDefaultVersion;
+                }
                 vmExtensionParameters = new VirtualMachineExtension
                 {
                     Location = vmParameters.Location,
-                    Publisher = AzureDiskEncryptionExtensionContext.ExtensionDefaultPublisher,
-                    VirtualMachineExtensionType = AzureDiskEncryptionExtensionContext.ExtensionDefaultName,
-                    TypeHandlerVersion = (this.TypeHandlerVersion) ?? AzureDiskEncryptionExtensionContext.ExtensionDefaultVersion,
+                    Publisher = this.ExtensionPublisherName ?? AzureDiskEncryptionExtensionContext.ExtensionDefaultPublisher,
+                    VirtualMachineExtensionType = this.ExtensionType ?? AzureDiskEncryptionExtensionContext.ExtensionDefaultType,
+                    TypeHandlerVersion = this.TypeHandlerVersion ?? typeHandlerDefaultVersion,
                     Settings = SettingString,
                     ProtectedSettings = ProtectedSettingString,
                     AutoUpgradeMinorVersion = !DisableAutoUpgradeMinorVersion.IsPresent
@@ -376,12 +479,20 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
             else if (OperatingSystemTypes.Linux.Equals(currentOSType))
             {
                 this.Name = this.Name ?? AzureDiskEncryptionExtensionContext.LinuxExtensionDefaultName;
+                if (this.ParameterSetName.Equals(AzureDiskEncryptionExtensionConstants.singlePassParameterSet))
+                {
+                    typeHandlerDefaultVersion = AzureDiskEncryptionExtensionContext.LinuxExtensionSinglePassVersion;
+                }
+                else
+                {
+                    typeHandlerDefaultVersion = AzureDiskEncryptionExtensionContext.LinuxExtensionDefaultVersion;
+                }
                 vmExtensionParameters = new VirtualMachineExtension
                 {
                     Location = vmParameters.Location,
-                    Publisher = AzureDiskEncryptionExtensionContext.LinuxExtensionDefaultPublisher,
-                    VirtualMachineExtensionType = AzureDiskEncryptionExtensionContext.LinuxExtensionDefaultName,
-                    TypeHandlerVersion = (this.TypeHandlerVersion) ?? AzureDiskEncryptionExtensionContext.LinuxExtensionDefaultVersion,
+                    Publisher = this.ExtensionPublisherName ?? AzureDiskEncryptionExtensionContext.LinuxExtensionDefaultPublisher,
+                    VirtualMachineExtensionType = this.ExtensionType ?? AzureDiskEncryptionExtensionContext.LinuxExtensionDefaultType,
+                    TypeHandlerVersion = this.TypeHandlerVersion ?? typeHandlerDefaultVersion,
                     Settings = SettingString,
                     ProtectedSettings = ProtectedSettingString,
                     AutoUpgradeMinorVersion = !DisableAutoUpgradeMinorVersion.IsPresent
@@ -430,22 +541,63 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
 
                     currentOSType = virtualMachineResponse.StorageProfile.OsDisk.OsType;
 
-                    if (OperatingSystemTypes.Linux.Equals(currentOSType))
+                    if (OperatingSystemTypes.Linux.Equals(currentOSType) && !SkipVmBackup)
                     {
                         CreateVMBackupForLinx();
                     }
 
                     VirtualMachineExtension parameters = GetVmExtensionParameters(virtualMachineResponse);
 
-                    this.VirtualMachineExtensionClient.CreateOrUpdateWithHttpMessagesAsync(
+                    DiskEncryptionSettings encryptionSettingsBackup = virtualMachineResponse.StorageProfile.OsDisk.EncryptionSettings ??
+                                                                      new DiskEncryptionSettings { Enabled = false };
+
+                    // Single Pass
+                    //      newer model, supported by newer extension versions and host functionality 
+                    //      if SinglePassParameterSet is used, cmdlet will default to newer extension version
+                    //      [first and only pass]
+                    //          only one enable extension call will be issued from the cmdlet n
+                    //          No AD identity information or protected settings will be passed to the extension 
+                    //          Host performs the necessary key vault operations and vm model updates 
+                    // Dual Pass
+                    //      older model, supported by older extension versions  
+                    //      if an AD ParameterSet is used, cmdlet will default to older extension version
+                    //      [first pass] 
+                    //          AD identity information is passed into the VM via protected settings of the extension
+                    //          VM uses the AD identity to authenticate and perform key vault operations  
+                    //          VM returns result of key vault operation to caller via the extension status message
+                    //      [second pass]
+                    //          powershell reads extension status message returned from first pass
+                    //          updates VM model with encryption settings
+                    //          updates VM 
+
+                    // First Pass
+                    AzureOperationResponse<VirtualMachineExtension> firstPass = this.VirtualMachineExtensionClient.CreateOrUpdateWithHttpMessagesAsync(
                         this.ResourceGroupName,
                         this.VMName,
                         this.Name,
                         parameters).GetAwaiter().GetResult();
 
-                    var op = UpdateVmEncryptionSettings();
-                    var result = Mapper.Map<PSAzureOperationResponse>(op);
-                    WriteObject(result);
+                    if (!firstPass.Response.IsSuccessStatusCode)
+                    {
+                        ThrowTerminatingError(new ErrorRecord(new ApplicationException(string.Format(CultureInfo.CurrentUICulture,
+                                                                                        "Installation failed for extension {0} with error {1}",
+                                                                                        parameters.VirtualMachineExtensionType,
+                                                                                        firstPass.Response.Content.ReadAsStringAsync().GetAwaiter().GetResult())),
+                                                                "InvalidResult",
+                                                                ErrorCategory.InvalidResult,
+                                                                null));
+                    }
+
+                    if (this.ParameterSetName.Equals(AzureDiskEncryptionExtensionConstants.singlePassParameterSet))
+                    {
+                        WriteObject(ComputeAutoMapperProfile.Mapper.Map<PSAzureOperationResponse>(firstPass));
+                    }
+                    else
+                    {
+                        // Second pass 
+                        var secondPass = UpdateVmEncryptionSettings(encryptionSettingsBackup);
+                        WriteObject(ComputeAutoMapperProfile.Mapper.Map<PSAzureOperationResponse>(secondPass));
+                    }
                 }
             });
         }

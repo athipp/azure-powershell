@@ -15,13 +15,15 @@
 namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
 {
     /// <summary>
-    /// This class includes contant values used in AzureDiskEncryption
+    /// This class includes constant values used in AzureDiskEncryption
     /// </summary>
     public static class AzureDiskEncryptionExtensionConstants
     {
-        public const string aadClientCertParameterSet = "AAD Client Cert Parameters";
-        public const string aadClientSecretParameterSet = "AAD Client Secret Parameters";
+        public const string singlePassParameterSet = "SinglePassParameterSet";
+        public const string aadClientCertParameterSet = "AADClientCertParameterSet";
+        public const string aadClientSecretParameterSet = "AADClientSecretParameterSet";
         public const string enableEncryptionOperation = "EnableEncryption";
+        public const string enableEncryptionFormatAllOperation = "EnableEncryptionFormatAll";
         public const string disableEncryptionOperation = "DisableEncryption";
         public const string queryEncryptionStatusOperation = "QueryEncryptionStatus";
         public const string encryptionResultOsKey = "os";
@@ -39,5 +41,7 @@ namespace Microsoft.Azure.Commands.Compute.Extension.AzureDiskEncryption
         public const string osTypeLinux = "Linux";
         public const string osTypeWindows = "Windows";
         public const string defaultKeyEncryptionAlgorithm = "RSA-OAEP";
+        public const string keyVaultResourceIdKey = "KeyVaultResourceId";
+        public const string kekVaultResourceIdKey = "KekVaultResourceId";
     }
 }

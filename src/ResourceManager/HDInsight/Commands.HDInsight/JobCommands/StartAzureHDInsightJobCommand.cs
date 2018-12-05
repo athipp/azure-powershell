@@ -15,6 +15,7 @@
 using Hyak.Common;
 using Microsoft.Azure.Commands.HDInsight.Commands;
 using Microsoft.Azure.Commands.HDInsight.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.HDInsight.Job.Models;
 using Microsoft.WindowsAzure.Commands.Common;
 using System;
@@ -23,9 +24,7 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.HDInsight
 {
-    [Cmdlet(VerbsLifecycle.Start,
-        Constants.CommandNames.AzureHDInsightJob),
-    OutputType(typeof(AzureHDInsightJob))]
+    [Cmdlet("Start", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "HDInsightJob"),OutputType(typeof(AzureHDInsightJob))]
     public class StartAzureHDInsightJobCommand : HDInsightCmdletBase
     {
         #region Input Parameter Definitions
@@ -66,6 +65,7 @@ namespace Microsoft.Azure.Commands.HDInsight
         }
 
         [Parameter(HelpMessage = "Gets or sets the name of the resource group.")]
+        [ResourceGroupCompleter]
         public string ResourceGroupName { get; set; }
 
         #endregion

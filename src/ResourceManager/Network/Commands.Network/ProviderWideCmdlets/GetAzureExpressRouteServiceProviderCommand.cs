@@ -21,7 +21,7 @@ namespace Microsoft.Azure.Commands.Network
 {
     using AutoMapper;
 
-    [Cmdlet(VerbsCommon.Get, "AzureRmExpressRouteServiceProvider"), OutputType(typeof(PSExpressRouteServiceProvider))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ExpressRouteServiceProvider"), OutputType(typeof(PSExpressRouteServiceProvider))]
     public class GetAzureExpressRouteServiceProviderCommand : NetworkBaseCmdlet
     {
         public override void Execute()
@@ -33,7 +33,7 @@ namespace Microsoft.Azure.Commands.Network
 
             foreach (var provider in serviceProviderList)
             {
-                var psProvider = Mapper.Map<PSExpressRouteServiceProvider>(provider);
+                var psProvider = NetworkResourceManagerProfile.Mapper.Map<PSExpressRouteServiceProvider>(provider);
                 psProviders.Add(psProvider);
             }
 

@@ -1,4 +1,4 @@
-// ----------------------------------------------------------------------------------
+﻿// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,10 +18,13 @@ using Microsoft.Azure.Commands.ResourceManager.Common.Tags;
 using Microsoft.Azure.Management.Storage;
 using Microsoft.Azure.Management.Storage.Models;
 using StorageModels = Microsoft.Azure.Management.Storage.Models;
+using Microsoft.Azure.Commands.Management.Storage.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
+using System;
 
 namespace Microsoft.Azure.Commands.Management.Storage
 {
-    [Cmdlet(VerbsCommon.New, StorageAccountNounStr), OutputType(typeof(StorageModels.StorageAccount))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "StorageAccount"), OutputType(typeof(PSStorageAccount))]
     public class NewAzureStorageAccountCommand : StorageAccountBaseCmdlet
     {
         [Parameter(
@@ -29,6 +32,7 @@ namespace Microsoft.Azure.Commands.Management.Storage
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Resource Group Name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -60,6 +64,7 @@ namespace Microsoft.Azure.Commands.Management.Storage
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Storage Account Location.")]
+        [LocationCompleter("Microsoft.Storage/storageAccounts")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
@@ -67,6 +72,7 @@ namespace Microsoft.Azure.Commands.Management.Storage
             Mandatory = false,
             HelpMessage = "Storage Account Kind.")]
         [ValidateSet(AccountKind.Storage,
+            AccountKind.StorageV2,
             AccountKind.BlobStorage,
             IgnoreCase = true)]
         public string Kind { get; set; }
@@ -93,15 +99,60 @@ namespace Microsoft.Azure.Commands.Management.Storage
 
         [Parameter(
             Mandatory = false,
-            HelpMessage = "Storage Service that will enable encryption.")]
-        public EncryptionSupportServiceEnum? EnableEncryptionService { get; set; }
-
-        [Parameter(
-            Mandatory = false,
             HelpMessage = "Storage Account Tags.")]
         [ValidateNotNull]
         [Alias(TagsAlias)]
         public Hashtable Tag { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            ValueFromPipelineByPropertyName = true,
+            HelpMessage = "Storage Account EnableHttpsTrafficOnly.")]
+        public bool EnableHttpsTrafficOnly
+        {
+            get
+            {
+                return enableHttpsTrafficOnly.Value;
+            }
+            set
+            {
+                enableHttpsTrafficOnly = value;
+            }
+        }
+        private bool? enableHttpsTrafficOnly = null;
+
+        [Parameter(
+        Mandatory = false,
+        HelpMessage = "Generate and assign a new Storage Account Identity for this storage account for use with key management services like Azure KeyVault.")]
+        public SwitchParameter AssignIdentity { get; set; }
+
+        [Parameter(HelpMessage = "Storage Account NetworkRule",
+            Mandatory = false)]
+        [ValidateNotNullOrEmpty]
+        public PSNetworkRuleSet NetworkRuleSet
+        {
+            get; set;
+        }
+
+        [Parameter(
+            Mandatory = false,
+            HelpMessage = "Enable HierarchicalNamespace for the Storage account.")]
+        [ValidateNotNullOrEmpty]
+        public bool EnableHierarchicalNamespace
+        {
+            get
+            {
+                return enableHierarchicalNamespace.Value;
+            }
+            set
+            {
+                enableHierarchicalNamespace = value;
+            }
+        }
+        private bool? enableHierarchicalNamespace = null;
+
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         public override void ExecuteCmdlet()
         {
@@ -116,7 +167,6 @@ namespace Microsoft.Azure.Commands.Management.Storage
             StorageAccountCreateParameters createParameters = new StorageAccountCreateParameters()
             {
                 Location = this.Location,
-                Kind = ParseAccountKind(Kind),
                 Sku = new Sku(ParseSkuName(this.SkuName)),
                 Tags = TagsConversionHelper.CreateTagDictionary(Tag, validate: true),
             };
@@ -134,14 +184,31 @@ namespace Microsoft.Azure.Commands.Management.Storage
                 throw new System.ArgumentException(string.Format("UseSubDomain must be set together with CustomDomainName."));
             }
 
-            if (this.EnableEncryptionService != null)
+            if (Kind != null)
             {
-                createParameters.Encryption = ParseEncryption(EnableEncryptionService);
+                createParameters.Kind = ParseAccountKind(Kind);
             }
 
             if (this.AccessTier != null)
             {
                 createParameters.AccessTier = ParseAccessTier(AccessTier);
+            }
+            if (enableHttpsTrafficOnly != null)
+            {
+                createParameters.EnableHttpsTrafficOnly = enableHttpsTrafficOnly;
+            }
+
+            if (AssignIdentity.IsPresent)
+            {
+                createParameters.Identity = new Identity();
+            }
+            if (NetworkRuleSet != null)
+            {
+                createParameters.NetworkRuleSet = PSNetworkRuleSet.ParseStorageNetworkRule(NetworkRuleSet);
+            }
+            if (enableHierarchicalNamespace != null)
+            {
+                createParameters.IsHnsEnabled = enableHierarchicalNamespace;
             }
 
             var createAccountResponse = this.StorageClient.StorageAccounts.Create(

@@ -14,19 +14,21 @@
 
 using AutoMapper;
 using Microsoft.Azure.Commands.Network.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System;
 using System.Management.Automation;
 using MNM = Microsoft.Azure.Management.Network.Models;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmVpnClientPackage"), OutputType(typeof(string))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VpnClientPackage"), OutputType(typeof(string))]
     public class GetAzureVpnClientPackage : VirtualNetworkGatewayBaseCmdlet
     {
         [Parameter(
             Mandatory = true,
             ValueFromPipeline = true,
             HelpMessage = "ResourceGroup name")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -34,6 +36,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = true,
             ValueFromPipeline = true,
             HelpMessage = "VirtualNetworkGateway name")]
+        [ResourceNameCompleter("Microsoft.Network/virtualNetworkGateways", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string VirtualNetworkGatewayName { get; set; }
 
@@ -53,12 +56,12 @@ namespace Microsoft.Azure.Commands.Network
 
             if (!this.IsVirtualNetworkGatewayPresent(ResourceGroupName, VirtualNetworkGatewayName))
             {
-                throw new ArgumentException(Microsoft.Azure.Commands.Network.Properties.Resources.ResourceNotFound);
+                throw new ArgumentException(string.Format(Microsoft.Azure.Commands.Network.Properties.Resources.ResourceNotFound, VirtualNetworkGatewayName));
             }
 
             PSVpnClientParameters vpnClientParams = new PSVpnClientParameters();
             vpnClientParams.ProcessorArchitecture = this.ProcessorArchitecture;
-            var vnetVpnClientParametersModel = Mapper.Map<MNM.VpnClientParameters>(vpnClientParams);
+            var vnetVpnClientParametersModel = NetworkResourceManagerProfile.Mapper.Map<MNM.VpnClientParameters>(vpnClientParams);
 
             //TODO:- This code is added just for current release of P2S feature as Generatevpnclientpackage API is broken & need to be fixed on server 
             //side as well as in overall Poweshell flow
@@ -70,4 +73,3 @@ namespace Microsoft.Azure.Commands.Network
         }
     }
 }
-

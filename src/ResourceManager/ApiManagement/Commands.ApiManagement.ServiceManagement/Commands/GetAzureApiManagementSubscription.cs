@@ -19,15 +19,14 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
     using System.Collections.Generic;
     using System.Management.Automation;
 
-    [Cmdlet(VerbsCommon.Get, Constants.ApiManagementSubscription, DefaultParameterSetName = GetAll)]
-    [OutputType(typeof(IList<PsApiManagementSubscription>), ParameterSetName = new[] { GetAll, GetByProductId, GetByUserId })]
-    [OutputType(typeof(PsApiManagementSubscription), ParameterSetName = new[] { GetBySubscriptionId })]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApiManagementSubscription", DefaultParameterSetName = GetAll)]
+    [OutputType(typeof(PsApiManagementSubscription))]
     public class GetAzureApiManagementSubscription : AzureApiManagementCmdletBase
     {
-        private const string GetAll = "Get all subscriptions";
-        private const string GetBySubscriptionId = "Get by subsctiption ID";
-        private const string GetByUserId = "Get by user ID";
-        private const string GetByProductId = "Get by product ID";
+        private const string GetAll = "GetAllSubscriptions";
+        private const string GetBySubscriptionId = "GetBySubscriptionId";
+        private const string GetByUserId = "GetByUserId";
+        private const string GetByProductId = "GetByProductId";
 
         [Parameter(
             ValueFromPipelineByPropertyName = true,

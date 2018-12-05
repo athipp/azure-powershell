@@ -15,14 +15,18 @@
 namespace Microsoft.Azure.Commands.ApiManagement.Commands
 {
     using Microsoft.Azure.Commands.ApiManagement.Models;
+    using ResourceManager.Common.ArgumentCompleters;
     using System;
     using System.Management.Automation;
 
-    [Cmdlet(VerbsCommon.Set, "AzureRmApiManagementHostnames", DefaultParameterSetName = DefaultParameterSetName), OutputType(typeof(PsApiManagement))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApiManagementHostnames", DefaultParameterSetName = DefaultParameterSetName), OutputType(typeof(PsApiManagement))]
+    [Obsolete("This cmdlet has been marked for deprecation in an upcoming release. Please use the " +
+        "Set-AzApiManagement cmdlet from the AzureRM.ApiManagement module instead.",
+        false)]
     public class SetAzureApiManagementHostnames : AzureApiManagementCmdletBase
     {
-        internal const string FromPsApiManagementInstanceSetName = "Set from provided PsApiManagement instance";
-        internal const string DefaultParameterSetName = "Specific API Management service";
+        internal const string FromPsApiManagementInstanceSetName = "SetFromPsApiManagementInstance";
+        internal const string DefaultParameterSetName = "SetSpecificService";
 
         [Parameter(
             ParameterSetName = FromPsApiManagementInstanceSetName,
@@ -37,6 +41,7 @@ namespace Microsoft.Azure.Commands.ApiManagement.Commands
             ValueFromPipelineByPropertyName = true,
             Mandatory = true,
             HelpMessage = "Name of resource group under which API Management exists.")]
+        [ResourceGroupCompleter()]
         public string ResourceGroupName { get; set; }
 
         [Parameter(
@@ -89,9 +94,11 @@ namespace Microsoft.Azure.Commands.ApiManagement.Commands
                 throw new Exception(string.Format("Unrecongnized parameter set: {0}", ParameterSetName));
             }
 
-            ExecuteLongRunningCmdletWrap(
-                () => Client.BeginSetHostnames(resourceGroupName, name, portalHostName, proxyHostName),
-                PassThru.IsPresent);
+            var apiManagementResource = Client.SetHostnames(resourceGroupName, name, portalHostName, proxyHostName);
+            if (PassThru.IsPresent)
+            {
+                this.WriteObject(apiManagementResource);
+            }
         }
     }
 }

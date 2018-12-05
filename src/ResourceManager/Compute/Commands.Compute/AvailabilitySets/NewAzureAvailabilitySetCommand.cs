@@ -15,12 +15,16 @@
 using AutoMapper;
 using Microsoft.Azure.Commands.Compute.Common;
 using Microsoft.Azure.Commands.Compute.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.Compute.Models;
+using System;
+using System.Collections;
+using System.Linq;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Compute
 {
-    [Cmdlet(VerbsCommon.New, ProfileNouns.AvailabilitySet)]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "AvailabilitySet")]
     [OutputType(typeof(PSAvailabilitySet))]
     public class NewAzureAvailabilitySetCommand : AvailabilitySetBaseCmdlet
     {
@@ -29,6 +33,7 @@ namespace Microsoft.Azure.Commands.Compute
            Position = 0,
            ValueFromPipelineByPropertyName = true,
            HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -46,22 +51,38 @@ namespace Microsoft.Azure.Commands.Compute
             Position = 2,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The location.")]
+        [LocationCompleter("Microsoft.Compute/availabilitySets")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
         [Parameter(
             Position = 3,
             ValueFromPipelineByPropertyName = true,
-            HelpMessage = "The Platform Update Domain Count.")]
+            HelpMessage = "The Platform Update Domain Count")]
         [ValidateNotNullOrEmpty]
         public int? PlatformUpdateDomainCount { get; set; }
 
         [Parameter(
             Position = 4,
             ValueFromPipelineByPropertyName = true,
-            HelpMessage = "The Platform Fault Domain Count.")]
+            HelpMessage = "The Platform Fault Domain Count")]
         [ValidateNotNullOrEmpty]
         public int? PlatformFaultDomainCount { get; set; }
+
+        [Parameter(
+            Position = 5,
+            ValueFromPipelineByPropertyName = true,
+            HelpMessage = "The Name of Sku")]
+        public string Sku { get; set; }
+
+        [Parameter(
+            Mandatory = false,
+            HelpMessage = "Key-value pairs in the form of a hash table."
+            )]
+        public Hashtable Tag { get; set; }
+
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         public override void ExecuteCmdlet()
         {
@@ -73,18 +94,28 @@ namespace Microsoft.Azure.Commands.Compute
                 {
                     Location = this.Location,
                     PlatformUpdateDomainCount = this.PlatformUpdateDomainCount,
-                    PlatformFaultDomainCount = this.PlatformFaultDomainCount
+                    PlatformFaultDomainCount = this.PlatformFaultDomainCount,
+                    Tags = Tag == null ? null : Tag.Cast<DictionaryEntry>().ToDictionary(d => (string)d.Key, d => (string)d.Value)
                 };
+
+                if (!string.IsNullOrEmpty(this.Sku))
+                {
+                    avSetParams.Sku = new Sku();
+                    if (!string.IsNullOrEmpty(this.Sku))
+                    {
+                        avSetParams.Sku.Name = this.Sku;
+                    }
+                }
 
                 var result = this.AvailabilitySetClient.CreateOrUpdateWithHttpMessagesAsync(
                     this.ResourceGroupName,
                     this.Name,
                     avSetParams).GetAwaiter().GetResult();
 
-                var psResult = Mapper.Map<PSAvailabilitySet>(result);
+                var psResult = ComputeAutoMapperProfile.Mapper.Map<PSAvailabilitySet>(result);
                 if (result.Body != null)
                 {
-                    psResult = Mapper.Map(result.Body, psResult);
+                    psResult = ComputeAutoMapperProfile.Mapper.Map(result.Body, psResult);
                 }
                 WriteObject(psResult);
             });

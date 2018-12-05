@@ -18,7 +18,9 @@ Gets valid resource group name
 #>
 function Get-ResourceGroupName
 {
-    return getAssetName
+    param([string] $prefix = [string]::Empty)
+
+	return getAssetName $prefix
 }
 
 <#
@@ -27,43 +29,61 @@ Gets valid resource name
 #>
 function Get-ResourceName
 {
-    return getAssetName
+    param([string] $prefix = [string]::Empty)
+
+    return getAssetName $prefix
+}
+
+<#
+.SYNOPSIS
+Gets test mode - 'Record' or 'Playback'
+#>
+function Get-NetworkTestMode {
+    try {
+        $testMode = [Microsoft.Azure.Test.HttpRecorder.HttpMockServer]::Mode;
+        $testMode = $testMode.ToString();
+    } catch {
+        if ($PSItem.Exception.Message -like '*Unable to find type*') {
+            $testMode = 'Record';
+        } else {
+            throw;
+        }
+    }
+
+    return $testMode
 }
 
 <#
 .SYNOPSIS
 Gets the default location for a provider
 #>
-function Get-ProviderLocation($provider)
+function Get-ProviderLocation($provider, $preferredLocation = "West Central US")
 {
-	if ([Microsoft.Azure.Test.HttpRecorder.HttpMockServer]::Mode -ne [Microsoft.Azure.Test.HttpRecorder.HttpRecorderMode]::Playback)
-	{
-		$namespace = $provider.Split("/")[0]  
-		if($provider.Contains("/"))  
-		{  
-			$type = $provider.Substring($namespace.Length + 1)  
-			$location = Get-AzureRmResourceProvider -ProviderNamespace $namespace | where {$_.ResourceTypes[0].ResourceTypeName -eq $type}  
-  
-			if ($location -eq $null) 
-			{  
-				return "West US"  
-			} else 
-			{  
-			if($location.Locations[0] -eq "West US")
-			{ 
-			return $location.Locations[1]
-			}
-			else
-			{
-				return $location.Locations[0]
-				}
-			}  
-		}
-		
-		return "West US"
-	}
-
-	return "WestUS"
+    if((Get-NetworkTestMode) -ne 'Playback')
+    {
+        if($env:AZURE_NRP_TEST_LOCATION -and $env:AZURE_NRP_TEST_LOCATION -match "^[a-z0-9\s]+$")
+        {
+            return $env:AZURE_NRP_TEST_LOCATION;
+        }
+        if(-not $preferredLocation.Contains(" "))
+        {
+            # TODO: implement UseCanonical switch after PR is merged: https://github.com/Azure/azure-powershell-common/pull/90
+            return $preferredLocation;
+        }
+        if($provider.Contains("/"))
+        {
+            $providerNamespace, $resourceType = $provider.Split("/");
+            return Get-Location $providerNamespace $resourceType $preferredLocation;
+        }
+        else
+        {
+            return $preferredLocation;
+        }
+    }
+    else
+    {
+        return $preferredLocation;
+    }
 }
 
 <#
@@ -72,7 +92,7 @@ Cleans the created resource groups
 #>
 function Clean-ResourceGroup($rgname)
 {
-    if ([Microsoft.Azure.Test.HttpRecorder.HttpMockServer]::Mode -ne [Microsoft.Azure.Test.HttpRecorder.HttpRecorderMode]::Playback) {
+    if ((Get-NetworkTestMode) -ne 'Playback') {
         Remove-AzureRmResourceGroup -Name $rgname -Force
     }
 }
@@ -83,7 +103,7 @@ Sleeps but only during recording.
 #>
 function Start-TestSleep($milliseconds)
 {
-    if ([Microsoft.Azure.Test.HttpRecorder.HttpMockServer]::Mode -ne [Microsoft.Azure.Test.HttpRecorder.HttpRecorderMode]::Playback)
+    if ((Get-NetworkTestMode) -ne 'Playback')
     {
         Start-Sleep -Milliseconds $milliseconds
     }

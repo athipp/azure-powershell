@@ -18,6 +18,7 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
     using Microsoft.Azure.Management.Logic.Models;
     using Microsoft.WindowsAzure.Commands.Utilities.Common;
     using Newtonsoft.Json.Linq;
+    using ResourceManager.Common.ArgumentCompleters;
     using System;
     using System.Collections.Generic;
     using System.Management.Automation;
@@ -25,7 +26,7 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
     /// <summary>
     /// Creates a new LogicApp workflow 
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmLogicApp", SupportsShouldProcess = true), OutputType(typeof(object))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "LogicApp", SupportsShouldProcess = true), OutputType(typeof(object))]
     public class NewAzureLogicAppCommand : LogicAppBaseCmdlet
     {
         #region private Variables
@@ -41,6 +42,7 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 
         [Parameter(Mandatory = true, HelpMessage = "The targeted resource group for the workflow.",
             ValueFromPipelineByPropertyName = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -50,6 +52,7 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
         public string Name { get; set; }
 
         [Parameter(Mandatory = true, HelpMessage = "The location of the workflow.", ValueFromPipelineByPropertyName = true)]
+        [LocationCompleter("Microsoft.Logic/workflows")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
@@ -62,12 +65,12 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
             set { this._status = value; }
         }
 
-        [Parameter(Mandatory = false, HelpMessage = "The definition of the workflow.",
+        [Parameter(Mandatory = true, HelpMessage = "The definition of the workflow.",
             ParameterSetName = ParameterSet.LogicAppWithDefinition)]
         [ValidateNotNullOrEmpty]
         public object Definition { get; set; }
 
-        [Parameter(Mandatory = false, HelpMessage = "The physical file path of the workflow definition.",
+        [Parameter(Mandatory = true, HelpMessage = "The physical file path of the workflow definition.",
             ParameterSetName = ParameterSet.LogicAppWithDefinitionFile)]
         [ValidateNotNullOrEmpty]
         public string DefinitionFilePath { get; set; }

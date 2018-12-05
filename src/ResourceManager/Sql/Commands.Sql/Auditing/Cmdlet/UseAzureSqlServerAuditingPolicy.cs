@@ -21,8 +21,9 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Cmdlet
     /// <summary>
     /// Marks the given database as using its server's default policy instead of its own policy.
     /// </summary>
-    [Cmdlet(VerbsOther.Use, "AzureRmSqlServerAuditingPolicy"), OutputType(typeof(AuditingPolicyModel))]
-    [Alias("Use-AzureRmSqlDatabaseServerAuditingPolicy")]
+    [Cmdlet("Use", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlServerAuditingPolicy"), OutputType(typeof(AuditingPolicyModel))]
+    [Alias("Use-" + ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlDatabaseServerAuditingPolicy")]
+    [Obsolete("Note that Table auditing is deprecated and this command will be removed in a future release. Please use the 'Set-AzSqlDatabaseAuditing' command to configure Blob auditing.", false)]
     public class UseAzureSqlServerAuditingPolicy : SqlDatabaseAuditingCmdletBase
     {
         /// <summary>
@@ -46,15 +47,60 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Cmdlet
             base.ApplyUserInputToModel(baseModel);
             if (AuditType == AuditType.Table)
             {
-                DatabaseAuditingPolicyModel model = baseModel as DatabaseAuditingPolicyModel;
-                if (model.AuditState == AuditStateType.New)
-                {
-                    model.AuditState = AuditStateType.Enabled;
-                }
-                model.UseServerDefault = UseServerDefaultOptions.Enabled;
-                model.StorageAccountName = GetStorageAccountName();
+                ApplyUserInputToTableAuditingModel(baseModel as DatabaseAuditingPolicyModel);
+            }
+            else
+            {
+                ApplyUserInputToBlobAuditingModel(baseModel as DatabaseBlobAuditingPolicyModel);
             }
             return baseModel;
+        }
+
+        private void ApplyUserInputToBlobAuditingModel(DatabaseBlobAuditingPolicyModel model)
+        {
+            model.AuditState = AuditStateType.Disabled;
+        }
+
+        private void ApplyUserInputToTableAuditingModel(DatabaseAuditingPolicyModel model)
+        {
+            if (model.AuditState == AuditStateType.New)
+            {
+                model.AuditState = AuditStateType.Enabled;
+            }
+            model.UseServerDefault = UseServerDefaultOptions.Enabled;
+            model.StorageAccountName = GetStorageAccountName();
+        }
+
+        /// <summary>
+        /// If the user has table and blob auditing policies, the change will be applied for both.  
+        /// </summary>
+        /// <param name="model">A model object</param>
+        protected override AuditingPolicyModel PersistChanges(AuditingPolicyModel model)
+        {
+            // Persist changes for current policy type
+            base.PersistChanges(model);
+            Action swapAuditType = () => { AuditType = AuditType == AuditType.Blob ? AuditType.Table : AuditType.Blob; };
+
+            // Since this is UseServerDefault cmdlet, we need to save changes for both policies.
+            // If current selected audit type is Blob for example, we need to swap audit type so we can save auditing policy (With use server policy enabled).
+            swapAuditType();
+            var otherAuditingTypePolicyModel = GetEntity();
+            if (otherAuditingTypePolicyModel != null)
+            {
+                if (AuditType == AuditType.Table)
+                {
+                    // Apply user input to table auditing policy (Use server default = true)
+                    ApplyUserInputToTableAuditingModel(otherAuditingTypePolicyModel as DatabaseAuditingPolicyModel);
+                }
+                else
+                {
+                    // Apply user input to blob auditing policy by turning it off.
+                    ApplyUserInputToBlobAuditingModel(otherAuditingTypePolicyModel as DatabaseBlobAuditingPolicyModel);
+                }
+                base.PersistChanges(otherAuditingTypePolicyModel);
+            }
+            swapAuditType();
+            return model;
         }
 
         /// <summary>
@@ -63,7 +109,7 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Cmdlet
         /// <returns>A storage account name</returns>
         protected string GetStorageAccountName()
         {
-            var storageAccountName = ModelAdapter.GetServerStorageAccount(ResourceGroupName, ServerName, clientRequestId);
+            var storageAccountName = ModelAdapter.GetServerStorageAccount(ResourceGroupName, ServerName);
             if (string.IsNullOrEmpty(storageAccountName))
             {
                 throw new Exception(string.Format(Properties.Resources.UseServerWithoutStorageAccount));

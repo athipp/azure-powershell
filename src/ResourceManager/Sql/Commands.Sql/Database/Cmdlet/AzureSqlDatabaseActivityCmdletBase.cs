@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,9 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.Common;
 using Microsoft.Azure.Commands.Sql.Database.Model;
 using Microsoft.Azure.Commands.Sql.Database.Services;
@@ -32,15 +34,17 @@ namespace Microsoft.Azure.Commands.Sql.Database.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 1,
             HelpMessage = "The name of the Azure SQL Server the Elastic Pool is in.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string ServerName { get; set; }
 
         /// <summary>
         /// Gets or sets the name of the ElasticPool to use.
         /// </summary>
-        [Parameter(Mandatory = true,
+        [Parameter(Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The name of the Azure SQL Elastic Pool.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers/elasticPools", "ResourceGroupName", "ServerName")]
         [ValidateNotNullOrEmpty]
         public string ElasticPoolName { get; set; }
 
@@ -50,6 +54,7 @@ namespace Microsoft.Azure.Commands.Sql.Database.Cmdlet
         [Parameter(Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The name of the Azure SQL Database.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers/databases", "ResourceGroupName", "ServerName")]
         [ValidateNotNullOrEmpty]
         public string DatabaseName { get; set; }
 
@@ -67,9 +72,9 @@ namespace Microsoft.Azure.Commands.Sql.Database.Cmdlet
         /// </summary>
         /// <param name="subscription"></param>
         /// <returns></returns>
-        protected override AzureSqlDatabaseAdapter InitModelAdapter(AzureSubscription subscription)
+        protected override AzureSqlDatabaseAdapter InitModelAdapter(IAzureSubscription subscription)
         {
-            return new AzureSqlDatabaseAdapter(DefaultProfile.Context);
+            return new AzureSqlDatabaseAdapter(DefaultProfile.DefaultContext);
         }
     }
 }

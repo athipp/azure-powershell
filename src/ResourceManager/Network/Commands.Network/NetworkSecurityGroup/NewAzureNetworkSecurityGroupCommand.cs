@@ -1,4 +1,4 @@
-// ----------------------------------------------------------------------------------
+﻿// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +14,18 @@
 
 using AutoMapper;
 using Microsoft.Azure.Commands.Network.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.ResourceManager.Common.Tags;
 using Microsoft.Azure.Management.Network;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Management.Automation;
 using MNM = Microsoft.Azure.Management.Network.Models;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.New, "AzureRmNetworkSecurityGroup", SupportsShouldProcess = true),
-        OutputType(typeof(PSNetworkSecurityGroup))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "NetworkSecurityGroup", SupportsShouldProcess = true),OutputType(typeof(PSNetworkSecurityGroup))]
     public class NewAzureNetworkSecurityGroupCommand : NetworkSecurityGroupBaseCmdlet
     {
         [Alias("ResourceName")]
@@ -39,6 +40,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public virtual string ResourceGroupName { get; set; }
 
@@ -46,6 +48,7 @@ namespace Microsoft.Azure.Commands.Network
          Mandatory = true,
          ValueFromPipelineByPropertyName = true,
          HelpMessage = "location.")]
+        [LocationCompleter("Microsoft.Network/networkSecurityGroups")]
         [ValidateNotNullOrEmpty]
         public virtual string Location { get; set; }
 
@@ -53,7 +56,7 @@ namespace Microsoft.Azure.Commands.Network
              Mandatory = false,
              ValueFromPipelineByPropertyName = true,
              HelpMessage = "The list of NetworkSecurityRules")]
-        public List<PSSecurityRule> SecurityRules { get; set; }
+        public PSSecurityRule[] SecurityRules { get; set; }
 
         [Parameter(
             Mandatory = false,
@@ -66,10 +69,12 @@ namespace Microsoft.Azure.Commands.Network
             HelpMessage = "Do not ask for confirmation if you want to overrite a resource")]
         public SwitchParameter Force { get; set; }
 
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
+
         public override void Execute()
         {
             base.Execute();
-            WriteWarning("The output object type of this cmdlet will be modified in a future release.");
             var present = this.IsNetworkSecurityGroupPresent(this.ResourceGroupName, this.Name);
             ConfirmAction(
                 Force.IsPresent,
@@ -90,11 +95,14 @@ namespace Microsoft.Azure.Commands.Network
             nsg.Name = this.Name;
             nsg.ResourceGroupName = this.ResourceGroupName;
             nsg.Location = this.Location;
-            nsg.SecurityRules = this.SecurityRules;
+            nsg.SecurityRules = this.SecurityRules?.ToList();
 
             // Map to the sdk object
-            var nsgModel = Mapper.Map<MNM.NetworkSecurityGroup>(nsg);
-            nsgModel.Tags = TagsConversionHelper.CreateTagDictionary(this.Tag, validate: true);
+            var nsgModel = NetworkResourceManagerProfile.Mapper.Map<MNM.NetworkSecurityGroup>(nsg);
+
+			this.NullifyApplicationSecurityGroupsIfAbsent(nsgModel);
+
+			nsgModel.Tags = TagsConversionHelper.CreateTagDictionary(this.Tag, validate: true);
 
             // Execute the Create NetworkSecurityGroup call
             this.NetworkSecurityGroupClient.CreateOrUpdate(this.ResourceGroupName, this.Name, nsgModel);

@@ -83,6 +83,15 @@ namespace Microsoft.WindowsAzure.Commands.ScenarioTest
         [Trait(Category.Service, Category.ServiceManagement)]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait(Category.AcceptanceType, Category.BVT)]
+        public void RunDSMSHostedServiceTest()
+        {
+            this.RunPowerShellTest("Run-DSMSHostedServiceTest");
+        }
+
+        [Fact]
+        [Trait(Category.Service, Category.ServiceManagement)]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.AcceptanceType, Category.BVT)]
         public void RunNewAzureComputeArgumentListTests()
         {
             this.RunPowerShellTest("Run-NewAzureComputeArgumentListTests");
@@ -97,7 +106,7 @@ namespace Microsoft.WindowsAzure.Commands.ScenarioTest
             this.RunPowerShellTest("Run-NewAzureComputeParameterObjectTests");
         }
 
-        [Fact]
+        [Fact(Skip = "Investigate why PIR.psd1 is being deleted during the build from IncrementalClean task.")]
         [Trait(Category.Service, Category.ServiceManagement)]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait(Category.AcceptanceType, Category.BVT)]
@@ -197,6 +206,13 @@ namespace Microsoft.WindowsAzure.Commands.ScenarioTest
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestAzureReservedIPWithIPTags()
+        {
+            this.RunPowerShellTest("Test-AzureReservedIPWithIPTags");
+        }
+
+        [Fact]
         [Trait(Category.Service, Category.ServiceManagement)]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
         [Trait(Category.AcceptanceType, Category.BVT)]
@@ -248,6 +264,15 @@ namespace Microsoft.WindowsAzure.Commands.ScenarioTest
         public void RunRedeployVirtualMachineTest()
         {
             this.RunPowerShellTest("Run-RedeployVirtualMachineTest");
+        }
+
+        [Fact]
+        [Trait(Category.Service, Category.ServiceManagement)]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.AcceptanceType, Category.BVT)]
+        public void RunInitiateMaintenanceTest()
+        {
+            this.RunPowerShellTest("Run-InitiateMaintenanceTest");
         }
     }
 }

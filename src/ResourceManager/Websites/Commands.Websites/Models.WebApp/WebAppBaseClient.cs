@@ -15,26 +15,25 @@
 
 using Microsoft.Azure.Commands.ResourceManager.Common;
 using Microsoft.Azure.Commands.WebApps.Utilities;
-using PSResourceManagerModels = Microsoft.Azure.Commands.Resources.Models;
+using Microsoft.Azure.Commands.WebApps.Models;
 
 namespace Microsoft.Azure.Commands.WebApps.Models
 {
     public abstract class WebAppBaseClientCmdLet : AzureRMCmdlet
     {
-        private PSResourceManagerModels.ResourcesClient _resourcesClient;
-        public PSResourceManagerModels.ResourcesClient ResourcesClient
+        private ResourceClient _resourcesClient;
+        public ResourceClient ResourcesClient
         {
             get
             {
                 if (_resourcesClient == null)
                 {
-                    _resourcesClient = new PSResourceManagerModels.ResourcesClient(DefaultProfile.Context)
-                    {
-                        VerboseLogger = WriteVerboseWithTimestamp,
-                        ErrorLogger = WriteErrorWithTimestamp,
-                        WarningLogger = WriteWarningWithTimestamp
-                    };
+                    _resourcesClient = new ResourceClient(DefaultProfile.DefaultContext);
                 }
+
+                this._resourcesClient.VerboseLogger = WriteVerboseWithTimestamp;
+                this._resourcesClient.ErrorLogger = WriteErrorWithTimestamp;
+                this._resourcesClient.WarningLogger = WriteWarningWithTimestamp;
                 return _resourcesClient;
             }
             set { _resourcesClient = value; }
@@ -47,7 +46,7 @@ namespace Microsoft.Azure.Commands.WebApps.Models
             {
                 if (_websitesClient == null)
                 {
-                    _websitesClient = new WebsitesClient(DefaultProfile.Context)
+                    _websitesClient = new WebsitesClient(DefaultProfile.DefaultContext)
                     {
                         VerboseLogger = WriteVerboseWithTimestamp,
                         ErrorLogger = WriteErrorWithTimestamp,

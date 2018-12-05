@@ -26,9 +26,13 @@ namespace Microsoft.Azure.Commands.TrafficManager.Utilities
         public const string Performance = "Performance";
         public const string Weighted = "Weighted";
         public const string Priority = "Priority";
+        public const string Geographic = "Geographic";
+        public const string Subnet = "Subnet";
+        public const string MultiValue = "MultiValue";
 
         public const string HTTP = "HTTP";
         public const string HTTPS = "HTTPS";
+        public const string TCP = "TCP";
 
         public const string ProfileType = "Microsoft.Network/trafficManagerProfiles";
     }

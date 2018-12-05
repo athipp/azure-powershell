@@ -1,4 +1,4 @@
-﻿//
+//
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,11 +34,11 @@ namespace Microsoft.Azure.Commands.Sql.Location_Capabilities.Model
         /// <summary>
         /// Gets or sets the unique ID of the Service Level Objecive
         /// </summary>
-        public Guid Id { get; set; }
+        public Guid? Id { get; set; }
 
         /// <summary>
         /// Gets or sets the list of supported max sizes and their capabilities
         /// </summary>
-        public IList<MaxSizeCapabilityModel> SupportedMaxSizes { get; internal set; }
+        public IList<MaxSizeRangeCapabilityModel> SupportedMaxSizes { get; internal set; }
     }
 }

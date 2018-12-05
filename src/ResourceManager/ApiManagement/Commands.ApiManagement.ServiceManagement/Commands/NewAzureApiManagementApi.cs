@@ -19,7 +19,7 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
     using System.Linq;
     using System.Management.Automation;
 
-    [Cmdlet(VerbsCommon.New, Constants.ApiManagementApi)]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApiManagementApi")]
     [OutputType(typeof(PsApiManagementApi))]
     public class NewAzureApiManagementApi : AzureApiManagementCmdletBase
     {
@@ -61,8 +61,8 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
             ValueFromPipelineByPropertyName = true,
             Mandatory = true,
             HelpMessage = "Web API Path. Last part of the API's public URL. This URL will be used by API consumers for sending requests to the web service." +
-                          " Must be 1 to 400 characters long. This parameter is required.")]
-        [ValidateNotNullOrEmpty]
+                          " Must be 0 to 400 characters long. This parameter is required.")]
+        [ValidateNotNull]
         public String Path { get; set; }
 
         [Parameter(
@@ -123,7 +123,7 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
 
             if (ProductIds != null && ProductIds.Any())
             {
-                WriteProgress(new ProgressRecord(0, "New-AzureRmApiManagementApi", "New API created. Adding to products..."));
+                WriteProgress(new ProgressRecord(0, "New-AzApiManagementApi", "New API created. Adding to products..."));
 
                 foreach (var productId in ProductIds)
                 {
@@ -133,7 +133,7 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
                         WriteProgress(
                             new ProgressRecord(
                                 0,
-                                "New-AzureRmApiManagementApi",
+                                "New-AzApiManagementApi",
                                 string.Format("... Added to product {0}", productId))
                             );
                     }
@@ -142,7 +142,7 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
                         WriteProgress(
                             new ProgressRecord(
                                 0,
-                                "New-AzureRmApiManagementApi",
+                                "New-AzApiManagementApi",
                                 string.Format("... Failed to add to product {0} due to: {1}", productId, ex))
                             );
                     }

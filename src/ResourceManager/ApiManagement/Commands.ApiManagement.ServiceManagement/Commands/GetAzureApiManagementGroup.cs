@@ -19,15 +19,14 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
     using System.Collections.Generic;
     using System.Management.Automation;
 
-    [Cmdlet(VerbsCommon.Get, Constants.ApiManagementGroup, DefaultParameterSetName = GetAll)]
-    [OutputType(typeof(IList<PsApiManagementGroup>), ParameterSetName = new[] { GetAll, FindByUser, FindByProduct })]
-    [OutputType(typeof(PsApiManagementGroup), ParameterSetName = new[] { GetById })]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApiManagementGroup", DefaultParameterSetName = GetAll)]
+    [OutputType(typeof(PsApiManagementGroup))]
     public class GetAzureApiManagementGroup : AzureApiManagementCmdletBase
     {
-        private const string GetAll = "Get all groups";
-        private const string GetById = "Get by group ID";
-        private const string FindByUser = "Find groups by user";
-        private const string FindByProduct = "Find groups by product";
+        private const string GetAll = "GetAllGroups";
+        private const string GetById = "GetByGroupId";
+        private const string FindByUser = "GetByUserId";
+        private const string FindByProduct = "GetByProductId";
 
         [Parameter(
             ValueFromPipelineByPropertyName = true,

@@ -22,7 +22,7 @@ namespace Microsoft.Azure.Commands.Batch.Utils
         public const string AzureRmBatchAccount = "AzureRmBatchAccount";
         public const string AzureRmBatchAccountKey = "AzureRmBatchAccountKey";
         public const string AzureRmBatchAccountKeys = "AzureRmBatchAccountKeys";
-        public const string AzureRmBatchSubscriptionQuotas = "AzureRmBatchSubscriptionQuotas";
+        public const string AzureRmBatchLocationQuotas = "AzureRmBatchLocationQuotas";
         public const string AzureRmBatchApplication = "AzureRmBatchApplication";
         public const string AzureRmBatchApplicationPackage = "AzureRmBatchApplicationPackage";
 
@@ -35,8 +35,10 @@ namespace Microsoft.Azure.Commands.Batch.Utils
         public const string AzureBatchComputeNodeUser = "AzureBatchComputeNodeUser";
         public const string AzureBatchJobSchedule = "AzureBatchJobSchedule";
         public const string AzureBatchJob = "AzureBatchJob";
+        public const string AzureBatchJobPrepAndReleaseStatus = "AzureBatchJobPreparationAndReleaseTaskStatus";
         public const string AzureBatchJobStatistics = "AzureBatchJobStatistics";
         public const string AzureBatchTask = "AzureBatchTask";
+        public const string AzureBatchTaskCounts = "AzureBatchTaskCounts";
         public const string AzureBatchSubtask = "AzureBatchSubtask";
         public const string AzureBatchNodeFile = "AzureBatchNodeFile";
         public const string AzureBatchNodeFileContent = "AzureBatchNodeFileContent";
@@ -48,6 +50,8 @@ namespace Microsoft.Azure.Commands.Batch.Utils
         public const string AzureBatchCertificate = "AzureBatchCertificate";
         public const string AzureBatchCertificateDeletion = "AzureBatchCertificateDeletion";
         public const string AzureBatchNodeAgentSku = "AzureBatchNodeAgentSku";
+        public const string AzureBatchPoolNodeCounts = "AzureBatchPoolNodeCounts";
+        public const string AzureBatchComputeNodeServiceLogUpload = "AzureBatchComputeNodeServiceLogUpload";
 
         // Parameter sets
         public const string IdParameterSet = "Id";
@@ -56,5 +60,6 @@ namespace Microsoft.Azure.Commands.Batch.Utils
         public const string ParentObjectParameterSet = "ParentObject";
         public const string InputObjectAndPathParameterSet = "InputObject_Path";
         public const string InputObjectAndStreamParameterSet = "InputObject_Stream";
+        public const string PoolIdParameterSet = "PoolId";
     }
 }

@@ -15,15 +15,17 @@
 namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
 {
     using Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Models;
+    using ResourceManager.Common.ArgumentCompleters;
     using System.Management.Automation;
 
-    [Cmdlet(VerbsCommon.New, "AzureRmApiManagementContext"), OutputType(typeof(PsApiManagementContext))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApiManagementContext"), OutputType(typeof(PsApiManagementContext))]
     public class NewAzureApiManagementContext : AzureApiManagementCmdletBase
     {
         [Parameter(
             ValueFromPipelineByPropertyName = true,
             Mandatory = true,
             HelpMessage = "Name of resource group under which an API Management service is deployed.")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

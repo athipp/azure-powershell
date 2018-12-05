@@ -25,7 +25,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Automation.Test.UnitTests
     [TestClass]
     public class SetAzureAutomationRunbookTest : RMTestBase
     {
-        private Mock<IAutomationClient> mockAutomationClient;
+        private Mock<IAutomationPSClient> mockAutomationClient;
 
         private MockCommandRuntime mockCommandRuntime;
 
@@ -34,7 +34,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Automation.Test.UnitTests
         [TestInitialize]
         public void SetupTest()
         {
-            this.mockAutomationClient = new Mock<IAutomationClient>();
+            this.mockAutomationClient = new Mock<IAutomationPSClient>();
             this.mockCommandRuntime = new MockCommandRuntime();
             this.cmdlet = new SetAzureAutomationRunbook
             {
@@ -80,7 +80,7 @@ namespace Microsoft.Azure.Commands.ResourceManager.Automation.Test.UnitTests
             this.cmdlet.ResourceGroupName = resourceGroupName;
             this.cmdlet.AutomationAccountName = accountName;
             this.cmdlet.Name = runbookName;
-            this.cmdlet.Tags = tags;
+            this.cmdlet.Tag = tags;
             this.cmdlet.LogProgress = logProgress;
             this.cmdlet.ExecuteCmdlet();
 

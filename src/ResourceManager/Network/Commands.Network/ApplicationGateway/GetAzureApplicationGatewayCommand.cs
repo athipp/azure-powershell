@@ -16,10 +16,13 @@ using Microsoft.Azure.Commands.Network.Models;
 using Microsoft.Azure.Management.Network;
 using System.Collections.Generic;
 using System.Management.Automation;
+using Microsoft.Azure.Management.Network.Models;
+using Microsoft.Rest.Azure;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmApplicationGateway"), OutputType(typeof(PSApplicationGateway), typeof(IEnumerable<PSApplicationGateway>))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApplicationGateway"), OutputType(typeof(PSApplicationGateway))]
     public class GetAzureApplicationGatewayCommand : ApplicationGatewayBaseCmdlet
     {
         [Alias("ResourceName")]
@@ -27,6 +30,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource name.")]
+        [ResourceNameCompleter("Microsoft.Network/applicationGateways", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public virtual string Name { get; set; }
 
@@ -34,6 +38,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public virtual string ResourceGroupName { get; set; }
 
@@ -46,24 +51,20 @@ namespace Microsoft.Azure.Commands.Network
 
                 WriteObject(applicationGateway);
             }
-            else if (!string.IsNullOrEmpty(this.ResourceGroupName))
-            {
-                var appGateway = this.ApplicationGatewayClient.List(this.ResourceGroupName);
-
-                var psApplicationGateways = new List<PSApplicationGateway>();
-
-                foreach (var appGw in appGateway)
-                {
-                    var psAppGw = this.ToPsApplicationGateway(appGw);
-                    psAppGw.ResourceGroupName = this.ResourceGroupName;
-                    psApplicationGateways.Add(psAppGw);
-                }
-
-                WriteObject(psApplicationGateways, true);
-            }
             else
             {
-                var appGwResponseList = this.ApplicationGatewayClient.ListAll();
+                IPage<ApplicationGateway> appGatewayPage;
+                if (!string.IsNullOrEmpty(this.ResourceGroupName))
+                {
+                    appGatewayPage = this.ApplicationGatewayClient.List(this.ResourceGroupName);
+                }
+                else
+                {
+                    appGatewayPage = this.ApplicationGatewayClient.ListAll();
+                }
+
+                // Get all resources by polling on next page link
+                var appGwResponseList = ListNextLink<ApplicationGateway>.GetAllResourcesByPollingNextLink(appGatewayPage, this.ApplicationGatewayClient.ListNext);
 
                 var psApplicationGateways = new List<PSApplicationGateway>();
 
@@ -79,4 +80,3 @@ namespace Microsoft.Azure.Commands.Network
         }
     }
 }
-

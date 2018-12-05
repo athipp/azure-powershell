@@ -24,7 +24,8 @@ using System.Threading.Tasks;
 
 namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
 {
-    [Cmdlet(VerbsCommon.Get, Constants.FileCopyCmdletStateName)]
+    [Cmdlet("Get", Azure.Commands.ResourceManager.Common.AzureRMConstants.AzurePrefix + "StorageFileCopyState")]
+    [OutputType(typeof(CloudFile))]
     public class GetAzureStorageFileCopyStateCommand : AzureStorageFileCmdletBase
     {
         [Parameter(
@@ -199,12 +200,12 @@ namespace Microsoft.WindowsAzure.Commands.Storage.File.Cmdlet
                     long internalTaskId = monitorRequest.Item1;
                     CloudFile file = monitorRequest.Item2;
                     //Just use the last file management channel since the following operation is context insensitive
-                    await Channel.FetchFileAttributesAsync(file, accessCondition, requestOptions, context, CmdletCancellationToken);
+                    await Channel.FetchFileAttributesAsync(file, accessCondition, requestOptions, context, CmdletCancellationToken).ConfigureAwait(false);
                     bool taskDone = false;
 
                     if (file.CopyState == null)
                     {
-                        ArgumentException e = new ArgumentException(String.Format(Resources.FileCopyTaskNotFound, file.Uri.ToString()));
+                        ArgumentException e = new ArgumentException(String.Format(Resources.FileCopyTaskNotFound, file.SnapshotQualifiedUri.ToString()));
                         OutputStream.WriteError(internalTaskId, e);
                         Interlocked.Increment(ref InternalFailedCount);
                         taskDone = true;

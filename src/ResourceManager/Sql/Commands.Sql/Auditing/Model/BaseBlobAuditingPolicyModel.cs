@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,27 +16,27 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Model
 {
     public enum AuditActionGroups
     {
-            BATCH_STARTED_GROUP,
-            BATCH_COMPLETED_GROUP,
-            APPLICATION_ROLE_CHANGE_PASSWORD_GROUP, 
-            AUDIT_CHANGE_GROUP,
-            BACKUP_RESTORE_GROUP,
-            DATABASE_LOGOUT_GROUP,
-            DATABASE_OBJECT_CHANGE_GROUP, 
-            DATABASE_OBJECT_OWNERSHIP_CHANGE_GROUP,
-            DATABASE_OBJECT_PERMISSION_CHANGE_GROUP,
-            DATABASE_OPERATION_GROUP,
-            DATABASE_PERMISSION_CHANGE_GROUP,
-            DATABASE_PRINCIPAL_CHANGE_GROUP,
-            DATABASE_PRINCIPAL_IMPERSONATION_GROUP,
-            DATABASE_ROLE_MEMBER_CHANGE_GROUP,
-            FAILED_DATABASE_AUTHENTICATION_GROUP,
-            SCHEMA_OBJECT_ACCESS_GROUP,
-            SCHEMA_OBJECT_CHANGE_GROUP, 
-            SCHEMA_OBJECT_OWNERSHIP_CHANGE_GROUP,
-            SCHEMA_OBJECT_PERMISSION_CHANGE_GROUP, 
-            SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP,
-            USER_CHANGE_PASSWORD_GROUP,
+        BATCH_STARTED_GROUP,
+        BATCH_COMPLETED_GROUP,
+        APPLICATION_ROLE_CHANGE_PASSWORD_GROUP,
+        BACKUP_RESTORE_GROUP,
+        DATABASE_LOGOUT_GROUP,
+        DATABASE_OBJECT_CHANGE_GROUP, 
+        DATABASE_OBJECT_OWNERSHIP_CHANGE_GROUP,
+        DATABASE_OBJECT_PERMISSION_CHANGE_GROUP,
+        DATABASE_OPERATION_GROUP,
+        AUDIT_CHANGE_GROUP,
+        DATABASE_PERMISSION_CHANGE_GROUP,
+        DATABASE_PRINCIPAL_CHANGE_GROUP,
+        DATABASE_PRINCIPAL_IMPERSONATION_GROUP,
+        DATABASE_ROLE_MEMBER_CHANGE_GROUP,
+        FAILED_DATABASE_AUTHENTICATION_GROUP,
+        SCHEMA_OBJECT_ACCESS_GROUP,
+        SCHEMA_OBJECT_CHANGE_GROUP, 
+        SCHEMA_OBJECT_OWNERSHIP_CHANGE_GROUP,
+        SCHEMA_OBJECT_PERMISSION_CHANGE_GROUP, 
+        SUCCESSFUL_DATABASE_AUTHENTICATION_GROUP,
+        USER_CHANGE_PASSWORD_GROUP
     }
 
     /// <summary>
@@ -45,16 +45,5 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Model
     public abstract class BaseBlobAuditingPolicyModel : AuditingPolicyModel
     {
         public AuditActionGroups[] AuditActionGroup { get; set; }
-        public string[] AuditAction { get; set; }
-
-
-        public override bool IsInUse()
-        {
-            return (AuditState == AuditStateType.Enabled ||
-                    !string.IsNullOrEmpty(StorageAccountName) ||
-                    RetentionInDays > 0 ||
-                    (AuditAction != null && AuditAction.Length > 0) ||
-                    (AuditActionGroup != null && AuditActionGroup.Length > 0));
-        }
     }
 }

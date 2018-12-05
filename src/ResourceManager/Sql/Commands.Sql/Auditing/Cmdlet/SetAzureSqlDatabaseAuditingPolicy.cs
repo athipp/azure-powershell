@@ -24,7 +24,8 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Cmdlet
     /// <summary>
     /// Sets the auditing policy properties for a specific database.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "AzureRmSqlDatabaseAuditingPolicy", SupportsShouldProcess = true), OutputType(typeof(AuditingPolicyModel))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlDatabaseAuditingPolicy", SupportsShouldProcess = true), OutputType(typeof(AuditingPolicyModel))]
+    [Obsolete("Note that Table auditing is deprecated and this command will be removed in a future release. Please use the 'Set-AzSqlDatabaseAuditing' command to configure Blob auditing.", false)]
     public class SetAzureSqlDatabaseAuditingPolicy : SqlDatabaseAuditingCmdletBase
     {
         /// <summary>
@@ -68,7 +69,7 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Cmdlet
         public string StorageAccountName { get; set; }
 
         /// <summary>
-        /// Gets or sets the name of the storage account to use.
+        /// Gets or sets the type of the storage key.
         /// </summary>
         [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The type of the storage key")]
         [ValidateSet(SecurityConstants.Primary, SecurityConstants.Secondary, IgnoreCase = false)]
@@ -120,12 +121,21 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Cmdlet
             {
                 model.RetentionInDays = RetentionInDays;
             }
+
             if (StorageAccountName != null)
             {
                 model.StorageAccountName = StorageAccountName;
             }
 
-            if (AuditActionGroup != null &&  AuditActionGroup.Length != 0)
+            if (MyInvocation.BoundParameters.ContainsKey(SecurityConstants.StorageKeyType))
+            {
+                // the user enter a key type - we use it (and override the previously defined key type)
+                model.StorageKeyType = (StorageKeyType == SecurityConstants.Primary)
+                    ? StorageKeyKind.Primary
+                    : StorageKeyKind.Secondary;
+            }
+
+            if (AuditActionGroup != null && AuditActionGroup.Length != 0)
             {
                 model.AuditActionGroup = AuditActionGroup;
             }
@@ -135,6 +145,7 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Cmdlet
                 model.AuditAction = AuditAction;
             }
 
+            model.StorageAccountSubscriptionId = Guid.Parse(DefaultProfile.DefaultContext.Subscription.Id);
         }
 
         private void ApplyUserInputToTableAuditingModel(DatabaseAuditingPolicyModel model)
@@ -147,9 +158,9 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Cmdlet
                 model.StorageAccountName = StorageAccountName;
                 ModelAdapter.ClearStorageDetailsCache();
             }
-            if (!string.IsNullOrEmpty(StorageKeyType))
-            // the user enter a key type - we use it (and running over the previously defined key type)
+            if (MyInvocation.BoundParameters.ContainsKey(SecurityConstants.StorageKeyType))
             {
+                // the user enter a key type - we use it (and override the previously defined key type)
                 model.StorageKeyType = (StorageKeyType == SecurityConstants.Primary)
                     ? StorageKeyKind.Primary
                     : StorageKeyKind.Secondary;
@@ -157,7 +168,7 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Cmdlet
 
             EventType = Util.ProcessAuditEvents(EventType);
 
-            if (EventType != null) // the user provided event types to audit
+            if (EventType != null) // the user provided Table auditing event types
             {
                 model.EventType = EventType.Select(s => SecurityConstants.AuditEventsToAuditEventType[s]).ToArray();
             }
@@ -179,7 +190,22 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Cmdlet
             {
                 model.TableIdentifier = TableIdentifier;
             }
+        }
 
+        protected override AuditingPolicyModel PersistChanges(AuditingPolicyModel model)
+        {
+            base.PersistChanges(model);
+            ModelAdapter.IgnoreStorage = true;            
+            Action swapAuditType = () => { AuditType = AuditType == AuditType.Blob ? AuditType.Table : AuditType.Blob; };
+            swapAuditType();
+            var otherAuditingTypePolicyModel = GetEntity();
+            if (otherAuditingTypePolicyModel != null)
+            {
+                otherAuditingTypePolicyModel.AuditState = AuditStateType.Disabled;
+                base.PersistChanges(otherAuditingTypePolicyModel);
+            }
+            swapAuditType();
+            return model;
         }
     }
 }

@@ -17,10 +17,11 @@ using Microsoft.Azure.Commands.Cdn.Common;
 using Microsoft.Azure.Commands.Cdn.Models.Endpoint;
 using Microsoft.Azure.Commands.Cdn.Properties;
 using Microsoft.Azure.Management.Cdn;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Cdn.Endpoint
 {
-    [Cmdlet(VerbsData.Publish, "AzureRmCdnEndpointContent", DefaultParameterSetName = FieldsParameterSet), OutputType(typeof(bool))]
+    [Cmdlet("Publish", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CdnEndpointContent", DefaultParameterSetName = FieldsParameterSet), OutputType(typeof(bool))]
     public class PublishAzureRmCdnEndpointContent : AzureCdnCmdletBase
     {
         [Parameter(Mandatory = true, ParameterSetName = FieldsParameterSet, HelpMessage = "Azure CDN endpoint name.")]
@@ -32,6 +33,7 @@ namespace Microsoft.Azure.Commands.Cdn.Endpoint
         public string ProfileName { get; set; }
 
         [Parameter(Mandatory = true, ParameterSetName = FieldsParameterSet, HelpMessage = "The resource group of the Azure CDN profile.")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -55,7 +57,7 @@ namespace Microsoft.Azure.Commands.Cdn.Endpoint
                 EndpointName = CdnEndpoint.Name;
             }
 
-            CdnManagementClient.Endpoints.LoadContent(EndpointName, ProfileName, ResourceGroupName, LoadContent);
+            CdnManagementClient.Endpoints.LoadContent(ResourceGroupName, ProfileName, EndpointName, LoadContent);
             WriteVerbose(Resources.Success);
 
             if (PassThru)

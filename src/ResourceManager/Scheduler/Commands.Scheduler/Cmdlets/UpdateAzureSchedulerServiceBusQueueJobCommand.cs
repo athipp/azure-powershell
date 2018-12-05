@@ -21,14 +21,16 @@ namespace Microsoft.Azure.Commands.Scheduler.Cmdlets
     using Microsoft.Azure.Commands.Scheduler.Properties;
     using Microsoft.Azure.Commands.Scheduler.Utilities;
     using SchedulerModels = Microsoft.Azure.Management.Scheduler.Models;
+    using ResourceManager.Common.ArgumentCompleters;
 
     /// <summary>
     /// Updates existing service bus queue job.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "AzureRmSchedulerServiceBusQueueJob", SupportsShouldProcess = true), OutputType(typeof(PSSchedulerJobDefinition))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SchedulerServiceBusQueueJob", SupportsShouldProcess = true), OutputType(typeof(PSSchedulerJobDefinition))]
     public class UpdateAzureSchedulerServiceBusQueueJobCommand : JobBaseCmdlet, IDynamicParameters
     {
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The targeted resource group for job.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -111,6 +113,7 @@ namespace Microsoft.Azure.Commands.Scheduler.Cmdlets
 
             var servicBusQueue = new PSServiceBusParams()
             {
+                Authentication = serviceBusAuthentication,
                 Message = this.ServiceBusMessage,
                 NamespaceProperty = this.ServiceBusNamespace,
                 QueueName = this.ServiceBusQueueName,

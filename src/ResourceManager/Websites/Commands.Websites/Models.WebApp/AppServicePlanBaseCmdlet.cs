@@ -12,7 +12,9 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.WebApps.Models;
+using Microsoft.Azure.Commands.WebApps.Models.WebApp;
 using Microsoft.Azure.Commands.WebApps.Utilities;
 using Microsoft.Azure.Management.WebSites.Models;
 using System;
@@ -26,24 +28,27 @@ namespace Microsoft.Azure.Commands.WebApps
         protected const string ParameterSet2Name = "S2";
 
         [Parameter(ParameterSetName = ParameterSet1Name, Position = 0, Mandatory = true, HelpMessage = "The name of the resource group.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
         [Parameter(ParameterSetName = ParameterSet1Name, Position = 1, Mandatory = true, HelpMessage = "The name of the app service plan.")]
+        [ResourceNameCompleter("Microsoft.Web/serverfarms", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string Name { get; set; }
 
         [Parameter(ParameterSetName = ParameterSet2Name, Position = 0, Mandatory = true, HelpMessage = "The app service plan object", ValueFromPipeline = true)]
         [ValidateNotNullOrEmpty]
-        public ServerFarmWithRichSku AppServicePlan { get; set; }
+        public PSAppServicePlan AppServicePlan { get; set; }
 
         public override void ExecuteCmdlet()
         {
             if (string.Equals(ParameterSetName, ParameterSet2Name, StringComparison.OrdinalIgnoreCase))
             {
                 string rg, name;
+                var psAppservicePlan = new PSAppServicePlan(AppServicePlan);
 
-                CmdletHelpers.TryParseAppServicePlanMetadataFromResourceId(AppServicePlan.Id, out rg, out name);
+                CmdletHelpers.TryParseAppServicePlanMetadataFromResourceId(psAppservicePlan.Id, out rg, out name);
 
                 ResourceGroupName = rg;
                 Name = name;

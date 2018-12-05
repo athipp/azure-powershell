@@ -45,7 +45,8 @@ namespace Microsoft.Azure.Commands.Automation.Common
     using AutomationManagement = WindowsAzure.Management.Automation;
     using Microsoft.Azure.Commands.Common.Authentication;
     using Hyak.Common;
-
+    using Commands.Common.Authentication.Abstractions;
+    using WindowsAzure.Commands.Utilities.Common;
 
     public class AutomationClient : IAutomationClient
     {
@@ -56,13 +57,13 @@ namespace Microsoft.Azure.Commands.Automation.Common
         {
         }
 
-        public AutomationClient(AzureSMProfile profile, AzureSubscription subscription)
+        public AutomationClient(AzureSMProfile profile, IAzureSubscription subscription)
             : this(subscription,
-            AzureSession.ClientFactory.CreateClient<AutomationManagement.AutomationManagementClient>(profile, subscription, AzureEnvironment.Endpoint.ServiceManagement))
+            AzureSession.Instance.ClientFactory.CreateClient<AutomationManagement.AutomationManagementClient>(profile, subscription, AzureEnvironment.Endpoint.ServiceManagement))
         {
         }
 
-        public AutomationClient(AzureSubscription subscription,
+        public AutomationClient(IAzureSubscription subscription,
             AutomationManagement.IAutomationManagementClient automationManagementClient)
         {
             Requires.Argument("automationManagementClient", automationManagementClient).NotNull();
@@ -71,7 +72,7 @@ namespace Microsoft.Azure.Commands.Automation.Common
             this.automationManagementClient = automationManagementClient;
         }
 
-        public AzureSubscription Subscription { get; private set; }
+        public IAzureSubscription Subscription { get; private set; }
 
         #region Schedule Operations
 
@@ -197,14 +198,13 @@ namespace Microsoft.Azure.Commands.Automation.Common
                         string.Format(CultureInfo.CurrentCulture, Resources.RunbookAlreadyExists, runbookName));
                 }
 
-                var rdcprop = new RunbookCreateDraftProperties()
-                {
-                    Description = description,
-                    RunbookType = RunbookTypeEnum.Script,
-                    Draft = new RunbookDraft(),
-                    ServiceManagementTags =
-                        (tags != null) ? string.Join(Constants.RunbookTagsSeparatorString, tags) : null
-                };
+            var rdcprop = new RunbookCreateDraftProperties()
+            {
+                Description = description,
+                RunbookType = RunbookTypeEnum.Script,
+                Draft = new RunbookDraft(),
+                ServiceManagementTags = (tags != null) ? string.Join(Constants.RunbookTagsSeparatorString, tags) : null
+            };
 
                 var rdcparam = new RunbookCreateDraftParameters()
                 {
@@ -281,9 +281,17 @@ namespace Microsoft.Azure.Commands.Automation.Common
                         string.Format(CultureInfo.CurrentCulture, Resources.RunbookNotFound, runbookName));
                 }
 
-                var runbookUpdateParameters = new RunbookUpdateParameters();
-                runbookUpdateParameters.Name = runbookName;
-                runbookUpdateParameters.Tags = null;
+            var runbookUpdateParameters = new RunbookUpdateParameters();
+            runbookUpdateParameters.Name = runbookName;
+            runbookUpdateParameters.Tags = null;
+            
+            runbookUpdateParameters.Properties =  new RunbookUpdateProperties();
+            runbookUpdateParameters.Properties.Description = description ?? runbookModel.Properties.Description;
+            runbookUpdateParameters.Properties.LogProgress = (logProgress.HasValue) ?  logProgress.Value : runbookModel.Properties.LogProgress;
+            runbookUpdateParameters.Properties.LogVerbose = (logVerbose.HasValue) ? logVerbose.Value : runbookModel.Properties.LogVerbose;
+            runbookUpdateParameters.Properties.ServiceManagementTags = (tags != null)
+                ? string.Join(Constants.RunbookTagsSeparatorString, tags)
+                : runbookModel.Properties.ServiceManagementTags;
 
                 runbookUpdateParameters.Properties = new RunbookUpdateProperties();
                 runbookUpdateParameters.Properties.Description = description ?? runbookModel.Properties.Description;

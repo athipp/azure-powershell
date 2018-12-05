@@ -13,12 +13,13 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Network.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmVpnClientRootCertificate"), OutputType(typeof(PSVpnClientRootCertificate))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VpnClientRootCertificate"), OutputType(typeof(PSVpnClientRootCertificate))]
     public class GetAzureVpnClientRootCertificates : VirtualNetworkGatewayBaseCmdlet
     {
         [Alias("ResourceName")]
@@ -33,6 +34,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The virtual network gateway name.")]
+        [ResourceNameCompleter("Microsoft.Network/virtualNetworkGateways", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public virtual string VirtualNetworkGatewayName { get; set; }
 
@@ -40,6 +42,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public virtual string ResourceGroupName { get; set; }
 
@@ -67,4 +70,3 @@ namespace Microsoft.Azure.Commands.Network
         }
     }
 }
-

@@ -12,42 +12,58 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Insights.Models;
+using System.Collections.Generic;
+using Microsoft.Azure.Management.Monitor.Models;
 
 namespace Microsoft.Azure.Commands.Insights.OutputClasses
 {
     /// <summary>
-    /// Wrapps around the PSMetricNoDetails and exposes all the localized strings as invariant/localized properties
+    /// Wraps around the PSMetricNoDetails and exposes all the localized strings as invariant/localized properties
     /// </summary>
-    public sealed class PSMetric : PSMetricNoDetails
+    public class PSMetric
     {
         /// <summary>
-        /// Gets or sets the MetricValues collection of the metric
+        /// Resource id
         /// </summary>
-        public new PSMetricValuesCollection MetricValues { get; set; }
+        public string Id { get; set; }
 
         /// <summary>
-        /// Gets or sets the Properties of the metric
+        /// Metric name (This should be the public facing display name)
         /// </summary>
-        public new PSDictionaryElement Properties { get; set; }
+        public LocalizableString Name { get; set; }
+
+        /// <summary>
+        /// Resource type
+        /// </summary>
+        public string Type { get; set; }
+
+        /// <summary>
+        /// Metric Unit
+        /// </summary>
+        public Unit Unit { get; set; }
+
+        /// <summary>
+        /// Metric data
+        /// </summary>
+        public IList<MetricValue> Data { get; set; }
+
+        /// <summary>
+        /// Gets or sets the time series returned when a data query is performed.
+        /// </summary>
+        public IList<TimeSeriesElement> Timeseries { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the PSMetric class.
         /// </summary>
         /// <param name="metric">The input Metric object</param>
         public PSMetric(Metric metric)
-            : base(metric)
         {
-            this.DimensionName = metric.DimensionName == null ? null : metric.DimensionName.Value;
-            this.DimensionValue = metric.DimensionValue == null ? null : metric.DimensionValue.Value;
-            this.EndTime = metric.EndTime;
-            this.MetricValues = new PSMetricValuesCollection(metric.MetricValues);
-            this.Name = metric.Name == null ? null : metric.Name.Value;
-            this.Properties = new PSDictionaryElement(metric.Properties);
-            this.ResourceId = metric.ResourceId;
-            this.StartTime = metric.StartTime;
-            this.TimeGrain = metric.TimeGrain;
+            this.Name = metric.Name;
             this.Unit = metric.Unit;
+            this.Id = metric.Id;
+            this.Type = metric.Type;
+            this.Data = ((metric.Timeseries != null && metric.Timeseries.Count > 0)? new PSMetricValuesCollection(metric.Timeseries[0].Data) : null);
+            this.Timeseries = metric.Timeseries;
         }
     }
 }

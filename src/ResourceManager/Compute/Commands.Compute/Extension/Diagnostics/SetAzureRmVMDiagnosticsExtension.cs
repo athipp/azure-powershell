@@ -14,22 +14,21 @@
 
 using AutoMapper;
 using Microsoft.Azure.Commands.Common.Authentication;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.Azure.Commands.Compute.Common;
 using Microsoft.Azure.Commands.Compute.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.Compute;
 using Microsoft.Azure.Management.Compute.Models;
-using Microsoft.Azure.Management.Storage;
-using Microsoft.WindowsAzure.Commands.Common.Storage;
+using Microsoft.Azure.Management.Storage.Version2017_10_01;
 using System;
 using System.Collections;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Compute
 {
-    [Cmdlet(
-        VerbsCommon.Set,
-        ProfileNouns.VirtualMachineDiagnosticsExtension)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VMDiagnosticsExtension")]
     [OutputType(typeof(PSAzureOperationResponse))]
     public class SetAzureRmVMDiagnosticsExtensionCommand : VirtualMachineExtensionBaseCmdlet
     {
@@ -46,6 +45,7 @@ namespace Microsoft.Azure.Commands.Compute
             Position = 0,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -55,6 +55,7 @@ namespace Microsoft.Azure.Commands.Compute
             Position = 1,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The virtual machine name.")]
+        [ResourceNameCompleter("Microsoft.Compute/virtualMachines", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string VMName { get; set; }
 
@@ -97,13 +98,14 @@ namespace Microsoft.Azure.Commands.Compute
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The storage connection context.")]
         [ValidateNotNullOrEmpty]
-        public AzureStorageContext StorageContext { get; set; }
+        public IStorageContext StorageContext { get; set; }
 
         [Parameter(
             Mandatory = false,
             Position = 7,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The location.")]
+        [LocationCompleter("Microsoft.Storage/storageAccounts")]
         public string Location
         {
             get
@@ -126,6 +128,7 @@ namespace Microsoft.Azure.Commands.Compute
             Position = 8,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The extension name.")]
+        [ResourceNameCompleter("Microsoft.Compute/virtualMachines/extensions", "ResourceGroupName", "VMName")]
         public string Name
         {
             get
@@ -209,8 +212,8 @@ namespace Microsoft.Azure.Commands.Compute
             {
                 if (this.storageClient == null)
                 {
-                    this.storageClient = AzureSession.ClientFactory.CreateArmClient<StorageManagementClient>(
-                        DefaultProfile.Context, AzureEnvironment.Endpoint.ResourceManager);
+                    this.storageClient = AzureSession.Instance.ClientFactory.CreateArmClient<StorageManagementClient>(
+                        DefaultProfile.DefaultContext, AzureEnvironment.Endpoint.ResourceManager);
                 }
 
                 return this.storageClient;
@@ -238,7 +241,7 @@ namespace Microsoft.Azure.Commands.Compute
                     this.Name,
                     parameters).GetAwaiter().GetResult();
 
-                var result = Mapper.Map<PSAzureOperationResponse>(op);
+                var result = ComputeAutoMapperProfile.Mapper.Map<PSAzureOperationResponse>(op);
                 WriteObject(result);
             });
         }
@@ -246,8 +249,13 @@ namespace Microsoft.Azure.Commands.Compute
         private void InitializeStorageParameters()
         {
             InitializeStorageAccountName();
-            InitializeStorageAccountKey();
-            InitializeStorageAccountEndpoint();
+
+            // If sas token is provided in private config, skip retrieving storage account key and endpoint.
+            if (!IsSasTokenProvided())
+            {
+                InitializeStorageAccountKey();
+                InitializeStorageAccountEndpoint();
+            }
         }
 
         private void InitializeStorageAccountName()
@@ -282,6 +290,12 @@ namespace Microsoft.Azure.Commands.Compute
             {
                 throw new ArgumentNullException(Properties.Resources.DiagnosticsExtensionNullStorageAccountEndpoint);
             }
+        }
+
+        private bool IsSasTokenProvided()
+        {
+            return !string.IsNullOrEmpty(DiagnosticsHelper.GetConfigValueFromPrivateConfig(this.DiagnosticsConfigurationPath, 
+                DiagnosticsHelper.PrivateConfigElemStr, DiagnosticsHelper.PrivConfSasKeyAttr));
         }
 
         public override void ExecuteCmdlet()

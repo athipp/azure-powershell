@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,16 +12,18 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.Azure.Commands.Sql.Database.Model;
 using Microsoft.Azure.Commands.Sql.ElasticPool.Services;
 using Microsoft.Azure.Commands.Sql.Server.Adapter;
 using Microsoft.Azure.Commands.Sql.Services;
-using Microsoft.Azure.Management.Sql.Models;
+using Microsoft.Azure.Management.Sql.LegacySdk.Models;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Microsoft.Azure.Management.Sql.Models;
 
 namespace Microsoft.Azure.Commands.Sql.Database.Services
 {
@@ -43,19 +45,19 @@ namespace Microsoft.Azure.Commands.Sql.Database.Services
         /// <summary>
         /// Gets or sets the Azure profile
         /// </summary>
-        public AzureContext Context { get; set; }
+        public IAzureContext Context { get; set; }
 
         /// <summary>
         /// Gets or sets the Azure Subscription
         /// </summary>
-        private AzureSubscription _subscription { get; set; }
+        private IAzureSubscription _subscription { get; set; }
 
         /// <summary>
         /// Constructs a database adapter
         /// </summary>
         /// <param name="profile">The current azure profile</param>
         /// <param name="subscription">The current azure subscription</param>
-        public AzureSqlDatabaseAdapter(AzureContext context)
+        public AzureSqlDatabaseAdapter(IAzureContext context)
         {
             Context = context;
             _subscription = context.Subscription;
@@ -72,7 +74,7 @@ namespace Microsoft.Azure.Commands.Sql.Database.Services
         /// <returns>The Azure Sql Database object</returns>
         internal AzureSqlDatabaseModel GetDatabase(string resourceGroupName, string serverName, string databaseName)
         {
-            var resp = Communicator.Get(resourceGroupName, serverName, databaseName, Util.GenerateTracingId());
+            var resp = Communicator.Get(resourceGroupName, serverName, databaseName);
             return CreateDatabaseModelFromResponse(resourceGroupName, serverName, resp);
         }
 
@@ -85,7 +87,7 @@ namespace Microsoft.Azure.Commands.Sql.Database.Services
         /// <returns>The Azure Sql Database object</returns>
         internal AzureSqlDatabaseModelExpanded GetDatabaseExpanded(string resourceGroupName, string serverName, string databaseName)
         {
-            var resp = Communicator.GetExpanded(resourceGroupName, serverName, databaseName, Util.GenerateTracingId());
+            var resp = Communicator.GetExpanded(resourceGroupName, serverName, databaseName);
             return CreateExpandedDatabaseModelFromResponse(resourceGroupName, serverName, resp);
         }
 
@@ -97,7 +99,7 @@ namespace Microsoft.Azure.Commands.Sql.Database.Services
         /// <returns>A list of database objects</returns>
         internal ICollection<AzureSqlDatabaseModel> ListDatabases(string resourceGroupName, string serverName)
         {
-            var resp = Communicator.List(resourceGroupName, serverName, Util.GenerateTracingId());
+            var resp = Communicator.List(resourceGroupName, serverName);
 
             return resp.Select((db) =>
             {
@@ -113,7 +115,7 @@ namespace Microsoft.Azure.Commands.Sql.Database.Services
         /// <returns>A list of database objects</returns>
         internal ICollection<AzureSqlDatabaseModelExpanded> ListDatabasesExpanded(string resourceGroupName, string serverName)
         {
-            var resp = Communicator.ListExpanded(resourceGroupName, serverName, Util.GenerateTracingId());
+            var resp = Communicator.ListExpanded(resourceGroupName, serverName);
 
             return resp.Select((db) =>
             {
@@ -122,26 +124,40 @@ namespace Microsoft.Azure.Commands.Sql.Database.Services
         }
 
         /// <summary>
-        /// Creates or updates an Azure Sql Database.
+        /// Creates or updates an Azure Sql Database with new AutoRest SDK.
         /// </summary>
         /// <param name="resourceGroup">The name of the resource group</param>
         /// <param name="serverName">The name of the Azure Sql Database Server</param>
         /// <param name="model">The input parameters for the create/update operation</param>
-        /// <returns>The upserted Azure Sql Database</returns>
-        internal AzureSqlDatabaseModel UpsertDatabase(string resourceGroup, string serverName, AzureSqlDatabaseModel model)
+        /// <returns>The upserted Azure Sql Database from AutoRest SDK</returns>
+        internal AzureSqlDatabaseModel UpsertDatabaseWithNewSdk(string resourceGroup, string serverName, AzureSqlDatabaseCreateOrUpdateModel model)
         {
-            var resp = Communicator.CreateOrUpdate(resourceGroup, serverName, model.DatabaseName, Util.GenerateTracingId(), new DatabaseCreateOrUpdateParameters()
+            // Construct the ARM resource Id of the pool
+            string elasticPoolId = string.IsNullOrWhiteSpace(model.Database.ElasticPoolName) ? null : AzureSqlDatabaseModel.PoolIdTemplate.FormatInvariant(
+                        _subscription.Id,
+                        resourceGroup,
+                        serverName,
+                        model.Database.ElasticPoolName);
+
+            // Use AutoRest SDK
+            var resp = Communicator.CreateOrUpdate(resourceGroup, serverName, model.Database.DatabaseName, new Management.Sql.Models.Database
             {
-                Location = model.Location,
-                Properties = new DatabaseCreateOrUpdateProperties()
+                Location = model.Database.Location,
+                Tags = model.Database.Tags,
+                Collation = model.Database.CollationName,
+                Sku = string.IsNullOrWhiteSpace(model.Database.SkuName) ? null : new Sku()
                 {
-                    Collation = model.CollationName,
-                    Edition = model.Edition == DatabaseEdition.None ? null : model.Edition.ToString(),
-                    MaxSizeBytes = model.MaxSizeBytes,
-                    RequestedServiceObjectiveId = model.RequestedServiceObjectiveId,
-                    ElasticPoolName = model.ElasticPoolName,
-                    RequestedServiceObjectiveName = model.RequestedServiceObjectiveName,
-                }
+                    Name = model.Database.SkuName,
+                    Tier = model.Database.Edition,
+                    Family = model.Database.Family,
+                    Capacity = model.Database.Capacity
+                },
+                MaxSizeBytes = model.Database.MaxSizeBytes,
+                ReadScale =  model.Database.ReadScale.ToString(),
+                SampleName = model.SampleName,
+                ZoneRedundant = model.Database.ZoneRedundant,
+                ElasticPoolId = elasticPoolId,
+                LicenseType = model.Database.LicenseType
             });
 
             return CreateDatabaseModelFromResponse(resourceGroup, serverName, resp);
@@ -155,7 +171,7 @@ namespace Microsoft.Azure.Commands.Sql.Database.Services
         /// <param name="databaseName">The name of the Azure Sql Database to delete</param>
         public void RemoveDatabase(string resourceGroupName, string serverName, string databaseName)
         {
-            Communicator.Remove(resourceGroupName, serverName, databaseName, Util.GenerateTracingId());
+            Communicator.Remove(resourceGroupName, serverName, databaseName);
         }
 
         /// <summary>
@@ -190,7 +206,19 @@ namespace Microsoft.Azure.Commands.Sql.Database.Services
         /// <param name="serverName">The name of the Azure Sql Database Server</param>
         /// <param name="database">The service response</param>
         /// <returns>The converted model</returns>
-        public static AzureSqlDatabaseModelExpanded CreateExpandedDatabaseModelFromResponse(string resourceGroup, string serverName, Management.Sql.Models.Database database)
+        public static AzureSqlDatabaseModel CreateDatabaseModelFromResponse(string resourceGroup, string serverName, Management.Sql.LegacySdk.Models.Database database)
+        {
+            return new AzureSqlDatabaseModel(resourceGroup, serverName, database);
+        }
+
+        /// <summary>
+        /// Converts the response from the service to a powershell database object
+        /// </summary>
+        /// <param name="resourceGroup">The resource group the server is in</param>
+        /// <param name="serverName">The name of the Azure Sql Database Server</param>
+        /// <param name="database">The service response</param>
+        /// <returns>The converted model</returns>
+        public static AzureSqlDatabaseModelExpanded CreateExpandedDatabaseModelFromResponse(string resourceGroup, string serverName, Management.Sql.LegacySdk.Models.Database database)
         {
             return new AzureSqlDatabaseModelExpanded(resourceGroup, serverName, database);
         }
@@ -199,33 +227,33 @@ namespace Microsoft.Azure.Commands.Sql.Database.Services
         {
             if (!string.IsNullOrEmpty(elasticPoolName))
             {
-                var response = ElasticPoolCommunicator.ListDatabaseActivity(resourceGroupName, serverName, elasticPoolName, Util.GenerateTracingId());
+                var response = ElasticPoolCommunicator.ListDatabaseActivity(resourceGroupName, serverName, elasticPoolName);
                 IEnumerable<AzureSqlDatabaseActivityModel> list = response.Select((r) =>
                    {
                        return new AzureSqlDatabaseActivityModel()
                        {
-                           DatabaseName = r.Properties.DatabaseName,
-                           EndTime = r.Properties.EndTime,
-                           ErrorCode = r.Properties.ErrorCode,
-                           ErrorMessage = r.Properties.ErrorMessage,
-                           ErrorSeverity = r.Properties.ErrorSeverity,
-                           Operation = r.Properties.Operation,
-                           OperationId = r.Properties.OperationId,
-                           PercentComplete = r.Properties.PercentComplete,
-                           ServerName = r.Properties.ServerName,
-                           StartTime = r.Properties.StartTime,
-                           State = r.Properties.State,
+                           DatabaseName = r.DatabaseName,
+                           EndTime = r.EndTime,
+                           ErrorCode = r.ErrorCode,
+                           ErrorMessage = r.ErrorMessage,
+                           ErrorSeverity = r.ErrorSeverity,
+                           Operation = r.Operation,
+                           OperationId = r.OperationId,
+                           PercentComplete = r.PercentComplete,
+                           ServerName = r.ServerName,
+                           StartTime = r.StartTime,
+                           State = r.State,
                            Properties = new AzureSqlDatabaseActivityModel.DatabaseState()
                            {
                                Current = new Dictionary<string, string>()
                                {
-                                    {"CurrentElasticPoolName", r.Properties.CurrentElasticPoolName},
-                                    {"CurrentServiceObjectiveName", r.Properties.CurrentServiceObjectiveName},
+                                    {"CurrentElasticPoolName", r.CurrentElasticPoolName},
+                                    {"CurrentServiceObjectiveName", r.CurrentServiceObjective},
                                },
                                Requested = new Dictionary<string, string>()
                                {
-                                    {"RequestedElasticPoolName", r.Properties.RequestedElasticPoolName},
-                                    {"RequestedServiceObjectiveName", r.Properties.RequestedServiceObjectiveName},
+                                    {"RequestedElasticPoolName", r.RequestedElasticPoolName},
+                                    {"RequestedServiceObjectiveName", r.RequestedServiceObjective},
                                }
                            }
                        };
@@ -241,8 +269,112 @@ namespace Microsoft.Azure.Commands.Sql.Database.Services
             }
             else
             {
-                throw new NotSupportedException(string.Format(CultureInfo.InvariantCulture, Microsoft.Azure.Commands.Sql.Properties.Resources.StandaloneDatabaseActivityNotSupported));
+                var response = Communicator.ListOperations(resourceGroupName, serverName, databaseName);
+                IEnumerable<AzureSqlDatabaseActivityModel> list = response.Select((r) =>
+                {
+                    return new AzureSqlDatabaseActivityModel()
+                    {
+                        DatabaseName = r.DatabaseName,
+                        ErrorCode = r.ErrorCode,
+                        ErrorMessage = r.ErrorDescription,
+                        ErrorSeverity = r.ErrorSeverity,
+                        Operation = r.Operation,
+                        OperationId = Guid.Parse(r.Name),
+                        PercentComplete = r.PercentComplete,
+                        ServerName = r.ServerName,
+                        StartTime = r.StartTime,
+                        State = r.State,
+                        Properties = new AzureSqlDatabaseActivityModel.DatabaseState()
+                        {
+                            Current = new Dictionary<string, string>(),
+                            Requested = new Dictionary<string, string>()
+                        },
+                        EstimatedCompletionTime = r.EstimatedCompletionTime,
+                        Description = r.Description,
+                        IsCancellable = r.IsCancellable
+                    };
+                });
+
+                // Check if we have a operation id constraint
+                if (operationId.HasValue)
+                {
+                    list = list.Where(pl => Guid.Equals(pl.OperationId, operationId));
+                }
+
+                return list.ToList();
             }
+        }
+
+        internal IEnumerable<AzureSqlDatabaseActivityModel> CancelDatabaseActivity(string resourceGroupName, string serverName, string elasticPoolName, string databaseName, Guid? operationId)
+        {
+            if (!string.IsNullOrEmpty(elasticPoolName))
+            {
+                throw new NotSupportedException(string.Format(CultureInfo.InvariantCulture, Microsoft.Azure.Commands.Sql.Properties.Resources.ElasticPoolDatabaseActivityCancelNotSupported));
+            }
+
+            if (!operationId.HasValue)
+            {
+                throw new NotSupportedException(string.Format(CultureInfo.InvariantCulture, Microsoft.Azure.Commands.Sql.Properties.Resources.OperationIdRequired));
+            }
+
+            Communicator.CancelOperation(resourceGroupName, serverName, databaseName, operationId.Value);
+
+            // After Cancel event is fired, state will be in 'CancelInProgress' for a while but should expect to finish in a minute
+
+            return ListDatabaseActivity(resourceGroupName, serverName, elasticPoolName, databaseName, operationId);
+        }
+
+        public void RenameDatabase(string resourceGroupName, string serverName, string databaseName, string newName)
+        {
+            Communicator.Rename(resourceGroupName, serverName, databaseName, newName);
+        }
+
+        /// <summary>
+        /// Get database sku name based on edition
+        ///    Edition              | SkuName
+        ///    GeneralPurpose       | GP
+        ///    BusinessCritical     | BC
+        ///    Standard             | Standard
+        ///    Basic                | Basic
+        ///    Premium              | Premium
+        /// </summary>
+        /// <param name="tier">Azure Sql database edition</param>
+        /// <returns>The sku name</returns>
+        public static string GetDatabaseSkuName(string tier)
+        {
+            if (string.IsNullOrWhiteSpace(tier))
+                return null;
+
+            switch(tier.ToLowerInvariant())
+            {
+                case "generalpurpose":
+                    return "GP";
+                case "businesscritical":
+                    return "BC";
+                default:
+                    return tier;
+            }
+        }
+
+        /// <summary>
+        /// Gets the Sku for the Dtu database.
+        /// </summary>
+        /// <param name="requestedServiceObjectiveName">Requested service objective name of the Azure Sql database</param>
+        /// <param name="edition">Edition of the Azure Sql database</param>
+        /// <returns></returns>
+        public static Sku GetDtuDatabaseSku(string requestedServiceObjectiveName, string edition)
+        {
+            Sku sku = null;
+            if (!string.IsNullOrWhiteSpace(requestedServiceObjectiveName) || !string.IsNullOrWhiteSpace(edition))
+            {
+                sku = new Sku()
+                {
+                    Name = string.IsNullOrWhiteSpace(requestedServiceObjectiveName) ? GetDatabaseSkuName(edition) : requestedServiceObjectiveName,
+                    Tier = edition
+                };
+            }
+
+            return sku;
         }
     }
 }

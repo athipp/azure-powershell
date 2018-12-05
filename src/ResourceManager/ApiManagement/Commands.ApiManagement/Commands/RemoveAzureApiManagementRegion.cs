@@ -15,9 +15,10 @@
 namespace Microsoft.Azure.Commands.ApiManagement.Commands
 {
     using Microsoft.Azure.Commands.ApiManagement.Models;
+    using ResourceManager.Common.ArgumentCompleters;
     using System.Management.Automation;
 
-    [Cmdlet(VerbsCommon.Remove, "AzureRmApiManagementRegion"), OutputType(typeof(PsApiManagement))]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApiManagementRegion"), OutputType(typeof(PsApiManagement))]
     public class RemoveAzureApiManagementRegion : AzureApiManagementCmdletBase
     {
         [Parameter(
@@ -31,6 +32,7 @@ namespace Microsoft.Azure.Commands.ApiManagement.Commands
             ValueFromPipelineByPropertyName = true,
             Mandatory = true,
             HelpMessage = "Location of the deployment region to remove.")]
+        [LocationCompleter("Microsoft.ApiManagement/service")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 

@@ -13,19 +13,22 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.NotificationHubs.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
+using System;
 using System.Collections;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.NotificationHubs.Commands.Namespace
 {
 
-    [Cmdlet(VerbsCommon.New, "AzureRmNotificationHubsNamespace"), OutputType(typeof(NamespaceAttributes))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "NotificationHubsNamespace", SupportsShouldProcess = true), OutputType(typeof(NamespaceAttributes))]
     public class NewAzureNotificationHubsNamespace : AzureNotificationHubsCmdletBase
     {
         [Parameter(Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             Position = 0,
             HelpMessage = "The name of the resource group")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroup { get; set; }
 
@@ -40,6 +43,7 @@ namespace Microsoft.Azure.Commands.NotificationHubs.Commands.Namespace
             ValueFromPipelineByPropertyName = true,
             Position = 2,
             HelpMessage = "Namespace Location.")]
+        [LocationCompleter("Microsoft.NotificationHubs/namespaces")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
@@ -47,13 +51,27 @@ namespace Microsoft.Azure.Commands.NotificationHubs.Commands.Namespace
             ValueFromPipelineByPropertyName = true,
             Position = 3,
             HelpMessage = "Hashtables which represents resource Tags.")]
-        public Hashtable Tags { get; set; }
+        public Hashtable Tag { get; set; }
+
+        [Parameter(Mandatory = false,
+            ValueFromPipelineByPropertyName = true,
+            Position = 4,
+            HelpMessage = "Sku tier of the namespace")]
+        public string SkuTier { get; set; }
 
         public override void ExecuteCmdlet()
         {
-            // Create a new namespace 
-            var nsAttribute = Client.BeginCreateNamespace(ResourceGroup, Namespace, Location, ConvertTagsToDictionary(Tags));
-            WriteObject(nsAttribute);
+            if (ShouldProcess(string.Empty, Resources.CreateNamespace))
+            {
+                // Create a new namespace
+                if(string.IsNullOrWhiteSpace(SkuTier))
+                {
+                    SkuTier = "free";
+                }
+
+                var nsAttribute = Client.CreateNamespace(ResourceGroup, Namespace, Location, ConvertTagsToDictionary(Tag), SkuTier);
+                WriteObject(nsAttribute);
+            }
         }
     }
 }

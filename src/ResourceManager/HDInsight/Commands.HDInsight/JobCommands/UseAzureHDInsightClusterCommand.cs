@@ -14,14 +14,13 @@
 
 using Hyak.Common;
 using Microsoft.Azure.Commands.HDInsight.Commands;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.WindowsAzure.Commands.Common;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.HDInsight
 {
-    [Cmdlet(VerbsOther.Use,
-        Constants.CommandNames.AzureHDInsightCluster),
-    OutputType(typeof(string))]
+    [Cmdlet("Use", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "HDInsightCluster"),OutputType(typeof(string))]
     public class UseAzureHDInsightClusterCommand : HDInsightCmdletBase
     {
         internal const string CurrentCluster = "CurrentHDInsightCluster";
@@ -60,6 +59,7 @@ namespace Microsoft.Azure.Commands.HDInsight
         }
 
         [Parameter(HelpMessage = "Gets or sets the name of the resource group.")]
+        [ResourceGroupCompleter]
         public string ResourceGroupName { get; set; }
 
         #endregion

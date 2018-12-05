@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,8 @@ using Microsoft.Azure.Commands.Sql.Common;
 using System.Management.Automation;
 using Microsoft.Azure.Commands.Sql.RecommendedAction.Model;
 using Microsoft.Azure.Commands.Sql.RecommendedAction.Service;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Sql.RecommendedAction.Cmdlet
 {
@@ -32,6 +34,7 @@ namespace Microsoft.Azure.Commands.Sql.RecommendedAction.Cmdlet
         [Parameter(Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Azure SQL Server name.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string ServerName { get; set; }
 
@@ -41,6 +44,7 @@ namespace Microsoft.Azure.Commands.Sql.RecommendedAction.Cmdlet
         [Parameter(Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Azure SQL Elastic Pool name.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers/elasticPools", "ResourceGroupName", "ServerName")]
         [ValidateNotNullOrEmpty]
         public string ElasticPoolName { get; set; }
 
@@ -58,9 +62,9 @@ namespace Microsoft.Azure.Commands.Sql.RecommendedAction.Cmdlet
         /// </summary>
         /// <param name="subscription">The subscription the cmdlets are operation under</param>
         /// <returns>The advisor adapter</returns>
-        protected override AzureSqlElasticPoolRecommendedActionAdapter InitModelAdapter(AzureSubscription subscription)
+        protected override AzureSqlElasticPoolRecommendedActionAdapter InitModelAdapter(IAzureSubscription subscription)
         {
-            return new AzureSqlElasticPoolRecommendedActionAdapter(DefaultProfile.Context);
+            return new AzureSqlElasticPoolRecommendedActionAdapter(DefaultProfile.DefaultContext);
         }
     }
 }

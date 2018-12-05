@@ -15,6 +15,7 @@
 using AutoMapper;
 using Microsoft.Azure.Commands.Compute.Common;
 using Microsoft.Azure.Commands.Compute.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.Compute.Models;
 using Microsoft.Rest.Azure;
 using System.Collections.Generic;
@@ -22,7 +23,7 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Compute
 {
-    [Cmdlet(VerbsCommon.Get, ProfileNouns.VirtualMachineSize, DefaultParameterSetName = ListVirtualMachineSizeParamSet)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VMSize", DefaultParameterSetName = ListVirtualMachineSizeParamSet)]
     [OutputType(typeof(PSVirtualMachineSize))]
     public class GetAzureVMSizeCommand : VirtualMachineSizeBaseCmdlet
     {
@@ -36,6 +37,7 @@ namespace Microsoft.Azure.Commands.Compute
            ParameterSetName = ListVirtualMachineSizeParamSet,
            ValueFromPipelineByPropertyName = true,
            HelpMessage = "The location name.")]
+        [LocationCompleter("Microsoft.Compute/locations/vmSizes")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
@@ -51,6 +53,7 @@ namespace Microsoft.Azure.Commands.Compute
            ParameterSetName = ListAvailableSizesForVirtualMachine,
            ValueFromPipelineByPropertyName = true,
            HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -60,6 +63,7 @@ namespace Microsoft.Azure.Commands.Compute
             ParameterSetName = ListAvailableSizesForAvailabilitySet,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The availability set name.")]
+        [ResourceNameCompleter("Microsoft.Compute/availabilitySets", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string AvailabilitySetName { get; set; }
 
@@ -69,6 +73,7 @@ namespace Microsoft.Azure.Commands.Compute
             ParameterSetName = ListAvailableSizesForVirtualMachine,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The virtual machine name.")]
+        [ResourceNameCompleter("Microsoft.Compute/virtualMachines", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string VMName { get; set; }
 
@@ -100,8 +105,8 @@ namespace Microsoft.Azure.Commands.Compute
                 List<PSVirtualMachineSize> psResultList = new List<PSVirtualMachineSize>();
                 foreach (var item in result.Body)
                 {
-                    var psItem = Mapper.Map<PSVirtualMachineSize>(result);
-                    psItem = Mapper.Map(item, psItem);
+                    var psItem = ComputeAutoMapperProfile.Mapper.Map<PSVirtualMachineSize>(result);
+                    psItem = ComputeAutoMapperProfile.Mapper.Map(item, psItem);
                     psResultList.Add(psItem);
                 }
 

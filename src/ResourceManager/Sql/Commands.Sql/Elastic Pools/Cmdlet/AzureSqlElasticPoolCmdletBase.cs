@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +12,9 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.Common;
 using Microsoft.Azure.Commands.Sql.ElasticPool.Model;
 using Microsoft.Azure.Commands.Sql.ElasticPool.Services;
@@ -23,6 +25,12 @@ namespace Microsoft.Azure.Commands.Sql.ElasticPool.Cmdlet
 {
     public abstract class AzureSqlElasticPoolCmdletBase : AzureSqlCmdletBase<IEnumerable<AzureSqlElasticPoolModel>, AzureSqlElasticPoolAdapter>
     {
+        // Some const variables used by SetAzureSqlElasticPool and NewAzureSqlElasticPool cmdlet
+        public const string DtuPoolParameterSet = "DtuBasedPool";
+        public const string VcorePoolParameterSet = "VcoreBasedPool";
+
+        public long Megabytes = 1024L * 1024L;
+
         /// <summary>
         /// Gets or sets the name of the server to use.
         /// </summary>
@@ -30,6 +38,7 @@ namespace Microsoft.Azure.Commands.Sql.ElasticPool.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 1,
             HelpMessage = "The name of the Azure SQL Server the Elastic Pool is in.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string ServerName { get; set; }
 
@@ -38,9 +47,9 @@ namespace Microsoft.Azure.Commands.Sql.ElasticPool.Cmdlet
         /// </summary>
         /// <param name="subscription"></param>
         /// <returns></returns>
-        protected override AzureSqlElasticPoolAdapter InitModelAdapter(AzureSubscription subscription)
+        protected override AzureSqlElasticPoolAdapter InitModelAdapter(IAzureSubscription subscription)
         {
-            return new AzureSqlElasticPoolAdapter(DefaultProfile.Context);
+            return new AzureSqlElasticPoolAdapter(DefaultProfile.DefaultContext);
         }
     }
 }

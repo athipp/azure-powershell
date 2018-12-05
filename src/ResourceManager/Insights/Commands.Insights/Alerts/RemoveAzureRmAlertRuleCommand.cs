@@ -12,19 +12,19 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Management.Insights;
-using System.Collections.Generic;
+using System.Net;
 using System.Management.Automation;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Insights.Alerts
 {
     /// <summary>
     /// Remove an Alert rule
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "AzureRmAlertRule"), OutputType(typeof(List<AzureOperationResponse>))]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "AlertRule", SupportsShouldProcess = true), OutputType(typeof(AzureOperationResponse))]
     public class RemoveAzureRmAlertRuleCommand : ManagementCmdletBase
     {
-        internal const string RemoveAzureRmAlertRuleParamGroup = "Parameters for Remove-AzureRmAlertRule cmdlet";
+        internal const string RemoveAzureRmAlertRuleParamGroup = "RemoveAlertRules";
 
         #region Parameter declaration
 
@@ -32,8 +32,10 @@ namespace Microsoft.Azure.Commands.Insights.Alerts
         /// Gets or sets the ResourceGroupName parameter of the cmdlet
         /// </summary>
         [Parameter(ParameterSetName = RemoveAzureRmAlertRuleParamGroup, Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The resource group name")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
-        public string ResourceGroup { get; set; }
+        [Alias("ResourceGroup")]
+        public string ResourceGroupName { get; set; }
 
         /// <summary>
         /// Gets or sets the rule name parameter of the cmdlet
@@ -49,8 +51,20 @@ namespace Microsoft.Azure.Commands.Insights.Alerts
         /// </summary>
         protected override void ProcessRecordInternal()
         {
-            AzureOperationResponse result = this.InsightsManagementClient.AlertOperations.DeleteRuleAsync(resourceGroupName: this.ResourceGroup, ruleName: this.Name).Result;
-            WriteObject(result);
+            if (ShouldProcess(
+                target: string.Format("Remove an alert rule: {0} from resource group: {1}", this.Name, this.ResourceGroupName),
+                action: "Remove an alert rule"))
+            {
+                var result = this.MonitorManagementClient.AlertRules.DeleteWithHttpMessagesAsync(resourceGroupName: this.ResourceGroupName, ruleName: this.Name).Result;
+
+                var response = new AzureOperationResponse()
+                {
+                    RequestId = result.RequestId,
+                    StatusCode = result.Response != null ? result.Response.StatusCode : HttpStatusCode.OK
+                };
+
+                WriteObject(response);
+            }
         }
     }
 }

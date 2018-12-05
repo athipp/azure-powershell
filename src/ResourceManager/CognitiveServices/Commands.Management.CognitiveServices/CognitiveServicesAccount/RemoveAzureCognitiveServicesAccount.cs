@@ -13,6 +13,7 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Management.CognitiveServices.Properties;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.CognitiveServices;
 using System.Globalization;
 using System.Management.Automation;
@@ -22,7 +23,7 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
     /// <summary>
     /// Delete a Cognitive Services.
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, CognitiveServicesAccountNounStr, SupportsShouldProcess = true)]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "CognitiveServicesAccount", SupportsShouldProcess = true), OutputType(typeof(void))]
     public class RemoveAzureCognitiveServicesAccountCommand : CognitiveServicesAccountBaseCmdlet
     {
         [Parameter(
@@ -30,6 +31,7 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Resource Group Name.")]
+        [ResourceGroupCompleter()]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -56,7 +58,7 @@ namespace Microsoft.Azure.Commands.Management.CognitiveServices
             {
                 RunCmdLet(() =>
                 {
-                    this.CognitiveServicesClient.CognitiveServicesAccounts.Delete(
+                    this.CognitiveServicesClient.Accounts.Delete(
                         this.ResourceGroupName,
                         this.Name);
                 });

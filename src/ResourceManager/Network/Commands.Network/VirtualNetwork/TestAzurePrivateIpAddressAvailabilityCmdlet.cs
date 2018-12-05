@@ -16,12 +16,15 @@ using AutoMapper;
 using System.Management.Automation;
 using Microsoft.Azure.Commands.Network.Models;
 using Microsoft.Azure.Management.Network;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
+using Microsoft.WindowsAzure.Commands.Common.CustomAttributes;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsDiagnostic.Test, "AzureRmPrivateIPAddressAvailability"), OutputType(typeof(PSIPAddressAvailabilityResult))]
+    [Cmdlet("Test", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "PrivateIPAddressAvailability"), OutputType(typeof(PSIPAddressAvailabilityResult))]
     public class TestAzurePrivateIPAddressAvailabilityCmdlet : VirtualNetworkBaseCmdlet
     {
+        [CmdletParameterBreakingChange("VirtualNetwork", ChangeDescription = "The EnableVMProtection property for the parameter Virtualnetwork is no longer supported. Setting this property has no impact. This property will be removed in a future release. Please remove it from your scripts")]
         [Parameter(
             Mandatory = true,
             ValueFromPipeline = true,
@@ -34,6 +37,7 @@ namespace Microsoft.Azure.Commands.Network
             ValueFromPipeline = false,
             ParameterSetName = "TestByResourceId",
             HelpMessage = "The resource group name")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -42,6 +46,7 @@ namespace Microsoft.Azure.Commands.Network
             ValueFromPipeline = false,
             ParameterSetName = "TestByResourceId",
             HelpMessage = "The virtualNetwork name")]
+        [ResourceNameCompleter("Microsoft.Network/virtualNetworks", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string VirtualNetworkName { get; set; }
 
@@ -72,7 +77,7 @@ namespace Microsoft.Azure.Commands.Network
         public PSIPAddressAvailabilityResult TestIpAddressAvailability(string resourceGroupName, string vnetName, string ipAddress)
         {
             var result = this.NetworkClient.NetworkManagementClient.VirtualNetworks.CheckIPAddressAvailability(resourceGroupName, vnetName, ipAddress);
-            var psResult = Mapper.Map<PSIPAddressAvailabilityResult>(result);
+            var psResult = NetworkResourceManagerProfile.Mapper.Map<PSIPAddressAvailabilityResult>(result);
 
             return psResult;
         }

@@ -16,10 +16,12 @@ namespace Microsoft.Azure.Commands.Network.Models
 {
     using Newtonsoft.Json;
     using System.Collections.Generic;
+    using WindowsAzure.Commands.Common.Attributes;
 
     public class PSNetworkInterfaceIPConfiguration : PSIPConfiguration
     {
         [JsonProperty(Order = 2)]
+        [Ps1Xml(Target = ViewControl.Table)]
         public string PrivateIpAddressVersion { get; set; }
 
         [JsonProperty(Order = 2)]
@@ -29,10 +31,14 @@ namespace Microsoft.Azure.Commands.Network.Models
         public List<PSInboundNatRule> LoadBalancerInboundNatRules { get; set; }
 
         [JsonProperty(Order = 2)]
+        [Ps1Xml(Target = ViewControl.Table)]
         public bool Primary { get; set; }
 
         [JsonProperty(Order = 2)]
         public List<PSApplicationGatewayBackendAddressPool> ApplicationGatewayBackendAddressPools { get; set; }
+
+        [JsonProperty(Order = 2)]
+        public List<PSApplicationSecurityGroup> ApplicationSecurityGroups { get; set; }
 
         [JsonIgnore]
         public string LoadBalancerBackendAddressPoolsText
@@ -52,6 +58,12 @@ namespace Microsoft.Azure.Commands.Network.Models
             get { return JsonConvert.SerializeObject(ApplicationGatewayBackendAddressPools, Formatting.Indented, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore }); }
         }
 
+        [JsonIgnore]
+        public string ApplicationSecurityGroupsText
+        {
+            get { return JsonConvert.SerializeObject(ApplicationSecurityGroups, Formatting.Indented, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore }); }
+        }
+
         public bool ShouldSerializeLoadBalancerBackendAddressPools()
         {
             return !string.IsNullOrEmpty(this.Name);
@@ -63,6 +75,11 @@ namespace Microsoft.Azure.Commands.Network.Models
         }
 
         public bool ShouldSerializeApplicationGatewayBackendAddressPools()
+        {
+            return !string.IsNullOrEmpty(this.Name);
+        }
+
+        public bool ShouldSerializeApplicationSecurityGroups()
         {
             return !string.IsNullOrEmpty(this.Name);
         }

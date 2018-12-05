@@ -15,7 +15,7 @@
 using System;
 using Microsoft.Azure.Commands.ResourceManager.Common;
 using Microsoft.Azure.Commands.Network.Common;
-
+using System.Collections.Generic;
 
 namespace Microsoft.Azure.Commands.Network
 {
@@ -24,19 +24,23 @@ namespace Microsoft.Azure.Commands.Network
 
         private NetworkClient _networkClient;
 
+        public const string IPv4 = "IPv4";
+        public const string IPv6 = "IPv6";
+        public const string All = "All";
+        public const string DisabledRuleGroupsAlias = "DisabledRuleGroups";
+
         public NetworkClient NetworkClient
         {
             get
             {
                 if (_networkClient == null)
                 {
-                    _networkClient = new NetworkClient(DefaultProfile.Context)
-                    {
-                        VerboseLogger = WriteVerboseWithTimestamp,
-                        ErrorLogger = WriteErrorWithTimestamp,
-                        WarningLogger = WriteWarningWithTimestamp
-                    };
+                    _networkClient = new NetworkClient(DefaultProfile.DefaultContext);
                 }
+
+                this._networkClient.VerboseLogger = WriteVerboseWithTimestamp;
+                this._networkClient.ErrorLogger = WriteErrorWithTimestamp;
+                this._networkClient.WarningLogger = WriteWarningWithTimestamp;
                 return _networkClient;
             }
 
@@ -45,7 +49,6 @@ namespace Microsoft.Azure.Commands.Network
         public override void ExecuteCmdlet()
         {
             base.ExecuteCmdlet();
-            NetworkResourceManagerProfile.Initialize();
             try
             {
                 Execute();

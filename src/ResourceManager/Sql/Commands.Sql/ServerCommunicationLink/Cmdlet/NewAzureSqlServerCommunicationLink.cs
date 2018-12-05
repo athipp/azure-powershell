@@ -23,8 +23,7 @@ namespace Microsoft.Azure.Commands.Sql.ServerCommunicationLink.Cmdlet
     /// <summary>
     /// Cmdlet to create a new Azure Sql server communication link
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmSqlServerCommunicationLink",
-        ConfirmImpact = ConfirmImpact.Low, SupportsShouldProcess = true), OutputType(typeof(AzureSqlServerCommunicationLinkModel))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlServerCommunicationLink",ConfirmImpact = ConfirmImpact.Low, SupportsShouldProcess = true), OutputType(typeof(AzureSqlServerCommunicationLinkModel))]
     public class NewAzureSqlServerCommunicationLink : AzureSqlServerCommunicationLinkCmdletBase
     {
         /// <summary>
@@ -42,6 +41,12 @@ namespace Microsoft.Azure.Commands.Sql.ServerCommunicationLink.Cmdlet
             HelpMessage = "The name of the partner server.")]
         [ValidateNotNullOrEmpty]
         public string PartnerServer { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether or not to run this cmdlet in the background as a job
+        /// </summary>
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         /// <summary>
         /// Get the entities from the service

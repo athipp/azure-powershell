@@ -23,7 +23,7 @@ namespace Microsoft.Azure.Commands.Sql.ServerDisasterRecoveryConfiguration.Cmdle
     /// <summary>
     /// Cmdlet to set a new Azure Sql Server Disaster Recovery Configuration (used for failover)
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "AzureRmSqlServerDisasterRecoveryConfiguration", SupportsShouldProcess = true)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlServerDisasterRecoveryConfiguration", SupportsShouldProcess = true), OutputType(typeof(AzureSqlServerDisasterRecoveryConfigurationModel))]
     public class SetAzureSqlServerDisasterRecoveryConfiguration : AzureSqlServerDisasterRecoveryConfigurationCmdletBase
     {
 
@@ -56,6 +56,12 @@ namespace Microsoft.Azure.Commands.Sql.ServerDisasterRecoveryConfiguration.Cmdle
             ParameterSetName = ByFailoverParams,
             HelpMessage = "Whether this failover operation will allow data loss.")]
         public SwitchParameter AllowDataLoss { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether or not to run this cmdlet in the background as a job
+        /// </summary>
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         /// <summary>
         /// Get the entities from the service

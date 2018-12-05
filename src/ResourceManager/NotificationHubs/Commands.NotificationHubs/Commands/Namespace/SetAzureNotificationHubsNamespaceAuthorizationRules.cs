@@ -14,17 +14,21 @@
 
 using Microsoft.Azure.Commands.NotificationHubs.Models;
 using System.Management.Automation;
+using System.Globalization;
+using System;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.NotificationHubs.Commands.Namespace
 {
 
-    [Cmdlet(VerbsCommon.Set, "AzureRmNotificationHubsNamespaceAuthorizationRules"), OutputType(typeof(SharedAccessAuthorizationRuleAttributes))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "NotificationHubsNamespaceAuthorizationRules", SupportsShouldProcess = true), OutputType(typeof(SharedAccessAuthorizationRuleAttributes))]
     public class SetAzureNotificationHubsNamespaceAuthorizationRules : AzureNotificationHubsCmdletBase
     {
         [Parameter(Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             Position = 0,
             HelpMessage = "The name of the resource group")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroup { get; set; }
 
@@ -49,6 +53,13 @@ namespace Microsoft.Azure.Commands.NotificationHubs.Commands.Namespace
         [ValidateNotNullOrEmpty]
         public SharedAccessAuthorizationRuleAttributes SASRule { get; set; }
 
+        /// <summary>
+        /// If present, do not ask for confirmation
+        /// </summary>
+        [Parameter(Mandatory = false,
+           HelpMessage = "Do not ask for confirmation.")]
+        public SwitchParameter Force { get; set; }
+
         public override void ExecuteCmdlet()
         {
             SharedAccessAuthorizationRuleAttributes sasRule = null;
@@ -61,10 +72,24 @@ namespace Microsoft.Azure.Commands.NotificationHubs.Commands.Namespace
                 sasRule = SASRule;
             }
 
-            // Update namespace authorizationRule
-            var updateNSAuthRule = Client.CreateOrUpdateNamespaceAuthorizationRules(ResourceGroup, Namespace, sasRule.Name, sasRule.Rights,
-                sasRule.PrimaryKey, sasRule.SecondaryKey == null ? null : sasRule.SecondaryKey);
-            WriteObject(updateNSAuthRule);
+            if (!string.IsNullOrEmpty(sasRule.Name))
+            {
+                ConfirmAction(
+                    Force.IsPresent,
+                    string.Format(CultureInfo.InvariantCulture, Resources.UpdateNamespaceAuthorizationRule_Confirm, sasRule.Name),
+                    Resources.UpdateNamespaceAuthorizationRule_WhatIf,
+                    sasRule.Name,
+                    () =>
+                    {
+                        // Update namespace authorizationRule
+                        var updateNSAuthRule = Client.CreateOrUpdateNamespaceAuthorizationRules(ResourceGroup, sasRule.Location, Namespace, sasRule.Name, sasRule.Rights);
+                        WriteObject(updateNSAuthRule);
+                    });
+            }
+            else
+            {
+                throw new ArgumentNullException(Resources.AuthorizationRuleNameNull);
+            }
         }
     }
 }

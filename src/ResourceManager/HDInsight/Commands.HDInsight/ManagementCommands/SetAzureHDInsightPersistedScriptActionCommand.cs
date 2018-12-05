@@ -13,13 +13,12 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.HDInsight.Commands;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.HDInsight
 {
-    [Cmdlet(VerbsCommon.Set,
-        Constants.CommandNames.AzureHDInsightPersistedScriptAction),
-    OutputType(typeof(void))]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "HDInsightPersistedScriptAction"),OutputType(typeof(void))]
     public class SetAzureHDInsightPersistedScriptActionCommand : HDInsightCmdletBase
     {
         #region Input Parameter Definitions
@@ -37,6 +36,7 @@ namespace Microsoft.Azure.Commands.HDInsight
         public long ScriptExecutionId { get; set; }
 
         [Parameter(HelpMessage = "Gets or sets the name of the resource group.")]
+        [ResourceGroupCompleter]
         public string ResourceGroupName { get; set; }
         #endregion
 

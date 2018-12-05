@@ -21,17 +21,23 @@ using System.Text;
 using Microsoft.Azure.Commands.Common.Authentication;
 using Microsoft.Azure.Commands.ResourceManager.Common.Tags;
 using Microsoft.Azure.Commands.Resources.Models.Authorization;
-using Microsoft.Azure.Commands.Tags.Model;
-using Microsoft.Azure.Gallery;
 using Microsoft.Azure.Management.Authorization.Models;
-using Microsoft.Azure.Management.Resources.Models;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Newtonsoft.Json;
+using Microsoft.WindowsAzure.Commands.Common;
+using Microsoft.Azure.Management.ResourceManager.Models;
+using Microsoft.Azure.Commands.Resources.Models;
+// TODO: Remove IfDef code
+#if !NETSTANDARD
+using Microsoft.Azure.Commands.Resources.Models.Gallery;
+#endif
 
 namespace Microsoft.Azure.Commands.Resources.Models
 {
     public static class ResourcesExtensions
     {
+// TODO: Remove IfDef code
+#if !NETSTANDARD
         public static PSGalleryItem ToPSGalleryItem(this GalleryItem gallery)
         {
             PSGalleryItem psGalleryItem = new PSGalleryItem();
@@ -42,10 +48,11 @@ namespace Microsoft.Azure.Commands.Resources.Models
 
             return psGalleryItem;
         }
+#endif
 
-        public static PSResource ToPSResource(this GenericResourceExtended resource, ResourcesClient client, bool minimal)
+        public static PSResource ToPSResource(this GenericResource resource, ResourcesClient client, bool minimal)
         {
-            ResourceIdentifier identifier = new ResourceIdentifier(resource.Id);
+            var identifier = new ResourceIdentifier(resource.Id);
             return new PSResource
             {
                 Name = identifier.ResourceName,
@@ -53,8 +60,8 @@ namespace Microsoft.Azure.Commands.Resources.Models
                 ResourceType = identifier.ResourceType,
                 ResourceGroupName = identifier.ResourceGroupName,
                 ParentResource = identifier.ParentResource,
-                Properties = JsonUtilities.DeserializeJson(resource.Properties),
-                PropertiesText = resource.Properties,
+                Properties = JsonUtilities.DeserializeJson(resource.Properties?.ToString()),
+                PropertiesText = resource.Properties?.ToString(),
                 Tags = TagsConversionHelper.CreateTagHashtable(resource.Tags),
                 Permissions = minimal ? null : client.GetResourcePermissions(identifier),
                 ResourceId = identifier.ToString()
@@ -63,7 +70,7 @@ namespace Microsoft.Azure.Commands.Resources.Models
 
         public static PSPermission ToPSPermission(this Permission permission)
         {
-            return new PSPermission()
+            return new PSPermission
             {
                 Actions = new List<string>(permission.Actions),
                 NotActions = new List<string>(permission.NotActions)
@@ -77,7 +84,7 @@ namespace Microsoft.Azure.Commands.Resources.Models
                 return string.Empty;
             }
 
-            StringBuilder result = new StringBuilder();
+            var result = new StringBuilder();
 
             result.AppendLine();
             result.AppendLine(string.Format("{0, -15}: {1}", "Uri", templateLink.Uri));
@@ -88,16 +95,14 @@ namespace Microsoft.Azure.Commands.Resources.Models
 
         private static string GetEventDataCaller(Dictionary<string, string> claims)
         {
-            string name = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name";
+            const string name = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name";
 
             if (claims == null || !claims.ContainsKey(name))
             {
                 return null;
             }
-            else
-            {
-                return claims[name];
-            }
+
+            return claims[name];
         }
 
         public static string ConstructDeploymentVariableTable(Dictionary<string, DeploymentVariable> dictionary)
@@ -106,20 +111,19 @@ namespace Microsoft.Azure.Commands.Resources.Models
             {
                 return null;
             }
+            
+            if (dictionary.Count <= 0) return string.Empty;
 
-            StringBuilder result = new StringBuilder();
+            const string rowFormat = "{0, -15}  {1, -25}  {2, -10}\r\n";
 
-            if (dictionary.Count > 0)
+            var result = new StringBuilder();
+            result.AppendLine();
+            result.AppendFormat(rowFormat, "Name", "Type", "Value");
+            result.AppendFormat(rowFormat, GeneralUtilities.GenerateSeparator(15, "="), GeneralUtilities.GenerateSeparator(25, "="), GeneralUtilities.GenerateSeparator(10, "="));
+
+            foreach (var pair in dictionary)
             {
-                string rowFormat = "{0, -15}  {1, -25}  {2, -10}\r\n";
-                result.AppendLine();
-                result.AppendFormat(rowFormat, "Name", "Type", "Value");
-                result.AppendFormat(rowFormat, GeneralUtilities.GenerateSeparator(15, "="), GeneralUtilities.GenerateSeparator(25, "="), GeneralUtilities.GenerateSeparator(10, "="));
-
-                foreach (KeyValuePair<string, DeploymentVariable> pair in dictionary)
-                {
-                    result.AppendFormat(rowFormat, pair.Key, pair.Value.Type, pair.Value.Value);
-                }
+                result.AppendFormat(rowFormat, pair.Key, pair.Value.Type, pair.Value.Value);
             }
 
             return result.ToString();
@@ -133,14 +137,14 @@ namespace Microsoft.Azure.Commands.Resources.Models
                 return null;
             }
 
-            StringBuilder resourcesTable = new StringBuilder();
+            var resourcesTable = new StringBuilder();
 
             var tagsDictionary = TagsConversionHelper.CreateTagDictionary(tags, false);
 
-            int maxNameLength = Math.Max("Name".Length, tagsDictionary.Max(tag => tag.Key.Length));
-            int maxValueLength = Math.Max("Value".Length, tagsDictionary.Max(tag => tag.Value.Length));
+            var maxNameLength = Math.Max("Name".Length, tagsDictionary.Max(tag => tag.Key.Length));
+            var maxValueLength = Math.Max("Value".Length, tagsDictionary.Max(tag => tag.Value.Length));
 
-            string rowFormat = "{0, -" + maxNameLength + "}  {1, -" + maxValueLength + "}\r\n";
+            var rowFormat = "{0, -" + maxNameLength + "}  {1, -" + maxValueLength + "}\r\n";
             resourcesTable.AppendLine();
             resourcesTable.AppendFormat(rowFormat, "Name", "Value");
             resourcesTable.AppendFormat(rowFormat,
@@ -162,21 +166,20 @@ namespace Microsoft.Azure.Commands.Resources.Models
 
         public static string ConstructPermissionsTable(List<PSPermission> permissions)
         {
-            StringBuilder permissionsTable = new StringBuilder();
-
+            var permissionsTable = new StringBuilder();
             if (permissions != null && permissions.Count > 0)
             {
-                int maxActionsLength = Math.Max("Actions".Length, permissions.Where(p => p.Actions != null).DefaultIfEmpty(EmptyPermission).Max(p => p.ActionsString.Length));
-                int maxNotActionsLength = Math.Max("NotActions".Length, permissions.Where(p => p.NotActions != null).DefaultIfEmpty(EmptyPermission).Max(p => p.NotActionsString.Length));
+                var maxActionsLength = Math.Max("Actions".Length, permissions.Where(p => p.Actions != null).DefaultIfEmpty(EmptyPermission).Max(p => p.ActionsString.Length));
+                var maxNotActionsLength = Math.Max("NotActions".Length, permissions.Where(p => p.NotActions != null).DefaultIfEmpty(EmptyPermission).Max(p => p.NotActionsString.Length));
 
-                string rowFormat = "{0, -" + maxActionsLength + "}  {1, -" + maxNotActionsLength + "}\r\n";
+                var rowFormat = "{0, -" + maxActionsLength + "}  {1, -" + maxNotActionsLength + "}\r\n";
                 permissionsTable.AppendLine();
                 permissionsTable.AppendFormat(rowFormat, "Actions", "NotActions");
                 permissionsTable.AppendFormat(rowFormat,
-                    GeneralUtilities.GenerateSeparator(maxActionsLength, "="),
-                    GeneralUtilities.GenerateSeparator(maxNotActionsLength, "="));
+                GeneralUtilities.GenerateSeparator(maxActionsLength, "="),
+                GeneralUtilities.GenerateSeparator(maxNotActionsLength, "="));
 
-                foreach (PSPermission permission in permissions)
+                foreach (var permission in permissions)
                 {
                     permissionsTable.AppendFormat(rowFormat, permission.ActionsString, permission.NotActionsString);
                 }
@@ -188,7 +191,7 @@ namespace Microsoft.Azure.Commands.Resources.Models
         {
             get
             {
-                return new PSPermission()
+                return new PSPermission
                 {
                     Actions = new List<string>(),
                     NotActions = new List<string>()
@@ -198,7 +201,7 @@ namespace Microsoft.Azure.Commands.Resources.Models
 
         public static PSResourceGroupDeployment ToPSResourceGroupDeployment(this DeploymentExtended result, string resourceGroup)
         {
-            PSResourceGroupDeployment deployment = new PSResourceGroupDeployment();
+            var deployment = new PSResourceGroupDeployment();
 
             if (result != null)
             {
@@ -210,43 +213,42 @@ namespace Microsoft.Azure.Commands.Resources.Models
 
         private static PSResourceGroupDeployment CreatePSResourceGroupDeployment(
             string name,
-            string gesourceGroup,
+            string resourceGroup,
             DeploymentPropertiesExtended properties)
         {
-            PSResourceGroupDeployment deploymentObject = new PSResourceGroupDeployment();
-
-            deploymentObject.DeploymentName = name;
-            deploymentObject.ResourceGroupName = gesourceGroup;
-
-            if (properties != null)
+            var deploymentObject = new PSResourceGroupDeployment
             {
-                deploymentObject.Mode = properties.Mode;
-                deploymentObject.ProvisioningState = properties.ProvisioningState;
-                deploymentObject.TemplateLink = properties.TemplateLink;
-                deploymentObject.Timestamp = properties.Timestamp;
-                deploymentObject.CorrelationId = properties.CorrelationId;
+                DeploymentName = name, ResourceGroupName = resourceGroup
+            };
+            if (properties == null) return deploymentObject;
 
-                if (properties.DebugSettingResponse != null && !string.IsNullOrEmpty(properties.DebugSettingResponse.DeploymentDebugDetailLevel))
-                {
-                    deploymentObject.DeploymentDebugLogLevel = properties.DebugSettingResponse.DeploymentDebugDetailLevel;
-                }
+            deploymentObject.Mode = properties.Mode();
+            deploymentObject.Timestamp = properties.Timestamp();
+            deploymentObject.ProvisioningState = properties.ProvisioningState;
+            deploymentObject.TemplateLink = properties.TemplateLink;
+            deploymentObject.CorrelationId = properties.CorrelationId;
+            deploymentObject.OnErrorDeployment = properties.OnErrorDeployment;
 
-                if (!string.IsNullOrEmpty(properties.Outputs))
-                {
-                    Dictionary<string, DeploymentVariable> outputs = JsonConvert.DeserializeObject<Dictionary<string, DeploymentVariable>>(properties.Outputs);
-                    deploymentObject.Outputs = outputs;
-                }
+            if (properties.DebugSetting() != null && !string.IsNullOrEmpty(properties.DebugSetting().DetailLevel()))
+            {
+                deploymentObject.DeploymentDebugLogLevel = properties.DebugSetting().DetailLevel();
+            }
 
-                if (!string.IsNullOrEmpty(properties.Parameters))
-                {
-                    Dictionary<string, DeploymentVariable> parameters = JsonConvert.DeserializeObject<Dictionary<string, DeploymentVariable>>(properties.Parameters);
-                    deploymentObject.Parameters = parameters;
-                }
+            if (properties.Outputs != null && !string.IsNullOrEmpty(properties.Outputs.ToString()))
+            {
+                var outputs = JsonConvert.DeserializeObject<Dictionary<string, DeploymentVariable>>(properties.Outputs.ToString());
+                deploymentObject.Outputs = outputs;
+            }
 
-                if (properties.TemplateLink != null)
-                {
-                    deploymentObject.TemplateLinkString = ConstructTemplateLinkView(properties.TemplateLink);
-                }
+            if (properties.Parameters != null && !string.IsNullOrEmpty(properties.Parameters.ToString()))
+            {
+                var parameters = JsonConvert.DeserializeObject<Dictionary<string, DeploymentVariable>>(properties.Parameters.ToString());
+                deploymentObject.Parameters = parameters;
+            }
+
+            if (properties.TemplateLink != null)
+            {
+                deploymentObject.TemplateLinkString = ConstructTemplateLinkView(properties.TemplateLink);
             }
 
             return deploymentObject;

@@ -12,34 +12,39 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Commands.ActiveDirectory.Models;
-using Microsoft.Azure.Commands.Resources.Models.ActiveDirectory;
-using Microsoft.Azure.Graph.RBAC.Models;
+using Microsoft.Azure.Graph.RBAC.Version1_6.ActiveDirectory;
+using Microsoft.Azure.Graph.RBAC.Version1_6.Models;
+using Microsoft.WindowsAzure.Commands.Common;
+using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using System.Management.Automation;
+using System.Security;
 
 namespace Microsoft.Azure.Commands.ActiveDirectory
 {
     /// <summary>
     /// Creates a new AD user.
     /// </summary>
-    [Cmdlet(VerbsCommon.New, "AzureRmADUser", SupportsShouldProcess = true), OutputType(typeof(PSADUser))]
+    [Cmdlet("New", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ADUser", SupportsShouldProcess = true), OutputType(typeof(PSADUser))]
     public class NewAzureADUserCommand : ActiveDirectoryBaseCmdlet
     {
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The display name for the user.")]
         [ValidateNotNullOrEmpty]
         public string DisplayName { get; set; }
-        
+
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The userPrincipalName.")]
         [ValidateNotNullOrEmpty]
         public string UserPrincipalName { get; set; }
 
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Password for the user.")]
         [ValidateNotNullOrEmpty]
-        public string Password { get; set; }
+        public SecureString Password { get; set; }
 
         [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "ImmutableId - to be specified only if you are using a federated domain for the user's user principal name (upn) property.")]
         [ValidateNotNullOrEmpty]
         public string ImmutableId { get; set; }
+
+        [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The mail alias for the user.")]
+        public string MailNickname { get; set; }
 
         [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "It must be specified if the user should change the password on the next successful login. Default behavior is to not change the password on the next successful login.")]
         public SwitchParameter ForceChangePasswordNextLogin { get; set; }
@@ -47,19 +52,25 @@ namespace Microsoft.Azure.Commands.ActiveDirectory
 
         public override void ExecuteCmdlet()
         {
+            string decodedPassword = SecureStringExtensions.ConvertToString(Password);
             var userCreateparameters = new UserCreateParameters
             {
                 AccountEnabled = true,
                 DisplayName = DisplayName,
                 PasswordProfile = new PasswordProfile
                 {
-                    Password = Password,
+                    Password = decodedPassword,
                     ForceChangePasswordNextLogin = ForceChangePasswordNextLogin.IsPresent ? true : false
                 },
                 UserPrincipalName = UserPrincipalName
             };
 
-            if(!string.IsNullOrEmpty(ImmutableId))
+            if (this.IsParameterBound(c => c.MailNickname))
+            {
+                userCreateparameters.MailNickname = MailNickname;
+            }
+
+            if (this.IsParameterBound(c => c.ImmutableId))
             {
                 userCreateparameters.ImmutableId = ImmutableId;
             }

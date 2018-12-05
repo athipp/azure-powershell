@@ -12,6 +12,7 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Cdn.Test.ScenarioTests.ScenarioTest;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 
@@ -25,6 +26,13 @@ namespace Microsoft.Azure.Commands.Cdn.Test.ScenarioTests.ScenarioTest
         {
             _logger = new ServiceManagemenet.Common.Models.XunitTracingInterceptor(output);
             ServiceManagemenet.Common.Models.XunitTracingInterceptor.AddToContext(_logger);
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestCustomDomainEnableDisableWithRunningEndpoint()
+        {
+            TestController.NewInstance.RunPowerShellTest(_logger, "Test-CustomDomainEnableDisableWithRunningEndpoint");
         }
 
         [Fact]

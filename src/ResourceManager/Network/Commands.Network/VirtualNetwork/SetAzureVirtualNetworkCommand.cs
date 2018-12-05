@@ -19,17 +19,23 @@ using Microsoft.Azure.Management.Network;
 using System;
 using System.Management.Automation;
 using MNM = Microsoft.Azure.Management.Network.Models;
+using Microsoft.WindowsAzure.Commands.Common.CustomAttributes;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Set, "AzureRmVirtualNetwork"), OutputType(typeof(PSVirtualNetwork))]
+    [CmdletOutputBreakingChange(typeof(PSVirtualNetwork), DeprecatedOutputProperties = new string[] { "EnableVmProtection" })]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VirtualNetwork"), OutputType(typeof(PSVirtualNetwork))]
     public class SetAzureVirtualNetworkCommand : VirtualNetworkBaseCmdlet
-    {
+    {        
+        [CmdletParameterBreakingChange("VirtualNetwork", ChangeDescription = "The EnableVMProtection property for the parameter Virtualnetwork is no longer supported. Setting this property has no impact. This property will be removed in a future release. Please remove it from your scripts")]
         [Parameter(
             Mandatory = true,
             ValueFromPipeline = true,
             HelpMessage = "The virtualNetwork")]
         public PSVirtualNetwork VirtualNetwork { get; set; }
+
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         public override void Execute()
         {
@@ -41,7 +47,7 @@ namespace Microsoft.Azure.Commands.Network
             }
 
             // Map to the sdk object
-            var vnetModel = Mapper.Map<MNM.VirtualNetwork>(this.VirtualNetwork);
+            var vnetModel = NetworkResourceManagerProfile.Mapper.Map<MNM.VirtualNetwork>(this.VirtualNetwork);
             vnetModel.Tags = TagsConversionHelper.CreateTagDictionary(this.VirtualNetwork.Tag, validate: true);
 
             // Execute the Create VirtualNetwork call

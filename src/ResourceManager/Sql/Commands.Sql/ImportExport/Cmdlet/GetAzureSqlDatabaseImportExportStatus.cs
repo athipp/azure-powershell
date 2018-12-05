@@ -12,6 +12,7 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.Azure.Commands.ResourceManager.Common;
 using Microsoft.Azure.Commands.Sql.ImportExport.Model;
@@ -23,7 +24,8 @@ namespace Microsoft.Azure.Commands.Sql.ImportExport.Cmdlet
     /// <summary>
     /// Defines the AzureRmSqlDatabaseImportExportStatus cmdlet
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmSqlDatabaseImportExportStatus", SupportsShouldProcess = true)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlDatabaseImportExportStatus", SupportsShouldProcess = true)]
+    [OutputType(typeof(AzureSqlDatabaseImportExportStatusModel))]
     public class GetAzureSqlDatabaseImportExportStatus : AzureRMCmdlet
     {
         /// <summary>
@@ -62,9 +64,9 @@ namespace Microsoft.Azure.Commands.Sql.ImportExport.Cmdlet
         /// </summary>
         /// <param name="subscription">The subscription the cmdlets are operation under</param>
         /// <returns>The server adapter</returns>
-        protected ImportExportDatabaseAdapter InitModelAdapter(AzureSubscription subscription)
+        protected ImportExportDatabaseAdapter InitModelAdapter(IAzureSubscription subscription)
         {
-            return new ImportExportDatabaseAdapter(DefaultProfile.Context);
+            return new ImportExportDatabaseAdapter(DefaultProfile.DefaultContext);
         }
 
         /// <summary>
@@ -72,7 +74,7 @@ namespace Microsoft.Azure.Commands.Sql.ImportExport.Cmdlet
         /// </summary>
         public override void ExecuteCmdlet()
         {
-            ModelAdapter = InitModelAdapter(DefaultProfile.Context.Subscription);
+            ModelAdapter = InitModelAdapter(DefaultProfile.DefaultContext.Subscription);
             AzureSqlDatabaseImportExportStatusModel model = GetEntity();
 
             if (model != null)

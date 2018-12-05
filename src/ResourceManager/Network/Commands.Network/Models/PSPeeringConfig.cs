@@ -17,24 +17,41 @@ namespace Microsoft.Azure.Commands.Network.Models
 {
     using Newtonsoft.Json;
     using System.Collections.Generic;
+    using WindowsAzure.Commands.Common.Attributes;
 
     public class PSPeeringConfig
     {
         public List<string> AdvertisedPublicPrefixes { get; set; }
 
         [JsonProperty(Order = 1)]
+        public List<string> AdvertisedCommunities { get; set; }
+
+        [JsonProperty(Order = 1)]
+        [Ps1Xml(Target = ViewControl.Table)]
         public string AdvertisedPublicPrefixesState { get; set; }
 
         [JsonProperty(Order = 1)]
+        [Ps1Xml(Target = ViewControl.Table)]
         public int CustomerASN { get; set; }
 
         [JsonProperty(Order = 1)]
+        [Ps1Xml(Target = ViewControl.Table)]
+        public int LegacyMode { get; set; }
+
+        [JsonProperty(Order = 1)]
+        [Ps1Xml(Target = ViewControl.Table)]
         public string RoutingRegistryName { get; set; }
 
         [JsonIgnore]
         public string AdvertisedPublicPrefixesSText
         {
             get { return JsonConvert.SerializeObject(AdvertisedPublicPrefixes, Formatting.Indented, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore }); }
+        }
+
+        [JsonIgnore]
+        public string AdvertisedCommunitiesSText
+        {
+            get { return JsonConvert.SerializeObject(AdvertisedCommunities, Formatting.Indented, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore }); }
         }
     }
 }

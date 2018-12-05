@@ -12,12 +12,17 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Commands.Common.Authentication;
-using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
+// TODO: Remove IfDef
+#if NETSTANDARD
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions.Core;
+#endif
 using Microsoft.WindowsAzure.Commands.Common;
 using Microsoft.WindowsAzure.Commands.Common.Storage;
 using Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel;
+using Microsoft.WindowsAzure.Commands.Storage.Adapters;
 using Microsoft.WindowsAzure.Commands.Storage.File;
+using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.File;
@@ -43,7 +48,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
     {
         [Parameter(HelpMessage = "Azure Storage Context Object",
             ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
-        public virtual AzureStorageContext Context { get; set; }
+        public virtual IStorageContext Context { get; set; }
 
         [Parameter(HelpMessage = "The server time out for each request in seconds.")]
         public virtual int? ServerTimeoutPerRequest { get; set; }
@@ -52,9 +57,16 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         public virtual int? ClientTimeoutPerRequest { get; set; }
 
         /// <summary>
+        /// Gets or sets the global profile for ARM cmdlets.
+        /// </summary>
+        [Parameter(Mandatory = false, HelpMessage = "The credentials, account, tenant, and subscription used for communication with Azure.")]
+        [Alias("AzureRmContext", "AzureCredential")]
+        public IAzureContextContainer DefaultProfile { get; set; }
+
+        /// <summary>
         /// Amount of concurrent async tasks to run per available core.
         /// </summary>
-        protected int concurrentTaskCount = 10;
+        private int _concurrentTaskCount = 10;
 
         /// <summary>
         /// Amount of concurrent async tasks to run per available core.
@@ -64,14 +76,14 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         [ValidateRange(1, 1000)]
         public virtual int? ConcurrentTaskCount
         {
-            get { return concurrentTaskCount; }
+            get { return _concurrentTaskCount; }
             set
             {
-                int count = value.Value;
+                var count = value.Value;
 
                 if (count > 0)
                 {
-                    concurrentTaskCount = count;
+                    _concurrentTaskCount = count;
                 }
             }
         }
@@ -128,13 +140,13 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         /// <summary>
         /// Cancellation Token Source
         /// </summary>
-        private CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         protected CancellationToken CmdletCancellationToken;
 
         /// <summary>
         /// whether stop processing
         /// </summary>
-        protected bool ShouldForceQuit { get { return cancellationTokenSource.Token.IsCancellationRequested; } }
+        protected bool ShouldForceQuit { get { return _cancellationTokenSource.Token.IsCancellationRequested; } }
 
         /// <summary>
         /// Enable or disable multithread
@@ -143,10 +155,10 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         /// </summary>
         protected bool EnableMultiThread
         {
-            get { return enableMultiThread; }
-            set { enableMultiThread = value; }
+            get { return _enableMultiThread; }
+            set { _enableMultiThread = value; }
         }
-        private bool enableMultiThread = true;
+        private bool _enableMultiThread = true;
 
         internal TaskOutputStream OutputStream;
 
@@ -158,7 +170,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         /// </summary>
         protected ProgressRecord summaryRecord;
 
-        private LimitedConcurrencyTaskScheduler taskScheduler;
+        private LimitedConcurrencyTaskScheduler _taskScheduler;
 
         /// <summary>
         /// Cmdlet operation context.
@@ -207,14 +219,14 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
                     throw new ArgumentException(Resources.InvalidStorageServiceType, "type");
             }
 
-            if (this.ServerTimeoutPerRequest.HasValue)
+            if (ServerTimeoutPerRequest.HasValue)
             {
-                options.ServerTimeout = ConvertToTimeSpan(this.ServerTimeoutPerRequest.Value);
+                options.ServerTimeout = ConvertToTimeSpan(ServerTimeoutPerRequest.Value);
             }
 
-            if (this.ClientTimeoutPerRequest.HasValue)
+            if (ClientTimeoutPerRequest.HasValue)
             {
-                options.MaximumExecutionTime = ConvertToTimeSpan(this.ClientTimeoutPerRequest.Value);
+                options.MaximumExecutionTime = ConvertToTimeSpan(ClientTimeoutPerRequest.Value);
             }
 
             return options;
@@ -226,13 +238,19 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         /// <returns>Storage account</returns>
         internal AzureStorageContext GetCmdletStorageContext()
         {
-            this.Context = this.GetCmdletStorageContext(this.Context);
-
-            return this.Context;
+            var context = GetCmdletStorageContext(Context);
+            Context = context;
+            return context;
         }
 
-        internal AzureStorageContext GetCmdletStorageContext(AzureStorageContext context)
+        internal AzureStorageContext GetCmdletStorageContext(IStorageContext inContext)
         {
+            var context = inContext as AzureStorageContext;
+            if (context == null && inContext != null)
+            {
+                context = new AzureStorageContext(inContext.GetCloudStorageAccount());
+            }
+
             if (context != null)
             {
                 WriteDebugLog(String.Format(Resources.UseStorageAccountFromContext, context.StorageAccountName));
@@ -243,7 +261,8 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
                 string storageAccount;
                 try
                 {
-                    if (TryGetStorageAccount(RMProfile, out storageAccount)
+                    if (TryGetStorageAccount(DefaultProfile, out storageAccount)
+                        || TryGetStorageAccount(RMProfile, out storageAccount)
                         || TryGetStorageAccount(SMProfile, out storageAccount)
                         || TryGetStorageAccountFromEnvironmentVariable(out storageAccount))
                     {
@@ -292,16 +311,14 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         /// Get the current storage account
         /// </summary>
         /// <returns>True if it need to init the service channel, otherwise false</returns>
-        internal virtual bool TryGetStorageAccount(IAzureProfile profile, out string account)
+        internal virtual bool TryGetStorageAccount(IAzureContextContainer profile, out string account)
         {
             account = null;
-            bool result = false;
             //Storage Context is empty and have already set the current storage account in subscription
-            if (Context == null && profile != null && profile.Context != null && profile.Context.Subscription != null)
-            {
-                account = profile.Context.Subscription.GetProperty(AzureSubscription.Property.StorageAccount);
-                result = !string.IsNullOrWhiteSpace(account);
-            }
+            if (Context != null || profile?.DefaultContext?.Subscription == null) return false;
+
+            account = profile.DefaultContext.GetCurrentStorageAccountConnectionString();
+            var result = !string.IsNullOrWhiteSpace(account);
 
             return result;
         }
@@ -317,7 +334,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
                 return;
             }
 
-            foreach (AzureStorageBase item in itemList)
+            foreach (var item in itemList)
             {
                 WriteObjectWithStorageContext(item);
             }
@@ -340,19 +357,16 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
                 {
                     return null;
                 }
-                else
-                {
-                    return timeSpan;
-                }
+
+                return timeSpan;
             }
-            else if (timeoutInSeconds == Timeout.Infinite)
+
+            if (timeoutInSeconds == Timeout.Infinite)
             {
                 return null;
             }
-            else
-            {
-                throw new ArgumentOutOfRangeException(string.Format(CultureInfo.CurrentCulture, Resources.InvalidTimeoutValue, timeoutInSeconds));
-            }
+
+            throw new ArgumentOutOfRangeException(string.Format(CultureInfo.CurrentCulture, Resources.InvalidTimeoutValue, timeoutInSeconds));
         }
 
 
@@ -360,16 +374,11 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         /// Get storage account from a connection string
         /// </summary>
         /// <returns>Cloud storage account</returns>
-        private bool TryGetStorageAccountFromEnvironmentVariable(out string connectionString)
+        private static bool TryGetStorageAccountFromEnvironmentVariable(out string connectionString)
         {
-            connectionString = System.Environment.GetEnvironmentVariable(Resources.EnvConnectionString);
+            connectionString = Environment.GetEnvironmentVariable(Resources.EnvConnectionString);
 
-            if (String.IsNullOrEmpty(connectionString))
-            {
-                return false;
-            }
-
-            return true;
+            return !String.IsNullOrEmpty(connectionString);
         }
 
         private CloudStorageAccount GetStorageAccountFromConnectionString(string connectionString)
@@ -378,19 +387,17 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
             {
                 throw new ArgumentException(Resources.DefaultStorageCredentialsNotFound);
             }
-            else
-            {
-                WriteDebugLog(Resources.GetStorageAccountFromEnvironmentVariable);
 
-                try
-                {
-                    return CloudStorageAccount.Parse(connectionString);
-                }
-                catch
-                {
-                    WriteVerboseWithTimestamp(Resources.CannotGetStorageAccountFromEnvironmentVariable);
-                    throw;
-                }
+            WriteDebugLog(Resources.GetStorageAccountFromEnvironmentVariable);
+
+            try
+            {
+                return CloudStorageAccount.Parse(connectionString);
+            }
+            catch
+            {
+                WriteVerboseWithTimestamp(Resources.CannotGetStorageAccountFromEnvironmentVariable);
+                throw;
             }
         }
 
@@ -416,13 +423,13 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         }
 
         /// <summary>
-        /// Get the error category for specificed exception
+        /// Get the error category for specified exception
         /// </summary>
         /// <param name="e">Exception object</param>
         /// <returns>Error category</returns>
         protected ErrorCategory GetExceptionErrorCategory(Exception e)
         {
-            ErrorCategory errorCategory = ErrorCategory.CloseError; //default error category
+            var errorCategory = ErrorCategory.CloseError; //default error category
 
             if (e is ArgumentException)
             {
@@ -456,7 +463,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         /// <returns>The max number of concurrent task/rest call</returns>
         protected int GetCmdletConcurrency()
         {
-            return concurrentTaskCount;
+            return _concurrentTaskCount;
         }
 
         /// <summary>
@@ -464,8 +471,8 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         /// </summary>
         private void ConfigureServicePointManager()
         {
-            int maxConcurrency = 1000;
-            int cmdletConcurrency = GetCmdletConcurrency();
+            var maxConcurrency = 1000;
+            var cmdletConcurrency = GetCmdletConcurrency();
             maxConcurrency = Math.Max(maxConcurrency, cmdletConcurrency);
             //Set the default connection limit to a very high value and control the concurrency with LimitedConcurrencyTaskScheduler.
             //If so, there is no need to set the ConnectionLimit for each ServicePoint.
@@ -476,10 +483,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
 
         private void TaskErrorHandler(object sender, TaskExceptionEventArgs args)
         {
-            if (OutputStream != null)
-            {
-                OutputStream.WriteError(args.TaskId, args.Exception);
-            }
+            OutputStream?.WriteError(args.TaskId, args.Exception);
         }
 
         /// <summary>
@@ -487,21 +491,23 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         /// </summary>
         internal void InitMutltiThreadResources()
         {
-            taskScheduler = new LimitedConcurrencyTaskScheduler(GetCmdletConcurrency(), CmdletCancellationToken);
-            OutputStream = new TaskOutputStream(CmdletCancellationToken);
-            OutputStream.OutputWriter = WriteObject;
-            OutputStream.ErrorWriter = WriteExceptionError;
-            OutputStream.ProgressWriter = WriteProgress;
-            OutputStream.VerboseWriter = WriteVerbose;
-            OutputStream.DebugWriter = WriteDebugWithTimestamp;
-            OutputStream.ConfirmWriter = ShouldProcess;
-            OutputStream.TaskStatusQueryer = taskScheduler.IsTaskCompleted;
-            taskScheduler.OnError += TaskErrorHandler;
+            _taskScheduler = new LimitedConcurrencyTaskScheduler(GetCmdletConcurrency(), CmdletCancellationToken);
+            OutputStream = new TaskOutputStream(CmdletCancellationToken)
+            {
+                OutputWriter = WriteObject,
+                ErrorWriter = WriteExceptionError,
+                ProgressWriter = WriteProgress,
+                VerboseWriter = WriteVerbose,
+                DebugWriter = WriteDebugWithTimestamp,
+                ConfirmWriter = ShouldProcess,
+                TaskStatusQueryer = _taskScheduler.IsTaskCompleted
+            };
+            _taskScheduler.OnError += TaskErrorHandler;
 
-            int summaryRecordId = 0;
-            string summary = String.Format(Resources.TransmitActiveSummary, taskScheduler.TotalTaskCount,
-                taskScheduler.FinishedTaskCount, taskScheduler.FailedTaskCount, taskScheduler.ActiveTaskCount);
-            string activity = string.Format(Resources.TransmitActivity, this.MyInvocation.MyCommand);
+            const int summaryRecordId = 0;
+            var summary = String.Format(Resources.TransmitActiveSummary, _taskScheduler.TotalTaskCount,
+                _taskScheduler.FinishedTaskCount, _taskScheduler.FailedTaskCount, _taskScheduler.ActiveTaskCount);
+            var activity = string.Format(Resources.TransmitActivity, MyInvocation.MyCommand);
             summaryRecord = new ProgressRecord(summaryRecordId, activity, summary);
             CmdletCancellationToken.Register(() => OutputStream.CancelConfirmRequest());
         }
@@ -527,7 +533,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
                 //So, we'd better output status at first.
                 OutputStream.Output();
             }
-            while (!taskScheduler.WaitForComplete(WaitTimeout, CmdletCancellationToken));
+            while (!_taskScheduler.WaitForComplete(WaitTimeout, CmdletCancellationToken));
 
             CloseSummaryProgressBar();
             OutputStream.Output();
@@ -535,8 +541,8 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
 
         protected void WriteTaskSummary()
         {
-            WriteVerbose(String.Format(Resources.TransferSummary, taskScheduler.TotalTaskCount,
-                taskScheduler.FinishedTaskCount, taskScheduler.FailedTaskCount, taskScheduler.ActiveTaskCount));
+            WriteVerbose(String.Format(Resources.TransferSummary, _taskScheduler.TotalTaskCount,
+                _taskScheduler.FinishedTaskCount, _taskScheduler.FailedTaskCount, _taskScheduler.ActiveTaskCount));
         }
 
         /// <summary>
@@ -551,7 +557,7 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
 
         internal void RunTask(Func<long, Task> taskGenerator)
         {
-            taskScheduler.RunTask(taskGenerator);
+            _taskScheduler.RunTask(taskGenerator);
         }
 
         /// <summary>
@@ -559,8 +565,8 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         /// </summary>
         protected virtual void WriteTransmitSummaryStatus()
         {
-            string summary = String.Format(Resources.TransmitActiveSummary, taskScheduler.TotalTaskCount,
-                taskScheduler.FinishedTaskCount, taskScheduler.FailedTaskCount, taskScheduler.ActiveTaskCount);
+            var summary = String.Format(Resources.TransmitActiveSummary, _taskScheduler.TotalTaskCount,
+                _taskScheduler.FinishedTaskCount, _taskScheduler.FailedTaskCount, _taskScheduler.ActiveTaskCount);
             summaryRecord.StatusDescription = summary;
             WriteProgress(summaryRecord);
         }
@@ -571,10 +577,10 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         protected override void BeginProcessing()
         {
             CmdletOperationContext.Init();
-            CmdletCancellationToken = cancellationTokenSource.Token;
-            WriteDebugLog(String.Format(Resources.InitOperationContextLog, this.GetType().Name, CmdletOperationContext.ClientRequestId));
+            CmdletCancellationToken = _cancellationTokenSource.Token;
+            WriteDebugLog(String.Format(Resources.InitOperationContextLog, GetType().Name, CmdletOperationContext.ClientRequestId));
 
-            if (enableMultiThread)
+            if (_enableMultiThread)
             {
                 SetUpMultiThreadEnvironment();
             }
@@ -582,7 +588,11 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
             OperationContext.GlobalSendingRequest +=
                 (sender, args) =>
                 {
+                    //https://github.com/Azure/azure-storage-net/issues/658
+// TODO: Remove IfDef code
+#if !NETSTANDARD
                     args.Request.UserAgent = Microsoft.WindowsAzure.Storage.Shared.Protocol.Constants.HeaderConstants.UserAgent + " " + ApiConstants.UserAgentHeaderValue;
+#endif
                 };
 
             base.BeginProcessing();
@@ -593,14 +603,14 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         /// </summary>
         protected override void EndProcessing()
         {
-            if (enableMultiThread)
+            if (_enableMultiThread)
             {
                 MultiThreadEndProcessing();
             }
 
-            double timespan = CmdletOperationContext.GetRunningMilliseconds();
-            string message = string.Format(Resources.EndProcessingLog,
-                this.GetType().Name, CmdletOperationContext.StartedRemoteCallCounter, CmdletOperationContext.FinishedRemoteCallCounter, timespan, CmdletOperationContext.ClientRequestId);
+            var timespan = CmdletOperationContext.GetRunningMilliseconds();
+            var message = string.Format(Resources.EndProcessingLog,
+                GetType().Name, CmdletOperationContext.StartedRemoteCallCounter, CmdletOperationContext.FinishedRemoteCallCounter, timespan, CmdletOperationContext.ClientRequestId);
             WriteDebugLog(message);
             base.EndProcessing();
         }
@@ -612,8 +622,26 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
         protected override void StopProcessing()
         {
             //ctrl + c and etc
-            cancellationTokenSource.Cancel();
+            _cancellationTokenSource.Cancel();
             base.StopProcessing();
+        }
+
+        /// <summary>
+        /// true if FIPS policy is enabled on the current machine
+        /// </summary>
+        public static bool fipsEnabled { get; } = IsFIPSEnabled();
+
+        internal static bool IsFIPSEnabled()
+        {
+            try
+            {
+                System.Security.Cryptography.MD5.Create();
+                return false;
+            }
+            catch (System.Reflection.TargetInvocationException)
+            {
+                return true;
+            }
         }
     }
 }

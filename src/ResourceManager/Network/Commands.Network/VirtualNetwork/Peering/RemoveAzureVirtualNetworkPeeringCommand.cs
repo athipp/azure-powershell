@@ -12,18 +12,20 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.Network;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Remove, "AzureRmVirtualNetworkPeering", SupportsShouldProcess = true)]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VirtualNetworkPeering", SupportsShouldProcess = true), OutputType(typeof(bool))]
     public class RemoveAzureVirtualNetworkPeeringCommand : VirtualNetworkPeeringBase
     {
         [Parameter(
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The virtual network name.")]
+        [ResourceNameCompleter("Microsoft.Network/virtualNetworks", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string VirtualNetworkName { get; set; }
 
@@ -31,6 +33,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The virtual network peering name.")]
+        [ResourceNameCompleter("Microsoft.Network/virtualNetworks/virtualNetworkPeerings", "ResourceGroupName", "VirtualNetworkName")]
         [ValidateNotNullOrEmpty]
         public string Name { get; set; }
 
@@ -38,6 +41,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -48,6 +52,9 @@ namespace Microsoft.Azure.Commands.Network
 
         [Parameter(Mandatory = false)]
         public SwitchParameter PassThru { get; set; }
+
+        [Parameter(Mandatory = false, HelpMessage = "Run cmdlet in the background")]
+        public SwitchParameter AsJob { get; set; }
 
         public override void Execute()
         {

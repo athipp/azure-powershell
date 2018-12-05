@@ -13,6 +13,7 @@
 // limitations under the License.
 //
 
+using Microsoft.WindowsAzure.Commands.Common.Attributes;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 
@@ -24,7 +25,10 @@ namespace Microsoft.Azure.Commands.Network.Models
 
         public List<PSNetworkInterfaceIPConfiguration> BackendIpConfigurations { get; set; }
 
+        [Ps1Xml(Target = ViewControl.Table)]
         public string ProvisioningState { get; set; }
+
+        public string Type { get; set; }
 
         [JsonIgnore]
         public string BackendAddressesText
@@ -36,6 +40,11 @@ namespace Microsoft.Azure.Commands.Network.Models
         public string BackendIpConfigurationsText
         {
             get { return JsonConvert.SerializeObject(BackendIpConfigurations, Formatting.Indented, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore }); }
+        }
+
+        public bool ShouldSerializeBackendAddresses()
+        {
+            return !string.IsNullOrEmpty(this.Name);
         }
 
         public bool ShouldSerializeBackendIpConfigurations()

@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,6 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.ScenarioTest.SqlTests;
-using Microsoft.Azure.ServiceManagemenet.Common.Models;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Xunit.Abstractions;
@@ -22,9 +21,8 @@ namespace Microsoft.Azure.Commands.Sql.Test.ScenarioTests
 {
     public class TransparentDataEncryptionCrudTests : SqlTestsBase
     {
-        public TransparentDataEncryptionCrudTests(ITestOutputHelper output)
+        public TransparentDataEncryptionCrudTests(ITestOutputHelper output) : base(output)
         {
-            XunitTracingInterceptor.AddToContext(new XunitTracingInterceptor(output));
         }
 
         [Fact]
@@ -39,6 +37,20 @@ namespace Microsoft.Azure.Commands.Sql.Test.ScenarioTests
         public void TestDatabaseTransparentDataEncryptionGet()
         {
             RunPowerShellTest("Test-GetTransparentDataEncryption");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestServerTransparentDataEncryptionProtectorGet()
+        {
+            RunPowerShellTest("Test-GetTransparentDataEncryptionProtector");
+        }
+
+        [Fact(Skip = "TODO: only works for live mode. Mihymel will fix the test issue for Create-ServerKeyVaultKeyTestEnvironment")]
+        [Trait(Category.RunType, Category.LiveOnly)]
+        public void TestServerTransparentDataEncryptionProtectorSet()
+        {
+            RunPowerShellTest("Test-SetTransparentDataEncryptionProtector");
         }
     }
 }

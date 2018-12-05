@@ -28,6 +28,8 @@ namespace Microsoft.Azure.Commands.Scheduler.Test.ScenarioTests
     using Microsoft.Rest.ClientRuntime.Azure.TestFramework;
     using Microsoft.WindowsAzure.Commands.ScenarioTest;
     using LegacyTest = Microsoft.Azure.Test;
+    using ResourceManager.Common;
+    using ServiceManagemenet.Common.Models;
 
     public class SchedulerController
     {
@@ -50,6 +52,11 @@ namespace Microsoft.Azure.Commands.Scheduler.Test.ScenarioTests
         /// Gets or sets the ResourceManagementClient
         /// </summary>
         public ResourceManagementClient ResourceManagementClient { get; private set; }
+
+        /// <summary>
+        /// Gets or sets the new ResourceManagementClient
+        /// </summary>
+        public Management.Internal.Resources.ResourceManagementClient NewResourceManagementClient { get; private set; }
 
         /// <summary>
         /// Gets or sets the SubscriptionClient.
@@ -94,15 +101,16 @@ namespace Microsoft.Azure.Commands.Scheduler.Test.ScenarioTests
         /// RUns the PowerShell tests.
         /// </summary>
         /// <param name="scripts">Scripts to be executed.</param>
-        public void RunPowerShellTests(params string[] scripts)
+        public void RunPowerShellTests(XunitTracingInterceptor logger, params string[] scripts)
         {
+            _helper.TracingInterceptor = logger;
             string callingClassType = TestUtilities.GetCallingClass(2);
             string mockName = TestUtilities.GetCurrentMethodName(2);
             RunPsTestScheduler(
                 () => scripts,
                 // no custom initializer
                 null,
-                // no custom cleanup 
+                // no custom cleanup
                 null,
                 callingClassType,
                 mockName);
@@ -122,7 +130,7 @@ namespace Microsoft.Azure.Commands.Scheduler.Test.ScenarioTests
             providers.Add("Microsoft.Storage", null);
 
             var providersToIgnore = new Dictionary<string, string>();
-            providersToIgnore.Add("Microsoft.Azure.Management.Resources.ResourceManagementClient", "2016-02-01");
+            providersToIgnore.Add("Microsoft.Azure.Management.Internal.Resources.ResourceManagementClient", "2016-02-01");
 
             HttpMockServer.Matcher = new PermissiveRecordMatcherWithApiExclusion(ignoreResourcesClient: true, providers: providers, userAgents: providersToIgnore);
             HttpMockServer.RecordsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SessionRecords");
@@ -148,7 +156,6 @@ namespace Microsoft.Azure.Commands.Scheduler.Test.ScenarioTests
                              "ScenarioTests\\Common.ps1",
                              "ScenarioTests\\" + callingClassName + ".ps1",
                              _helper.RMProfileModule,
-                             _helper.RMResourceModule,
                              _helper.GetRMModulePath(@"AzureRM.Scheduler.psd1"),
                              "AzureRM.Resources.ps1",
                              "AzureRM.Storage.ps1");
@@ -182,6 +189,7 @@ namespace Microsoft.Azure.Commands.Scheduler.Test.ScenarioTests
         private void SetupManagementClients(MockContext context)
         {
             this.ResourceManagementClient = GetResourceManagementClient();
+            this.NewResourceManagementClient = GetResourceManagementClient(context);
             this.SubscriptionClient = GetSubscriptionClient();
             this.AuthorizationManagementClient = GetAuthorizationManagementClient();
             this.GalleryClient = GetGalleryClient();
@@ -189,6 +197,7 @@ namespace Microsoft.Azure.Commands.Scheduler.Test.ScenarioTests
 
             this._helper.SetupManagementClients(
                 ResourceManagementClient,
+                NewResourceManagementClient,
                 SubscriptionClient,
                 AuthorizationManagementClient,
                 GalleryClient,
@@ -202,6 +211,16 @@ namespace Microsoft.Azure.Commands.Scheduler.Test.ScenarioTests
         private ResourceManagementClient GetResourceManagementClient()
         {
            return LegacyTest.TestBase.GetServiceClient<ResourceManagementClient>(this._csmTestFactory);
+        }
+
+        /// <summary>
+        /// Creates a new ResourceManagementClient instance.
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns>New ResourceManagementClient instance.</returns>
+        private Management.Internal.Resources.ResourceManagementClient GetResourceManagementClient(MockContext context)
+        {
+            return context.GetServiceClient<Management.Internal.Resources.ResourceManagementClient>(TestEnvironmentFactory.GetTestEnvironment());
         }
 
         /// <summary>

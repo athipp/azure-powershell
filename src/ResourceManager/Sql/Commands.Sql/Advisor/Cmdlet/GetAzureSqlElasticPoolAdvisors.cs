@@ -19,9 +19,10 @@ using System.Management.Automation;
 namespace Microsoft.Azure.Commands.Sql.Advisor.Cmdlet
 {
     /// <summary>
-    /// Defines the Get-AzureRmSqlElasticPoolAdvisors cmdlet
+    /// Defines the Get-AzSqlElasticPoolAdvisors cmdlet
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmSqlElasticPoolAdvisor")]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlElasticPoolAdvisor")]
+    [OutputType(typeof(AzureSqlElasticPoolAdvisorModel))]
     public class GetAzureSqlElasticPoolAdvisor : AzureSqlElasticPoolAdvisorCmdletBase
     {
         /// <summary>

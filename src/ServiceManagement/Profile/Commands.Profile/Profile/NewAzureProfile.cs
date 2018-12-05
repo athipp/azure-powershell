@@ -19,6 +19,10 @@ using System.Linq;
 using System.Security;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Azure.Commands.Common.Authentication;
+// TODO: Remove IfDef
+#if NETSTANDARD
+using Microsoft.Azure.Commands.Common.Authentication.Core;
+#endif
 using Microsoft.Azure.Commands.Common.Authentication.Models;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;
 using Microsoft.WindowsAzure.Commands.Common.Properties;
@@ -27,6 +31,7 @@ using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using System.Management.Automation;
 using System.Security.Permissions;
 using Microsoft.Azure.ServiceManagemenet.Common;
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 
 namespace Microsoft.WindowsAzure.Commands.Profile
 {
@@ -141,8 +146,8 @@ namespace Microsoft.WindowsAzure.Commands.Profile
 
         private void InitializeAzureProfile(AzureSMProfile profile, string parameterSet, AzureProfileSettings settings)
         {
-            var savedCache = AzureSession.TokenCache;
-            AzureSession.TokenCache = TokenCache.DefaultShared;
+            var savedCache = AzureSession.Instance.TokenCache;
+            AzureSession.Instance.TokenCache = new AuthenticationStoreTokenCache(TokenCache.DefaultShared);
             try
             {
 
@@ -185,16 +190,16 @@ namespace Microsoft.WindowsAzure.Commands.Profile
                             settings.Credential.Password, settings.StorageAccount);
                         break;
                     case EmptyParameterSet:
-                        if (!profile.Environments.ContainsKey(settings.Environment.Name))
+                        if (!profile.EnvironmentTable.ContainsKey(settings.Environment.Name))
                         {
-                            profile.Environments.Add(settings.Environment.Name, settings.Environment);
+                            profile.EnvironmentTable.Add(settings.Environment.Name, settings.Environment);
                         }
                         break;
                 }
             }
             finally
             {
-                AzureSession.TokenCache = savedCache;
+                AzureSession.Instance.TokenCache = savedCache;
             }
         }
 

@@ -12,10 +12,12 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Hyak.Common;
-using Microsoft.Azure.Management.Insights.Models;
+using Microsoft.Azure.Commands.Insights.OutputClasses;
+using Microsoft.Azure.Commands.Insights.TransitionalClasses;
+using Microsoft.Azure.Management.Monitor.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Insights.Alerts
@@ -23,7 +25,7 @@ namespace Microsoft.Azure.Commands.Insights.Alerts
     /// <summary>
     /// Add an Alert rule
     /// </summary>
-    [Cmdlet(VerbsCommon.Add, "AzureRmWebtestAlertRule"), OutputType(typeof(List<PSObject>))]
+    [Cmdlet("Add", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "WebtestAlertRule", SupportsShouldProcess = true), OutputType(typeof(PSAddAlertRuleOperationResponse))]
     public class AddAzureRmWebtestAlertRuleCommand : AddAzureRmAlertRuleCommandBase
     {
         /// <summary>
@@ -58,48 +60,43 @@ namespace Microsoft.Azure.Commands.Insights.Alerts
         [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The metric namespace for rule")]
         public string MetricNamespace { get; set; }
 
-        private RuleCondition CreateRuleCondition()
+        private LocationThresholdRuleCondition CreateRuleCondition()
         {
             WriteVerboseWithTimestamp(string.Format("CreateRuleCondition: Creating location threshold rule condition (webtest rule)"));
             var dataSource = new RuleMetricDataSource
             {
                 MetricName = this.MetricName,
-                MetricNamespace = this.MetricNamespace,
                 ResourceUri = this.TargetResourceUri
             };
 
-            return new LocationThresholdRuleCondition()
+            return new LocationThresholdRuleCondition
             {
                 DataSource = dataSource,
                 FailedLocationCount = this.FailedLocationCount,
-                WindowSize = this.WindowSize,
+                WindowSize = this.WindowSize
             };
         }
 
-        protected override RuleCreateOrUpdateParameters CreateSdkCallParameters()
+        protected override AlertRuleResource CreateSdkCallParameters()
         {
-            RuleCondition condition = this.CreateRuleCondition();
+            LocationThresholdRuleCondition condition = this.CreateRuleCondition();
 
             WriteVerboseWithTimestamp(string.Format("CreateSdkCallParameters: Creating rule object"));
-            return new RuleCreateOrUpdateParameters()
+            return new AlertRuleResource
             {
+                Description = this.Description ?? Utilities.GetDefaultDescription("webtest alert rule"),
+                Condition = condition,
+                Actions = this.Action?.Select(TransitionHelpers.ToMirrorNamespace).ToList(),
                 Location = this.Location,
-                Properties = new Rule()
-                {
-                    Name = this.Name,
-                    IsEnabled = !this.DisableRule,
-                    Description = this.Description ?? Utilities.GetDefaultDescription("webtest alert rule"),
-                    LastUpdatedTime = DateTime.Now,
-                    Condition = condition,
-                    Actions = this.Actions,
-                },
+                IsEnabled = !this.DisableRule,
+                AlertRuleResourceName = this.Name,
 
                 // DO NOT REMOVE OR CHANGE the following. The two elements in the Tags are required by other services.
-                Tags = new LazyDictionary<string, string>()
+                Tags = new Dictionary<string, string>()
                 {
                     {"$type" , "Microsoft.WindowsAzure.Management.Common.Storage.CasePreservedDictionary,Microsoft.WindowsAzure.Management.Common.Storage"},
                     {"hidden-link:", "Resource" },
-                },
+                }
             };
         }
     }

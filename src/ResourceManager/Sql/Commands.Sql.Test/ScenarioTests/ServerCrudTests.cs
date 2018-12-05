@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +13,6 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.ScenarioTest.SqlTests;
-using Microsoft.Azure.ServiceManagemenet.Common.Models;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Xunit.Abstractions;
@@ -22,9 +21,8 @@ namespace Microsoft.Azure.Commands.Sql.Test.ScenarioTests
 {
     public class ServerCrudTests : SqlTestsBase
     {
-        public ServerCrudTests(ITestOutputHelper output)
+        public ServerCrudTests(ITestOutputHelper output) : base(output)
         {
-            XunitTracingInterceptor.AddToContext(new XunitTracingInterceptor(output));
         }
 
         [Fact]
@@ -53,6 +51,27 @@ namespace Microsoft.Azure.Commands.Sql.Test.ScenarioTests
         public void TestServerRemove()
         {
             RunPowerShellTest("Test-RemoveServer");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestServerCreateWithIdentity()
+        {
+            RunPowerShellTest("Test-CreateServerWithIdentity");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestServerUpdateWithIdentity()
+        {
+            RunPowerShellTest("Test-UpdateServerWithIdentity");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        public void TestServerUpdateWithoutIdentity()
+        {
+            RunPowerShellTest("Test-UpdateServerWithoutIdentity");
         }
     }
 }

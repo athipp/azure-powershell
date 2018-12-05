@@ -14,6 +14,7 @@
 
 using Microsoft.Azure.Commands.Compute.Common;
 using Microsoft.Azure.Commands.Compute.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.Compute.Models;
 using Microsoft.Rest.Azure.OData;
 using System.Linq;
@@ -21,8 +22,7 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Compute
 {
-    [Cmdlet(VerbsCommon.Get,
-        ProfileNouns.VirtualMachineImage)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "VMImage")]
     [OutputType(typeof(PSVirtualMachineImage),
         ParameterSetName = new[] { ListVMImageParamSetName })]
     [OutputType(typeof(PSVirtualMachineImageDetail),
@@ -38,6 +38,7 @@ namespace Microsoft.Azure.Commands.Compute
         [Parameter(ParameterSetName = GetVMImageDetailParamSetName,
             Mandatory = true,
             ValueFromPipelineByPropertyName = true)]
+        [LocationCompleter("Microsoft.Compute/locations/publishers")]
         [ValidateNotNullOrEmpty]
         public string Location { get; set; }
 
@@ -135,6 +136,7 @@ namespace Microsoft.Azure.Commands.Compute
                         OSDiskImage = response.Body.OsDiskImage,
                         DataDiskImages = response.Body.DataDiskImages,
                         PurchasePlan = response.Body.Plan,
+                        AutomaticOSUpgradeProperties = response.Body.AutomaticOSUpgradeProperties,
                     };
 
                     WriteObject(image);

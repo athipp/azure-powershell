@@ -14,19 +14,21 @@
 
 using AutoMapper;
 using Microsoft.Azure.Commands.Network.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Management.Network;
 using System.Collections.Generic;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Network
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmEffectiveNetworkSecurityGroup"), OutputType(typeof(PSEffectiveNetworkSecurityGroup))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "EffectiveNetworkSecurityGroup"), OutputType(typeof(PSEffectiveNetworkSecurityGroup))]
     public class GetAzureEffectiveNetworkSecurityGroupCommand : NetworkInterfaceBaseCmdlet
     {
         [Parameter(
            Mandatory = true,
            ValueFromPipelineByPropertyName = true,
            HelpMessage = "The network interface name.")]
+        [ResourceNameCompleter("Microsoft.Network/networkInterfaces", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string NetworkInterfaceName { get; set; }
 
@@ -34,6 +36,7 @@ namespace Microsoft.Azure.Commands.Network
             Mandatory = false,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
@@ -43,9 +46,14 @@ namespace Microsoft.Azure.Commands.Network
 
             var getEffectiveNsgs = this.NetworkInterfaceClient.ListEffectiveNetworkSecurityGroups(this.ResourceGroupName, this.NetworkInterfaceName);
 
-            var psEffectiveNsgs = Mapper.Map<List<PSEffectiveNetworkSecurityGroup>>(getEffectiveNsgs.Value);
+            var psEffectiveNsgs = NetworkResourceManagerProfile.Mapper.Map<List<PSEffectiveNetworkSecurityGroup>>(getEffectiveNsgs.Value);
 
             WriteObject(psEffectiveNsgs, true);
+
+            if (psEffectiveNsgs.Count == 0)
+            {
+                WriteWarning(Microsoft.Azure.Commands.Network.Properties.Resources.EmptyEffectiveNetworkSecurityGroupOnNic);
+            }
         }
     }
 }

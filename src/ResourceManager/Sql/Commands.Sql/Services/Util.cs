@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,20 +22,6 @@ namespace Microsoft.Azure.Commands.Sql.Services
 {
     public class Util
     {
-        /// <summary>
-        /// Generates a client side tracing Id of the format:
-        /// [Guid]
-        /// </summary>
-        /// <returns>A string representation of the client side tracing Id.</returns>
-        public static string GenerateTracingId()
-        {
-            return string.Format(
-                CultureInfo.InvariantCulture,
-                "{0}",
-                Guid.NewGuid().ToString()
-            );
-        }
-
         /// <summary>
         /// In cases where the user decided to use one of the shortcuts (ALL or NONE), this method sets the value of the EventType property to reflect the correct values.
         /// In addition the is a deprecated audit events validity check.
@@ -102,11 +88,26 @@ namespace Microsoft.Azure.Commands.Sql.Services
             }
 
             string[] emailAddressesArray = emailAddresses.Split(seperator).Where(s => !string.IsNullOrEmpty(s)).ToArray();
+            return AreEmailAddressesInCorrectFormat(emailAddressesArray);
+        }
+
+        /// <summary>
+        /// Checks if email addresses are in a correct format
+        /// </summary>
+        /// <param name="emailAddresses">The email addresses</param>
+        /// <returns>Returns whether the email addresses are in a correct format</returns>
+        public static bool AreEmailAddressesInCorrectFormat(string[] emailAddresses)
+        {
+            if (emailAddresses == null)
+            {
+                return true;
+            }
+
             var emailRegex =
                 new Regex(string.Format("{0}{1}",
                     @"^(?("")("".+?(?<!\\)""@)|(([0-9a-z]((\.(?!\.))|[-!#\$%&'\*\+/=\?\^`\{\}\|~\w])*)(?<=[0-9a-z])@))",
                     @"(?(\[)(\[(\d{1,3}\.){3}\d{1,3}\])|(([0-9a-z][-\w]*[0-9a-z]*\.)+[a-z0-9][\-a-z0-9]{0,22}[a-z0-9]))$"));
-            return !emailAddressesArray.Any(e => !emailRegex.IsMatch(e));
+            return !emailAddresses.Any(e => !emailRegex.IsMatch(e));
         }
     }
 }

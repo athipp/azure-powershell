@@ -1,4 +1,4 @@
-﻿// ----------------------------------------------------------------------------------
+// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +12,7 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
-using Microsoft.Azure.Commands.ScenarioTest.Mocks;
 using Microsoft.Azure.Commands.ScenarioTest.SqlTests;
-using Microsoft.Azure.ServiceManagemenet.Common.Models;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
 using Xunit.Abstractions;
@@ -26,62 +24,65 @@ namespace Microsoft.Azure.Commands.Sql.Test.ScenarioTests
     {
         protected override void SetupManagementClients(RestTestFramework.MockContext context)
         {
-            var sqlCSMClient = GetSqlClient();
-            var storageClient = GetStorageClient();
-            var storageV2Client = GetStorageV2Client();
-            //TODO, Remove the MockDeploymentFactory call when the test is re-recorded
-            var resourcesClient = MockDeploymentClientFactory.GetResourceClient(GetResourcesClient());
-            var authorizationClient = GetAuthorizationManagementClient();
-            helper.SetupSomeOfManagementClients(sqlCSMClient, storageClient, storageV2Client, resourcesClient,
-                authorizationClient);
+            var sqlClient = GetSqlClient(context);
+            var storageV2Client = GetStorageV2Client(context);
+            var newResourcesClient = GetResourcesClient(context);
+            Helper.SetupSomeOfManagementClients(sqlClient, storageV2Client, newResourcesClient);
         }
 
-        public ThreatDetectionTests(ITestOutputHelper output)
+        public ThreatDetectionTests(ITestOutputHelper output) : base(output)
         {
-            XunitTracingInterceptor.AddToContext(new XunitTracingInterceptor(output));
         }
 
         [Fact]
-        [Trait(Category.AcceptanceType, Category.Sql)]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void ThreatDetectionGetDefualtPolicy()
         {
             RunPowerShellTest("Test-ThreatDetectionGetDefualtPolicy");
         }
 
+#if NETSTANDARD
+        [Fact(Skip = "Storage version difference: Awaiting Storage.Common usage in Sql")]
+        [Trait(Category.RunType, Category.DesktopOnly)]
+#else
         [Fact]
-        [Trait(Category.AcceptanceType, Category.Sql)]
+#endif
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void ThreatDetectionDatabaseUpdatePolicy()
         {
             RunPowerShellTest("Test-ThreatDetectionDatabaseUpdatePolicy");
         }
 
+#if NETSTANDARD
+        [Fact(Skip = "Storage version difference: Awaiting Storage.Common usage in Sql")]
+        [Trait(Category.RunType, Category.DesktopOnly)]
+#else
         [Fact]
-        [Trait(Category.AcceptanceType, Category.Sql)]
+#endif
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void ThreatDetectionServerUpdatePolicy()
         {
             RunPowerShellTest("Test-ThreatDetectionServerUpdatePolicy");
         }
 
 
+#if NETSTANDARD
+        [Fact(Skip = "Storage version difference: Awaiting Storage.Common usage in Sql")]
+        [Trait(Category.RunType, Category.DesktopOnly)]
+#else
         [Fact]
-        [Trait(Category.AcceptanceType, Category.Sql)]
+#endif
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void DisablingThreatDetection()
         {
             RunPowerShellTest("Test-DisablingThreatDetection");
         }
 
         [Fact]
-        [Trait(Category.AcceptanceType, Category.Sql)]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
         public void InvalidArgumentsThreatDetection()
         {
             RunPowerShellTest("Test-InvalidArgumentsThreatDetection");
-        }
-
-        [Fact]
-        [Trait(Category.AcceptanceType, Category.Sql)]
-        public void ThreatDetectionOnV2Server()
-        {
-            RunPowerShellTest("Test-ThreatDetectionOnV2Server");
         }
     }
 }

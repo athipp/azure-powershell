@@ -12,44 +12,104 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using System;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Xunit;
+using Microsoft.Azure.ServiceManagemenet.Common.Models;
+using Xunit.Abstractions;
 
 namespace Commands.Network.Test.ScenarioTests
 {
     public class VirtualNetworkGatewayTests : Microsoft.WindowsAzure.Commands.Test.Utilities.Common.RMTestBase
     {
-        [Fact(Skip = "Rerecord tests")]
+        public XunitTracingInterceptor _logger;
+
+        public VirtualNetworkGatewayTests(Xunit.Abstractions.ITestOutputHelper output)
+        {
+            _logger = new XunitTracingInterceptor(output);
+            XunitTracingInterceptor.AddToContext(_logger);
+        }
+
+
+        [Fact]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Owner, NrpTeamAlias.brooklynft_subset2)]
         public void TestVirtualNetworkExpressRouteGatewayCRUD()
         {
-            NetworkResourcesController.NewInstance.RunPsTest("Test-VirtualNetworkExpressRouteGatewayCRUD");
+            NetworkResourcesController.NewInstance.RunPsTest(_logger, "Test-VirtualNetworkExpressRouteGatewayCRUD");
         }
 
         [Fact]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Owner, NrpTeamAlias.brooklynft_subset2)]
         public void TestVirtualNetworkGatewayCRUD()
         {
-            NetworkResourcesController.NewInstance.RunPsTest("Test-VirtualNetworkGatewayCRUD");
+            NetworkResourcesController.NewInstance.RunPsTest(_logger, "Test-VirtualNetworkGatewayCRUD");
         }
 
-        [Fact(Skip = "Need to record afterwards, failing due to product issue.")]
+        [Fact]
         [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Owner, NrpTeamAlias.brooklynft_subset2)]
         public void TestVirtualNetworkGatewayP2SAndSKU()
         {
-            NetworkResourcesController.NewInstance.RunPsTest("Test-VirtualNetworkGatewayP2SAndSKU");
+            NetworkResourcesController.NewInstance.RunPsTest(_logger, "Test-VirtualNetworkGatewayP2SAndSKU");
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Owner, NrpTeamAlias.brooklynft_subset2)]
         public void TestSetVirtualNetworkGatewayCRUD()
         {
-            NetworkResourcesController.NewInstance.RunPsTest("Test-SetVirtualNetworkGatewayCRUD");
+            NetworkResourcesController.NewInstance.RunPsTest(_logger, "Test-SetVirtualNetworkGatewayCRUD");
         }
 
         [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Owner, NrpTeamAlias.brooklynft_subset2)]
         public void VirtualNetworkGatewayActiveActiveFeatureTest()
         {
-            NetworkResourcesController.NewInstance.RunPsTest("Test-VirtualNetworkGatewayActiveActiveFeatureOperations");
+            NetworkResourcesController.NewInstance.RunPsTest(_logger, "Test-VirtualNetworkGatewayActiveActiveFeatureOperations");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Owner, NrpTeamAlias.brooklynft_subset3)]
+        public void VirtualNetworkGatewayRouteApiTest()
+        {
+            NetworkResourcesController.NewInstance.RunPsTest(_logger, "Test-VirtualNetworkGatewayBgpRouteApi");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Owner, NrpTeamAlias.brooklynft_subset3)]
+        public void TestVirtualNetworkGatewayP2SVpnProfile()
+        {
+            NetworkResourcesController.NewInstance.RunPsTest(_logger, string.Format(
+                "Test-VirtualNetworkGatewayGenerateVpnProfile -baseDir '{0}'", AppDomain.CurrentDomain.BaseDirectory));
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Owner, NrpTeamAlias.brooklynft_subset3)]
+        public void VirtualNetworkGatewayIkeV2Test()
+        {
+            NetworkResourcesController.NewInstance.RunPsTest(_logger, "Test-VirtualNetworkGatewayIkeV2");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Owner, NrpTeamAlias.brooklynft_subset3)]
+        public void VirtualNetworkGatewayOpenVPNTest()
+        {
+            NetworkResourcesController.NewInstance.RunPsTest(_logger, "Test-VirtualNetworkGatewayOpenVPN");
+        }
+
+        [Fact]
+        [Trait(Category.AcceptanceType, Category.CheckIn)]
+        [Trait(Category.Owner, NrpTeamAlias.brooklynft_subset3)]
+        public void VirtualNetworkGatewayVpnCustomIpsecPolicySetTest()
+        {
+            NetworkResourcesController.NewInstance.RunPsTest(_logger, "Test-VirtualNetworkGatewayVpnCustomIpsecPolicySet");
         }
     }
 }

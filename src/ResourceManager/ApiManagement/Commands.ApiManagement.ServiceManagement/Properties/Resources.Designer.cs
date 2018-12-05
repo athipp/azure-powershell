@@ -79,6 +79,24 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Removing Api Release &quot;{0}&quot;.
+        /// </summary>
+        internal static string ApiReleaseRemoveDescription {
+            get {
+                return ResourceManager.GetString("ApiReleaseRemoveDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to remove Api Release &quot;{0}&quot;?.
+        /// </summary>
+        internal static string ApiReleaseRemoveWarning {
+            get {
+                return ResourceManager.GetString("ApiReleaseRemoveWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Removing API &quot;{0}&quot;..
         /// </summary>
         internal static string ApiRemoveDescription {
@@ -93,6 +111,42 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Properties {
         internal static string ApiRemoveWarning {
             get {
                 return ResourceManager.GetString("ApiRemoveWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Removing Api Revision &apos;{0}&apos;;rev=&apos;{1}&apos;..
+        /// </summary>
+        internal static string ApiRevisionRemoveDescription {
+            get {
+                return ResourceManager.GetString("ApiRevisionRemoveDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to remove Api Revision &apos;{0}&apos;;rev={1}.
+        /// </summary>
+        internal static string ApiRevisionRemoveWarning {
+            get {
+                return ResourceManager.GetString("ApiRevisionRemoveWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Removing API Version Set &quot;{0}&quot;.
+        /// </summary>
+        internal static string ApiVersionSetRemoveDescription {
+            get {
+                return ResourceManager.GetString("ApiVersionSetRemoveDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to remove API Version Set &quot;{0}&quot;?.
+        /// </summary>
+        internal static string ApiVersionSetRemoveWarning {
+            get {
+                return ResourceManager.GetString("ApiVersionSetRemoveWarning", resourceCulture);
             }
         }
         
@@ -115,6 +169,24 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Removing Backend &apos;{0}&apos;.
+        /// </summary>
+        internal static string BackendRemoveDescription {
+            get {
+                return ResourceManager.GetString("BackendRemoveDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to remove Backend &quot;{0}&quot; ?.
+        /// </summary>
+        internal static string BackendRemoveWarning {
+            get {
+                return ResourceManager.GetString("BackendRemoveWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Removing Certificate &quot;{0}&quot;..
         /// </summary>
         internal static string CertificateRemoveDescription {
@@ -133,6 +205,42 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Create a API Release.
+        /// </summary>
+        internal static string CreateApiRelease {
+            get {
+                return ResourceManager.GetString("CreateApiRelease", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create a API Revision.
+        /// </summary>
+        internal static string CreateApiRevision {
+            get {
+                return ResourceManager.GetString("CreateApiRevision", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create an API Version Set.
+        /// </summary>
+        internal static string CreateApiVersionSet {
+            get {
+                return ResourceManager.GetString("CreateApiVersionSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create a Backend Entity.
+        /// </summary>
+        internal static string CreateBackend {
+            get {
+                return ResourceManager.GetString("CreateBackend", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Removing Group &quot;{0}&quot;..
         /// </summary>
         internal static string GroupRemoveDescription {
@@ -147,6 +255,24 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Properties {
         internal static string GroupRemoveWarning {
             get {
                 return ResourceManager.GetString("GroupRemoveWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Removing Identity Provider configuration for &quot;{0}&quot;..
+        /// </summary>
+        internal static string IdentityProviderRemoveDescription {
+            get {
+                return ResourceManager.GetString("IdentityProviderRemoveDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Are you sure you want to remove Identity Provider &quot;{0}&quot;?.
+        /// </summary>
+        internal static string IdentityProviderRemoveWarning {
+            get {
+                return ResourceManager.GetString("IdentityProviderRemoveWarning", resourceCulture);
             }
         }
         
@@ -313,11 +439,47 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Update the Api Revision.
+        /// </summary>
+        internal static string SetApiRevision {
+            get {
+                return ResourceManager.GetString("SetApiRevision", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update Api Version Set.
+        /// </summary>
+        internal static string SetApiVersionSet {
+            get {
+                return ResourceManager.GetString("SetApiVersionSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Set Backend.
+        /// </summary>
+        internal static string SetBackend {
+            get {
+                return ResourceManager.GetString("SetBackend", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Confirm.
         /// </summary>
         internal static string ShouldProcessCaption {
             get {
                 return ResourceManager.GetString("ShouldProcessCaption", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to File &apos;{0}&apos; does not exist..
+        /// </summary>
+        internal static string SourceFileNotFound {
+            get {
+                return ResourceManager.GetString("SourceFileNotFound", resourceCulture);
             }
         }
         
@@ -336,6 +498,15 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Properties {
         internal static string SubscriptionRemoveWarning {
             get {
                 return ResourceManager.GetString("SubscriptionRemoveWarning", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Update the Api Release.
+        /// </summary>
+        internal static string UpdateApiRelease {
+            get {
+                return ResourceManager.GetString("UpdateApiRelease", resourceCulture);
             }
         }
         

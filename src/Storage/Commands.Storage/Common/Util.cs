@@ -17,9 +17,11 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Auth;
     using Microsoft.WindowsAzure.Storage.Blob;
+    using Microsoft.WindowsAzure.Storage.File;
     using System;
     using System.Globalization;
     using System.Net;
+    using System.Threading.Tasks;
 
     internal static class Util
     {
@@ -60,9 +62,10 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
             string blobName,
             AccessCondition accessCondition = null,
             BlobRequestOptions options = null,
-            OperationContext operationContext = null)
+            OperationContext operationContext = null,
+            DateTimeOffset? snapshotTime = null)
         {
-            CloudBlob blob = container.GetBlobReference(blobName);
+            CloudBlob blob = container.GetBlobReference(blobName, snapshotTime);
             return GetBlobReferenceFromServer(blob, accessCondition, options, operationContext);
         }
 
@@ -76,11 +79,22 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
             CloudBlob blob,
             AccessCondition accessCondition = null,
             BlobRequestOptions options = null,
-            OperationContext operationContext = null)
+            OperationContext operationContext = null,
+            DateTimeOffset? snapshotTime = null)
         {
             try
             {
-                blob.FetchAttributes(accessCondition, options, operationContext);
+                Task.Run(() => blob.FetchAttributesAsync(accessCondition, options, operationContext)).Wait();
+            }
+            catch (AggregateException e) when (e.InnerException is StorageException)
+            {
+                if (((StorageException)e.InnerException).RequestInformation == null ||
+                    (((StorageException)e.InnerException).RequestInformation.HttpStatusCode != (int)HttpStatusCode.NotFound))
+                {
+                    throw e.InnerException;
+                }
+
+                return null;
             }
             catch (StorageException se)
             {
@@ -118,7 +132,15 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
                         blob.Name));
             }
 
-            targetBlob.FetchAttributes();
+            try
+            {
+                Task.Run(() => targetBlob.FetchAttributesAsync()).Wait();
+            }
+            catch (AggregateException e) when (e.InnerException is StorageException)
+            {
+                throw e.InnerException;
+            }
+
             return targetBlob;
         }
 
@@ -176,6 +198,30 @@ namespace Microsoft.WindowsAzure.Commands.Storage.Common
             {
                 return new IPAddressOrRange(inputIPACL.Substring(0, separator), inputIPACL.Substring(separator + 1));
             }
+        }
+
+        /// <summary>
+        /// Used in DMlib ShouldOverwriteCallback, to convert object to blob/file/localpath, and return path
+        /// </summary>
+        /// <param name="instance">object instace</param>
+        /// <returns>path of the object</returns>
+        public static string ConvertToString(this object instance)
+        {
+            CloudBlob blob = instance as CloudBlob;
+
+            if (null != blob)
+            {
+                return blob.SnapshotQualifiedUri.AbsoluteUri;
+            }
+
+            CloudFile file = instance as CloudFile;
+
+            if (null != file)
+            {
+                return file.SnapshotQualifiedUri.AbsoluteUri;
+            }
+
+            return instance.ToString();
         }
     }
 }

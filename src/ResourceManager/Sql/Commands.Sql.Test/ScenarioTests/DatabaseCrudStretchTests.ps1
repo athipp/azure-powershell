@@ -26,11 +26,11 @@ function Test-CreateStretchDatabase
 	.SYNOPSIS
 	Helper for testing creating a database
 #>
-function Test-CreateDatabaseInternal ($serverVersion, $location = "Japan East")
+function Test-CreateDatabaseInternal ($serverVersion, $location = "westcentralus")
 {
 	# Setup
 	$rg = Create-ResourceGroupForTest $location
-	$server = Create-ServerForTest $rg $serverVersion $location
+	$server = Create-ServerForTest $rg $location
 
 	try
 	{
@@ -38,8 +38,11 @@ function Test-CreateDatabaseInternal ($serverVersion, $location = "Japan East")
 		$databaseName = Get-DatabaseName
 		$collationName = "SQL_Latin1_General_CP1_CI_AS"
 		$maxSizeBytes = 250GB
-		$strechdb = New-AzureRmSqlDatabase -ResourceGroupName $rg.ResourceGroupName -ServerName $server.ServerName -DatabaseName $databaseName `
-				-CollationName $collationName -MaxSizeBytes $maxSizeBytes -Edition Stretch -RequestedServiceObjectiveName DS100
+		$job = New-AzureRmSqlDatabase -ResourceGroupName $rg.ResourceGroupName -ServerName $server.ServerName -DatabaseName $databaseName `
+				-CollationName $collationName -MaxSizeBytes $maxSizeBytes -Edition Stretch -RequestedServiceObjectiveName DS100 -AsJob
+		$job | Wait-Job
+		$strechdb = $job.Output
+
 		Assert-AreEqual $databaseName $strechdb.DatabaseName 
 		Assert-AreEqual $maxSizeBytes $strechdb.MaxSizeBytes 
 		Assert-AreEqual Stretch $strechdb.Edition 
@@ -66,11 +69,11 @@ function Test-UpdateStretchDatabase
 	.SYNOPSIS
 	Helper for testing updating a database
 #>
-function Test-UpdateDatabaseInternal ($serverVersion, $location = "Japan East")
+function Test-UpdateDatabaseInternal ($serverVersion, $location = "westcentralus")
 {
 	# Setup
 		$rg = Create-ResourceGroupForTest $location
-		$server = Create-ServerForTest $rg $serverVersion $location
+		$server = Create-ServerForTest $rg $location
 	try {
 		# Create stretch database
 		$databaseName = Get-DatabaseName
@@ -80,8 +83,11 @@ function Test-UpdateDatabaseInternal ($serverVersion, $location = "Japan East")
 		-CollationName $collationName -MaxSizeBytes $maxSizeBytes -Edition Stretch -RequestedServiceObjectiveName DS100
 
 		# Alter stretch database properties
-		$strechdb2 = Set-AzureRmSqlDatabase -ResourceGroupName $rg.ResourceGroupName -ServerName $server.ServerName -DatabaseName $strechdb.DatabaseName `
-		-MaxSizeBytes $maxSizeBytes -Edition Stretch -RequestedServiceObjectiveName DS200
+		$job = Set-AzureRmSqlDatabase -ResourceGroupName $rg.ResourceGroupName -ServerName $server.ServerName -DatabaseName $strechdb.DatabaseName `
+		-MaxSizeBytes $maxSizeBytes -Edition Stretch -RequestedServiceObjectiveName DS200 -AsJob
+		$job | Wait-Job
+		$strechdb2 = $job.Output
+
 		Assert-AreEqual $strechdb.DatabaseName $strechdb2.DatabaseName
 		Assert-AreEqual $maxSizeBytes $strechdb2.MaxSizeBytes
 		Assert-AreEqual Stretch $strechdb2.Edition
@@ -109,11 +115,11 @@ function Test-GetStretchDatabase
 	.SYNOPSIS
 	Helper for testing getting a database
 #>
-function Test-GetDatabaseInternal  ($serverVersion, $location = "Japan East")
+function Test-GetDatabaseInternal  ($serverVersion, $location = "westcentralus")
 {
 	# Setup
 	$rg = Create-ResourceGroupForTest $location
-	$server = Create-ServerForTest $rg $serverVersion $location
+	$server = Create-ServerForTest $rg $location
 
 	try
 	{
@@ -153,11 +159,11 @@ function Test-RemoveStretchDatabase
 	.SYNOPSIS
 	Helper for testing deleting a database
 #>
-function Test-RemoveDatabaseInternal  ($serverVersion, $location = "Japan East")
+function Test-RemoveDatabaseInternal  ($serverVersion, $location = "westcentralus")
 {
 	# Setup
 	$rg = Create-ResourceGroupForTest $location
-	$server = Create-ServerForTest $rg $serverVersion $location
+	$server = Create-ServerForTest $rg $location
 
 	try
 	{

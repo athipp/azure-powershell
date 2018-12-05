@@ -13,6 +13,7 @@
 // ----------------------------------------------------------------------------------
 
 using Microsoft.Azure.Commands.Sql.Auditing.Model;
+using System;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Sql.Auditing.Cmdlet
@@ -20,7 +21,8 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Cmdlet
     /// <summary>
     /// Returns the auditing policy of a specific database.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmSqlDatabaseAuditingPolicy", SupportsShouldProcess = true), OutputType(typeof (AuditingPolicyModel))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlDatabaseAuditingPolicy", SupportsShouldProcess = true), OutputType(typeof(AuditingPolicyModel))]
+    [Obsolete("Note that Table auditing is deprecated and this command will be removed in a future release. Please use the 'Get-AzSqlDatabaseAuditing' command to get Blob auditing settings.", false)]
     public class GetAzureSqlDatabaseAuditingPolicy : SqlDatabaseAuditingCmdletBase
     {
         /// <summary>
@@ -30,27 +32,6 @@ namespace Microsoft.Azure.Commands.Sql.Auditing.Cmdlet
         protected override AuditingPolicyModel PersistChanges(AuditingPolicyModel model)
         {
             return null;
-        }
-
-        /// <summary>
-        /// Provides the model element that this cmdlet operates on
-        /// </summary>
-        /// <returns>A model object</returns>
-        protected override AuditingPolicyModel GetEntity()
-        {
-            AuditType = AuditType.Table;
-            var tablePolicy = base.GetEntity();
-            if (tablePolicy.IsInUse())
-            {
-                return tablePolicy;
-            }
-            AuditType = AuditType.Blob;
-            var blobPolicy = base.GetEntity();
-            if (blobPolicy.IsInUse())
-            {
-                return blobPolicy;
-            }
-            return tablePolicy;
         }
     }
 }

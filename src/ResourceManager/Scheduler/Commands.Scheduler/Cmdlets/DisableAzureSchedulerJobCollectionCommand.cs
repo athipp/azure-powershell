@@ -17,14 +17,16 @@ namespace Microsoft.Azure.Commands.Scheduler.Cmdlets
     using System.Management.Automation;
     using Microsoft.Azure.Commands.Scheduler.Properties;
     using Microsoft.Azure.Commands.Scheduler.Utilities;
+    using ResourceManager.Common.ArgumentCompleters;
 
     /// <summary>
     /// Disables job collection.
     /// </summary>
-    [Cmdlet(VerbsLifecycle.Disable, "AzureRmSchedulerJobCollection", SupportsShouldProcess = true)]
+    [Cmdlet("Disable", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SchedulerJobCollection", SupportsShouldProcess = true), OutputType(typeof(string))]
     public class DisableAzureSchedulerJobCollectionCommand : SchedulerBaseCmdlet
     {
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "The targeted resource group for job collection.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

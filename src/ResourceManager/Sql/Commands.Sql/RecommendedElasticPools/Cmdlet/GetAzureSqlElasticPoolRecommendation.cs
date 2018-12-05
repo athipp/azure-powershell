@@ -12,17 +12,19 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication.Abstractions;
 using Microsoft.Azure.Commands.Common.Authentication.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using Microsoft.Azure.Commands.Sql.Common;
 using Microsoft.Azure.Commands.Sql.RecommendedElasticPools.Services;
-using Microsoft.Azure.Management.Sql.Models;
+using Microsoft.Azure.Management.Sql.LegacySdk.Models;
 using System.Collections.Generic;
 using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.Sql.RecommendedElasticPools.Cmdlet
 {
-    [Cmdlet(VerbsCommon.Get, "AzureRmSqlElasticPoolRecommendation",
-        ConfirmImpact = ConfirmImpact.None, SupportsShouldProcess = true)]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlElasticPoolRecommendation",ConfirmImpact = ConfirmImpact.None, SupportsShouldProcess = true)]
+    [OutputType(typeof(UpgradeRecommendedElasticPoolProperties))]
     public class GetAzureSqlElasticPoolRecommendation : AzureSqlCmdletBase<IEnumerable<UpgradeRecommendedElasticPoolProperties>, AzureSqlElasticPoolRecommendationAdapter>
     {
 
@@ -33,6 +35,7 @@ namespace Microsoft.Azure.Commands.Sql.RecommendedElasticPools.Cmdlet
             ValueFromPipelineByPropertyName = true,
             Position = 1,
             HelpMessage = "The name of the Azure SQL Server the Elastic Pool Recommendation is in.")]
+        [ResourceNameCompleter("Microsoft.Sql/servers", "ResourceGroupName")]
         [ValidateNotNullOrEmpty]
         public string ServerName { get; set; }
 
@@ -41,9 +44,9 @@ namespace Microsoft.Azure.Commands.Sql.RecommendedElasticPools.Cmdlet
         /// </summary>
         /// <param name="subscription"></param>
         /// <returns></returns>
-        protected override AzureSqlElasticPoolRecommendationAdapter InitModelAdapter(AzureSubscription subscription)
+        protected override AzureSqlElasticPoolRecommendationAdapter InitModelAdapter(IAzureSubscription subscription)
         {
-            return new AzureSqlElasticPoolRecommendationAdapter(DefaultProfile.Context);
+            return new AzureSqlElasticPoolRecommendationAdapter(DefaultProfile.DefaultContext);
         }
 
         /// <summary>

@@ -19,14 +19,16 @@ namespace Microsoft.Azure.Commands.Scheduler.Cmdlets
     using Microsoft.Azure.Commands.Scheduler.Utilities;
     using Microsoft.Azure.Management.Scheduler.Models;
     using Microsoft.Azure.Commands.Scheduler.Models;
+    using ResourceManager.Common.ArgumentCompleters;
 
     /// <summary>
     /// Gets job collection info.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "AzureRmSchedulerJobCollection"), OutputType(typeof(object))]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SchedulerJobCollection"), OutputType(typeof(PSJobCollectionDefinition))]
     public class GetAzureSchedulerJobCollectionCommand : SchedulerBaseCmdlet
     {
         [Parameter(Mandatory = false, ValueFromPipelineByPropertyName = true, HelpMessage = "The targeted resource group for job collection.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

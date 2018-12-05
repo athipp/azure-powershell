@@ -28,9 +28,11 @@ function Test-ServerUpgradeWithUpgradeHint
 
     try
     {
+        $upgrade = Get-AzureRmSqlServerUpgrade -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName
+
         $mapping = Get-AzureRmSqlServerUpgradeHint -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName
 
-        Start-AzureRmSqlServerUpgrade -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName -ServerVersion 12.0 -ScheduleUpgradeAfterUtcDateTime ((Get-Date).AddMinutes(1).ToUniversalTime()) -DatabaseCollection $mapping.Databases -ElasticPoolCollection $hint.ElasticPools
+        Assert-Throws { Start-AzureRmSqlServerUpgrade -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName -ServerVersion 12.0 -ScheduleUpgradeAfterUtcDateTime ((Get-Date).AddMinutes(1).ToUniversalTime()) -DatabaseCollection $mapping.Databases -ElasticPoolCollection $hint.ElasticPools }
 
         while ($true)
         {
@@ -69,29 +71,33 @@ function Test-ServerUpgradeAndCancel
 
     try
     {
-        Start-AzureRmSqlServerUpgrade -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName -ServerVersion 12.0
+        Assert-Throws { Start-AzureRmSqlServerUpgrade -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName -ServerVersion 12.0 }
 
         $upgrade = Get-AzureRmSqlServerUpgrade -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName
-        Assert-AreEqual $upgrade.Status "Queued"
+        # Assert-AreEqual $upgrade.Status "Queued"  # If the server was version 2.0 and Start had succeeded
+        Assert-AreEqual $upgrade.Status "Completed"
 
-        Stop-AzureRmSqlServerUpgrade -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName -Force
-        
+        Assert-Throws { Stop-AzureRmSqlServerUpgrade -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName -Force }
+
         $upgrade = Get-AzureRmSqlServerUpgrade -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName
-        Assert-AreEqual $upgrade.Status "Cancelling"
+        # Assert-AreEqual $upgrade.Status "Cancelling" # If the server was version 2.0 and Stop had succeeded
+        Assert-AreEqual $upgrade.Status "Completed"
 
-        while ($true)
-        {
-            $upgrade = Get-AzureRmSqlServerUpgrade -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName
-            if ($upgrade.Status -eq "Stopped")
-            {
-                break
-            }
-            Wait-Seconds 10
-        }
+        # Below would be if the server was version 2.0 and Stop had succeeded
+        # while ($true)
+        # {
+        #     $upgrade = Get-AzureRmSqlServerUpgrade -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName
+        #     # if ($upgrade.Status -eq "Stopped")
+        #     if ($upgrade.Status -eq "Completed")
+        #     {
+        #         break
+        #     }
+        #     Wait-Seconds 10
+        # }
 
         # Upgrade is cancelled
-        $server = Get-AzureRmSqlServer -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName
-        Assert-AreEqual $server.ServerVersion "2.0"
+        # $server = Get-AzureRmSqlServer -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName
+        # Assert-AreEqual $server.ServerVersion "2.0"
     }
     finally
     {
@@ -119,7 +125,7 @@ function Test-ServerUpgradeNegative
         Assert-Throws { Start-AzureRmSqlServerUpgrade -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName -ServerVersion 13.0}
         Assert-Throws { Start-AzureRmSqlServerUpgrade -ResourceGroupName $server.ResourceGroupName -ServerName $server.ServerName -ScheduleUpgradeAfterUtcDateTime ((Get-Date).ToUniversalTime())}
 
-        $recommendedDatabase = New-Object -TypeName Microsoft.Azure.Management.Sql.Models.RecommendedDatabaseProperties
+        $recommendedDatabase = New-Object -TypeName Microsoft.Azure.Management.Sql.LegacySdk.Models.RecommendedDatabaseProperties
         $recommendedDatabase.Name = databaseName
         $recommendedDatabase.TargetEdition = "InvalidEdition"
         $recommendedDatabase.TargetServiceLevelObjective = "S0"
@@ -141,13 +147,13 @@ function Test-ServerUpgradeNegative
 #>
 function Create-ServerForServerUpgradeTest()
 {
-    $location = "West US"
+    $location = "West US 2"
     $rgName = Get-ResourceGroupName
 
     $rg = New-AzureRmResourceGroup -Name $rgName -Location $location
 
     $serverName = Get-ServerName
-    $version = "2.0"
+    $version = "12.0"
     $serverLogin = "testusername"
     $serverPassword = "t357ingP@s5w0rd!"
     $credentials = New-Object System.Management.Automation.PSCredential($serverLogin, ($serverPassword | ConvertTo-SecureString -asPlainText -Force)) 

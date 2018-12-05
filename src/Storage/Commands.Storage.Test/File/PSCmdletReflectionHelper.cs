@@ -1,4 +1,4 @@
-﻿﻿// ----------------------------------------------------------------------------------
+﻿// ----------------------------------------------------------------------------------
 //
 // Copyright Microsoft Corporation
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +12,7 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using Microsoft.Azure.Commands.Common.Authentication;
 using Microsoft.WindowsAzure.Commands.Utilities.Common;
 using System;
 using System.Collections.Generic;
@@ -35,7 +36,12 @@ namespace Microsoft.WindowsAzure.Management.Storage.Test.File
 
         private static readonly FieldInfo engineFieldInfo = psCmdletType.Assembly.GetType("System.Management.Automation.Runspaces.LocalRunspace").GetField("_engine", BindingFlags.NonPublic | BindingFlags.Instance);
 
-        private static readonly FieldInfo executionContextFieldInfo = psCmdletType.Assembly.GetType("System.Management.Automation.AutomationEngine").GetField("_context", BindingFlags.NonPublic | BindingFlags.Instance);
+        
+#if NETSTANDARD
+        private static readonly PropertyInfo executionContextInfo = psCmdletType.Assembly.GetType("System.Management.Automation.AutomationEngine").GetProperty("Context", BindingFlags.NonPublic | BindingFlags.Instance);
+#else
+        private static readonly FieldInfo executionContextInfo = psCmdletType.Assembly.GetType("System.Management.Automation.AutomationEngine").GetField("_context", BindingFlags.NonPublic | BindingFlags.Instance);
+#endif
 
         private static readonly PropertyInfo contextPropertyInfo = typeof(InternalCommand).GetProperty("Context", BindingFlags.Instance | BindingFlags.NonPublic);
 
@@ -53,7 +59,7 @@ namespace Microsoft.WindowsAzure.Management.Storage.Test.File
             try
             {
                 var engine = engineFieldInfo.GetValue(ps.Runspace);
-                var context = executionContextFieldInfo.GetValue(engine);
+                var context = executionContextInfo.GetValue(engine);
                 contextPropertyInfo.SetValue(cmdlet, context, emptyParameters);
                 return ps;
             }
@@ -78,6 +84,7 @@ namespace Microsoft.WindowsAzure.Management.Storage.Test.File
 
         public static void RunCmdlet(this PSCmdlet cmdlet, string parameterSet, KeyValuePair<string, object[]>[] incomingValues)
         {
+            AzureSessionInitializer.InitializeAzureSession();
             var cmdletType = cmdlet.GetType();
             parameterSetFieldInfo.SetValue(cmdlet, parameterSet);
             beginProcessingMethodInfo.Invoke(cmdlet, emptyParameters);

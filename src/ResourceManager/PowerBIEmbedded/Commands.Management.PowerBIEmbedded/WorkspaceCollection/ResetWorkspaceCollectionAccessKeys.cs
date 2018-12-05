@@ -20,10 +20,11 @@ using Microsoft.Azure.Commands.Management.PowerBIEmbedded.Models;
 using Microsoft.Azure.Commands.Management.PowerBIEmbedded.Properties;
 using Microsoft.Azure.Management.PowerBIEmbedded;
 using Microsoft.Azure.Management.PowerBIEmbedded.Models;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 
 namespace Microsoft.Azure.Commands.Management.PowerBIEmbedded.WorkspaceCollection
 {
-    [Cmdlet(VerbsCommon.Reset, Nouns.WorkspaceCollectionAccessKeys, SupportsShouldProcess = true), OutputType(typeof(PSWorkspaceCollectionAccessKey))]
+    [Cmdlet("Reset", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "PowerBIWorkspaceCollectionAccessKeys", SupportsShouldProcess = true), OutputType(typeof(PSWorkspaceCollectionAccessKey))]
     public class ResetWorkspaceCollectionAccessKeys : WorkspaceCollectionBaseCmdlet
     {
         [Parameter(
@@ -31,6 +32,7 @@ namespace Microsoft.Azure.Commands.Management.PowerBIEmbedded.WorkspaceCollectio
             Mandatory = true,
             ValueFromPipelineByPropertyName = true,
             HelpMessage = "Resource Group Name.")]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 

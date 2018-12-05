@@ -19,14 +19,13 @@ namespace Microsoft.Azure.Commands.ApiManagement.ServiceManagement.Commands
     using System.Collections.Generic;
     using System.Management.Automation;
 
-    [Cmdlet(VerbsCommon.Get, Constants.ApiManagementOpenIdConnectProvider, DefaultParameterSetName = GetAll)]
-    [OutputType(typeof(IList<PsApiManagementOpenIdConnectProvider>), ParameterSetName = new[] { GetAll })]
-    [OutputType(typeof(PsApiManagementOpenIdConnectProvider), ParameterSetName = new[] { GetById })]
+    [Cmdlet("Get", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "ApiManagementOpenIdConnectProvider", DefaultParameterSetName = GetAll)]
+    [OutputType(typeof(PsApiManagementOpenIdConnectProvider))]
     public class GetAzureApiManagementOpenIdConnectProvider : AzureApiManagementCmdletBase
     {
-        private const string GetAll = "Get all OpenID Connect Providers";
-        private const string GetById = "Get by OpenID Connect Provider ID";
-        private const string FindByName = "Find by OpenID Connect Provider friendly Name";
+        private const string GetAll = "GetAllOpenIdConnectProviders";
+        private const string GetById = "GetByOpenIdConnectProviderId";
+        private const string FindByName = "GetByName";
 
         [Parameter(
             ValueFromPipelineByPropertyName = true,

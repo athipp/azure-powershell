@@ -17,15 +17,14 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Management.Automation;
-using Microsoft.Azure.Management.Sql.Models;
+using Microsoft.Azure.Management.Sql.LegacySdk.Models;
 
 namespace Microsoft.Azure.Commands.Sql.RecommendedAction.Cmdlet
 {
     /// <summary>
-    /// Defines the Set-AzureRmSqlElasticPoolRecommendedActionState cmdlet
+    /// Defines the Set-AzSqlElasticPoolRecommendedActionState cmdlet
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "AzureRmSqlElasticPoolRecommendedActionState",
-        SupportsShouldProcess = true)]
+    [Cmdlet("Set", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "SqlElasticPoolRecommendedActionState",SupportsShouldProcess = true), OutputType(typeof(AzureSqlElasticPoolRecommendedActionModel))]
     public class SetAzureSqlElasticPoolRecommendedActionState : AzureSqlElasticPoolRecommendedActionCmdletBase
     {
         /// <summary>

@@ -14,6 +14,7 @@
 
 using Microsoft.Azure.Commands.OperationalInsights.Models;
 using Microsoft.Azure.Commands.OperationalInsights.Properties;
+using Microsoft.Azure.Commands.ResourceManager.Common.ArgumentCompleters;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,10 +22,25 @@ using System.Management.Automation;
 
 namespace Microsoft.Azure.Commands.OperationalInsights
 {
-    [Cmdlet(VerbsLifecycle.Enable, "AzureRmOperationalInsightsIISLogCollection", SupportsShouldProcess = true,
-        DefaultParameterSetName = ByWorkspaceName), OutputType(typeof(PSDataSource))]
+    [Cmdlet("Enable", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "OperationalInsightsIISLogCollection", SupportsShouldProcess = true,DefaultParameterSetName = ByWorkspaceName), OutputType(typeof(PSDataSource))]
     public class EnableAzureOperationalInsightsIISLogCollectionCommand : AzureOperationalInsightsDataSourceBaseCmdlet
     {
+        [Parameter(Position = 0, ParameterSetName = ByWorkspaceObject, Mandatory = true, ValueFromPipeline = true,
+            HelpMessage = "The workspace that will contain the data source.")]
+        [ValidateNotNull]
+        public override PSWorkspace Workspace { get; set; }
+
+        [Parameter(Position = 1, ParameterSetName = ByWorkspaceName, Mandatory = true, ValueFromPipelineByPropertyName = true,
+            HelpMessage = "The resource group name.")]
+        [ResourceGroupCompleter]
+        [ValidateNotNullOrEmpty]
+        public override string ResourceGroupName { get; set; }
+
+        [Parameter(Position = 2, ParameterSetName = ByWorkspaceName, Mandatory = true, ValueFromPipelineByPropertyName = true,
+            HelpMessage = "The name of the workspace that will contain the data source.")]
+        [ValidateNotNullOrEmpty]
+        public override string WorkspaceName { get; set; }
+
         public override void ExecuteCmdlet()
         {
             PSDataSource dataSource = OperationalInsightsClient.GetSingletonDataSource(

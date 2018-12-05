@@ -12,9 +12,12 @@
 // limitations under the License.
 // ----------------------------------------------------------------------------------
 
+using System.Collections.Generic;
+using System.Xml;
 using Microsoft.Azure.Commands.Insights.Metrics;
-using Microsoft.Azure.Insights;
-using Microsoft.Azure.Insights.Models;
+using Microsoft.Azure.Management.Monitor;
+using Microsoft.Azure.Management.Monitor.Models;
+using Microsoft.Rest.Azure.OData;
 using Microsoft.WindowsAzure.Commands.ScenarioTest;
 using Moq;
 using System;
@@ -28,36 +31,52 @@ namespace Microsoft.Azure.Commands.Insights.Test.Metrics
     public class GetAzureRmMetricTests
     {
         private readonly GetAzureRmMetricCommand cmdlet;
-        private readonly Mock<InsightsClient> insightsClientMock;
-        private readonly Mock<IMetricOperations> insightsMetricOperationsMock;
+        private readonly Mock<MonitorManagementClient> MonitorClientMock;
+        private readonly Mock<IMetricsOperations> insightsMetricOperationsMock;
         private Mock<ICommandRuntime> commandRuntimeMock;
-        private MetricListResponse response;
+        private Microsoft.Rest.Azure.AzureOperationResponse<Response> response;
         private string resourceId;
-        private string filter;
+        private ODataQuery<MetadataValue> filter;
+        private string timeSpan;
+        private TimeSpan? metricQueryInterval;
+        private string metricnames;
+        private string aggregationType;
+        private int? topNumber;
+        private string orderby;
+        private ResultType? resulttype;
+        private string metricnamespace;
 
         public GetAzureRmMetricTests(Xunit.Abstractions.ITestOutputHelper output)
         {
             ServiceManagemenet.Common.Models.XunitTracingInterceptor.AddToContext(new ServiceManagemenet.Common.Models.XunitTracingInterceptor(output));
-            insightsMetricOperationsMock = new Mock<IMetricOperations>();
-            insightsClientMock = new Mock<InsightsClient>();
+            insightsMetricOperationsMock = new Mock<IMetricsOperations>();
+            MonitorClientMock = new Mock<MonitorManagementClient>() { CallBase = true };
             commandRuntimeMock = new Mock<ICommandRuntime>();
             cmdlet = new GetAzureRmMetricCommand()
             {
                 CommandRuntime = commandRuntimeMock.Object,
-                InsightsClient = insightsClientMock.Object
+                MonitorManagementClient = MonitorClientMock.Object
             };
 
-            response = Utilities.InitializeMetricResponse();
+            response = new Microsoft.Rest.Azure.AzureOperationResponse<Response>();
 
-            insightsMetricOperationsMock.Setup(f => f.GetMetricsAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .Returns(Task.FromResult<MetricListResponse>(response))
-                .Callback((string f, string s, CancellationToken t) =>
-                {
-                    resourceId = f;
-                    filter = s;
+            insightsMetricOperationsMock.Setup(f => f.ListWithHttpMessagesAsync(It.IsAny<string>(), It.IsAny<ODataQuery<MetadataValue>>(), It.IsAny<string>(), It.IsAny<TimeSpan?>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<ResultType?>(), It.IsAny<string>(), It.IsAny<Dictionary<string, List<string>>>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult<Microsoft.Rest.Azure.AzureOperationResponse<Response>>(response))
+                .Callback((string resourceUri, ODataQuery<MetadataValue> odataQuery, string timespan, TimeSpan? interval, string metricNames, string aggregation, int? top, string orderBy, ResultType? resultType, string metricNamespace, Dictionary<string, List<string>> headers, CancellationToken t) =>
+                 {
+                     resourceId = resourceUri;
+                     filter = odataQuery;
+                     timeSpan = timespan;
+                     metricQueryInterval = interval;
+                     metricnames = metricNames;
+                     aggregationType = aggregation;
+                     topNumber = top;
+                     orderby = orderBy;
+                     resulttype = resultType;
+                     metricnamespace = metricNamespace;
                 });
 
-            insightsClientMock.SetupGet(f => f.MetricOperations).Returns(this.insightsMetricOperationsMock.Object);
+            MonitorClientMock.SetupGet(f => f.Metrics).Returns(this.insightsMetricOperationsMock.Object);
         }
 
         [Fact]
@@ -66,48 +85,65 @@ namespace Microsoft.Azure.Commands.Insights.Test.Metrics
         {
             // Testting defaults and required parameters
             cmdlet.ResourceId = Utilities.ResourceUri;
-            cmdlet.TimeGrain = TimeSpan.FromMinutes(1);
 
             cmdlet.ExecuteCmdlet();
-            Assert.True(filter != null && filter.Contains("timeGrain eq duration'PT1M'") && filter.Contains(" and startTime eq ") && filter.Contains(" and endTime eq "));
             Assert.Equal(Utilities.ResourceUri, resourceId);
 
-            cmdlet.TimeGrain = TimeSpan.FromMinutes(5);
-
+            // Testing with optional parameters
+            cmdlet.MetricName = new[] { "n1", "n2" };
             cmdlet.ExecuteCmdlet();
-            Assert.True(filter != null && filter.Contains("timeGrain eq duration'PT5M'") && filter.Contains(" and startTime eq ") && filter.Contains(" and endTime eq "));
+            string expectedMetricNames = string.Join(",", cmdlet.MetricName);
             Assert.Equal(Utilities.ResourceUri, resourceId);
+            Assert.Equal(expectedMetricNames, metricnames);
 
-            var endDate = DateTime.Now.AddMinutes(-1);
-            cmdlet.TimeGrain = TimeSpan.FromMinutes(5);
+            cmdlet.AggregationType = AggregationType.Total;
+            cmdlet.ExecuteCmdlet();
+            Assert.Equal(Utilities.ResourceUri, resourceId);
+            Assert.Equal(expectedMetricNames, metricnames);
+            Assert.Equal(AggregationType.Total.ToString(), aggregationType);
+
+            var endDate = DateTime.UtcNow.AddMinutes(-1);
+            cmdlet.AggregationType = AggregationType.Average;
             cmdlet.EndTime = endDate;
-
-            var startTime = endDate.Subtract(GetAzureRmMetricCommand.DefaultTimeRange).ToString("O");
-            var endTime = endDate.ToString("O");
-            var expected = "timeGrain eq duration'PT5M' and startTime eq " + startTime + " and endTime eq " + endTime;
 
             // Remove the value assigned in the last execution
             cmdlet.StartTime = default(DateTime);
 
             cmdlet.ExecuteCmdlet();
-            Assert.Equal(expected, filter);
+            string expectedTimespan = string.Concat(endDate.Subtract(GetAzureRmMetricCommand.DefaultTimeRange).ToUniversalTime().ToString("O"), "/", endDate.ToUniversalTime().ToString("O"));
             Assert.Equal(Utilities.ResourceUri, resourceId);
+            Assert.Equal(expectedMetricNames, metricnames);
+            Assert.Equal(AggregationType.Average.ToString(), aggregationType);
+            Assert.Equal(expectedTimespan, timeSpan);
+
 
             cmdlet.StartTime = endDate.Subtract(GetAzureRmMetricCommand.DefaultTimeRange).Subtract(GetAzureRmMetricCommand.DefaultTimeRange);
-            startTime = cmdlet.StartTime.ToString("O");
-            expected = "timeGrain eq duration'PT5M' and startTime eq " + startTime + " and endTime eq " + endTime;
 
             cmdlet.ExecuteCmdlet();
-            Assert.Equal(expected, filter);
+            expectedTimespan = string.Concat(cmdlet.StartTime.ToUniversalTime().ToString("O"), "/", cmdlet.EndTime.ToUniversalTime().ToString("O"));
             Assert.Equal(Utilities.ResourceUri, resourceId);
+            Assert.Equal(expectedMetricNames, metricnames);
+            Assert.Equal(AggregationType.Average.ToString(), aggregationType);
+            Assert.Equal(expectedTimespan, timeSpan);
 
-            // Testing with optional parameters
-            cmdlet.MetricNames = new[] { "n1", "n2" };
-            expected = "(name.value eq 'n1' or name.value eq 'n2') and " + expected;
-
+            cmdlet.AggregationType = AggregationType.Maximum;
+            cmdlet.TimeGrain = TimeSpan.FromMinutes(5);
             cmdlet.ExecuteCmdlet();
-            Assert.Equal(expected, filter);
             Assert.Equal(Utilities.ResourceUri, resourceId);
+            Assert.Equal(expectedMetricNames, metricnames);
+            Assert.Equal(AggregationType.Maximum.ToString(), aggregationType);
+            Assert.Equal(expectedTimespan, timeSpan);
+            Assert.Equal(TimeSpan.FromMinutes(5), metricQueryInterval.Value);
+
+            cmdlet.MetricNamespace = Utilities.MetricNamespace;
+            cmdlet.Top = 5;
+            cmdlet.OrderBy = "asc";
+            cmdlet.ResultType = ResultType.Metadata;
+            Assert.Equal(Utilities.ResourceUri, resourceId);
+            Assert.Equal(expectedMetricNames, metricnames);
+            Assert.Equal(AggregationType.Maximum.ToString(), aggregationType);
+            Assert.Equal(expectedTimespan, timeSpan);
+            Assert.Equal(TimeSpan.FromMinutes(5), metricQueryInterval.Value);
         }
     }
 }

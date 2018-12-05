@@ -15,14 +15,14 @@
 namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 {
     using Microsoft.Azure.Commands.LogicApp.Utilities;
+    using ResourceManager.Common.ArgumentCompleters;
     using System.Globalization;
     using System.Management.Automation;
 
     /// <summary>
     /// Creates a new LogicApp workflow 
     /// </summary>
-    [Cmdlet(VerbsCommon.Remove, "AzureRmLogicApp", SupportsShouldProcess = true), 
-        OutputType(typeof(object))]
+    [Cmdlet("Remove", ResourceManager.Common.AzureRMConstants.AzureRMPrefix + "LogicApp", SupportsShouldProcess = true), OutputType(typeof(void))]
     public class RemoveAzureLogicAppCommand : LogicAppBaseCmdlet
     {
 
@@ -30,6 +30,7 @@ namespace Microsoft.Azure.Commands.LogicApp.Cmdlets
 
         [Parameter(Mandatory = true, HelpMessage = "The targeted resource group for the workflow.",
             ValueFromPipelineByPropertyName = true)]
+        [ResourceGroupCompleter]
         [ValidateNotNullOrEmpty]
         public string ResourceGroupName { get; set; }
 
